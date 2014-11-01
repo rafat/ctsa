@@ -116,7 +116,7 @@ ar_object ar_init(int method, int N) {
 	// retval = 4 Optimization Routine didn't converge
 	// Retval = 15 Optimization Routine Encountered Inf/Nan Values
 
-	logn = (int) 10.0 * log((double)N);
+	logn = (int) (10.0 * log((double)N));
 	ordermax = imin(N - 1, logn);
 
 	if (method == 2) {
@@ -922,7 +922,7 @@ int ar_estimate(double *x, int N, int method) {
 	inp = (double*)malloc(sizeof(double)* N);
 	resid = (double*)malloc(sizeof(double)* N);
 
-	logn = (int) 10.0 * log((double)N);
+	logn = (int) (10.0 * log((double)N));
 	ordermax = imin(N - 1, logn);
 
 	if (method == 2) {
@@ -943,7 +943,7 @@ int ar_estimate(double *x, int N, int method) {
 			ywalg2(inp, N, i + 1, phi, &var);
 		}
 		else if (method == 1) {
-			burgalg(inp, N, i + 1, phi, &var);
+			burgalg(inp, N-1, i + 1, phi, &var);
 		}
 		else if (method == 2) {
 			as154(inp, N, 7, i + 1, 0, 0, phi, NULL, &wmean, &var, resid, &loglik, hess);
@@ -1009,7 +1009,7 @@ void ar_summary(ar_object obj) {
 }
 
 void model_estimate(double *x, int N, int d, int pmax, int h) {
-	int m, i, t, pq, j, k;
+	int m, i, t, pq, j;
 	double wmean, sos, var, lvar, aic, sc, hq, aic0, sc0, hq0;
 	double *inp, *phim, *a;
 	int paic, qaic, psc, qsc, phq, qhq;
@@ -1196,4 +1196,18 @@ void sarima_free(sarima_object object) {
 
 void ar_free(ar_object object) {
 	free(object);
+}
+
+// Yule-Walker, Burg and Hannan Rissanen Algorithms for Initial Parameter Estimation
+
+void yw(double *x, int N, int p, double *phi, double *var) {
+	ywalg2(x, N, p, phi, var);
+}
+
+void burg(double *x, int N, int p, double *phi, double *var) {
+	burgalg(x, N-1, p, phi, var);
+}
+
+void hr(double *x, int N, int p, int q, double *phi, double *theta, double *var) {
+	hralg(x, N, p, q, phi, theta, var);
 }

@@ -18,7 +18,6 @@ double fix(double x) {
 }
 
 double normf(double x) {
-	double y;
 	if ( x < 0.0) {
 		x = - x;
 	}
@@ -236,7 +235,7 @@ double gamma_log(double x) {
    
 	// numerator and denominator coefficients for 1 <= x <= 2
 	
-	double y,oup,fact,sum,y2,yi,z,nsum,dsum;
+	double y,oup,fact,y2,nsum,dsum;
 	int i;
 	
 	double spi = 0.9189385332046727417803297;
@@ -937,7 +936,7 @@ double betainv(double alpha, double p, double q) {
     value = 0.9999;
   }
 
-  iex = r8_max ( - 5.0 / pp / pp - 1.0 / pow ( a, 0.2 ) - 13.0, sae );
+  iex = (int) r8_max ( - 5.0 / pp / pp - 1.0 / pow ( a, 0.2 ) - 13.0, sae );
 
   acu = pow ( 10.0, iex );
 

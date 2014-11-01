@@ -159,28 +159,6 @@ void burgalg(double *x, int N, int p, double *phi,double *var) {
 	free(an);
 }
 
-void burgalg2(double *x, int N, int p, double *phi, double *var) {
-	int i, j, N1, p1;
-	double dk, u, temp1, temp2;
-	double *fk, *bk, *an;
-
-	N1 = N;
-	N = N - 1;
-	p1 = p + 1;
-
-	fk = (double*)malloc(sizeof(double)* N1);
-	bk = (double*)malloc(sizeof(double)* N1);
-	an = (double*)malloc(sizeof(double)* p1);
-
-	for (i = 0; i < N1; ++i) {
-		fk[i] = x[i+1];
-		bk[i] = x[i];
-	}
-
-	free(fk);
-	free(bk);
-	free(an);
-}
 
 void ywalg(double *x, int N, int p, double *phi) {
 	int lag,k,j;
@@ -456,7 +434,7 @@ void pacf_burg(double* vec, int N, double* par, int M) {
 
 	temp = (double*)malloc(sizeof(double)* M);
 	for (i = 0; i < M; ++i) {
-		burgalg(vec, N, i + 1, temp, &var);
+		burgalg(vec, N-1, i + 1, temp, &var);
 		par[i] = temp[i];
 	}
 	free(temp);
@@ -476,7 +454,7 @@ void pacf_yw(double* vec, int N, double* par, int M) {
 
 void pacf_mle(double* vec, int N, double* par, int M) {
 	// Using Box-Jenkins Conditional MLE
-	double var, thetac, eps,loglik;
+	double var, thetac, eps;
 	double *phi, *theta, *varcovar, *res;
 	int i, p, mean, k,ret;
 

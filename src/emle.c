@@ -620,7 +620,7 @@ int forkal(int ip,int iq,int id,double *phi,double*theta,double *delta,int N,dou
 	int ifault,ir,np,k,nrbar,ird,irz;
 	double *A,*P,*V,*store,*xrow;
 	double zero, one, two,AA,del,sumlog,ssq,sigma,A1,dt,phij,phijdt,phii,AMS;
-	int i, iq1, j, ll, lli, nt, nj, idk, iid,iupd,nit,iter,ind,irj;
+	int i,  j, ll, nt, nj, idk, iid,iupd,nit,iter,ind,irj;
 	int ir2, ir1, id2r, id2r1, id1,idd1,idd2,i45,idrr1,iddr,jkl,jkl1,id2r2,ibc,l,iri1,jj;
 	int lk, lk1,jklj,iri,kk1,k1,kk,kkk,ind1,ind2,jrj,j1,jrk;
 	/*

@@ -204,9 +204,9 @@ void linreg_multi(int p, double *xi,double *y, int N, double* b,double *sigma2,
 			double* ci_lower, double* ci_upper) {
 	double *x,*xt,*seb,*xb;
 	double *xxt,*yxt,*temp1,*temp2,*bt;
-	int i,j,df;
+	int i,df;
 	int *ipiv;
-	double tmp1,sum,sum2,ym,ym2,a2,ta2,intrvl,chia2,chi1a2;
+	double tmp1,sum,ym,ym2,a2,ta2,intrvl,chia2,chi1a2;
 
 	/*
 	 * Matrix Based Multiple Regression

@@ -297,7 +297,7 @@ double erfinv(double x) {
 }
 
 double erfcinv(double x) {
-	double oup,xinf,pi,temp,t;
+	double oup,xinf,pi,t;
 	
 	/*
 	 * This implementation is based on 

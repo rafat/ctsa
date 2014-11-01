@@ -151,6 +151,14 @@ void sarima_free(sarima_object object);
 
 void ar_free(ar_object object);
 
+// Yule-Walker, Burg and Hannan Rissanen Algorithms for Initial Parameter Estimation
+
+void yw(double *x, int N, int p, double *phi, double *var);
+
+void burg(double *x, int N, int p, double *phi, double *var);
+
+void hr(double *x, int N, int p, int q, double *phi, double *theta, double *var);
+
 
 #ifdef __cplusplus
 }
