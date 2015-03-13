@@ -7,6 +7,8 @@ ARIMA and Seasonal ARIMA models have been added as of 10/30/2014. Other function
 
 Documentation is tentatively available at Google Code
 
-https://code.google.com/p/ctsa/
+https://github.com/rafat/ctsa/wiki
 
 License : BSD 3- Clause Check COPYRIGHT file
+
+Contact rafat.hsn@gmail.com
