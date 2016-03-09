@@ -11,7 +11,7 @@ Description : Hello World in C, Ansi-style
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "ctsa.h"
+#include "../header/ctsa.h"
 
 int main(void) {
 	int i, N;
