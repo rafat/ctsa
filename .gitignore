@@ -1,6 +1,5 @@
 #Folders Ignore
 Bin/
-data/
 
 #cmake ignore
 CMakeCache.txt
