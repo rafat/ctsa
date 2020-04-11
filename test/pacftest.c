@@ -1,13 +1,3 @@
-/*
-============================================================================
-Name        : tseries.c
-Author      : Rafat Hussain
-Version     :
-Copyright   :
-Description : Hello World in C, Ansi-style
-============================================================================
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -21,7 +11,7 @@ int main(void) {
 	FILE *ifp;
 	double temp[1200];
 
-	ifp = fopen("seriesC.txt", "r");
+	ifp = fopen("../data/seriesC.txt", "r");
 	i = 0;
 	if (!ifp) {
 		printf("Cannot Open File");

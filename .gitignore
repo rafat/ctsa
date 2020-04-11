@@ -1,0 +1,35 @@
+#Folders Ignore
+Bin/
+data/
+
+#cmake ignore
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Makefile/
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
+Makefile
+
+#yml
+*.yml
+
+#Compiled
+*.a
+*.o
+*.lib
+*.so
+*.exe
+*.dll
+
+#Eclipse
+.project
+.cproject
+language.settings.xml
+
+#tcl
+*.tcl
+
+#nnet
+*.nnet

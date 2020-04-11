@@ -1,13 +1,3 @@
-/*
-============================================================================
-Name        : tseries.c
-Author      : Rafat Hussain
-Version     :
-Copyright   :
-Description : 
-============================================================================
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -34,7 +24,7 @@ int main(void) {
 	FILE *ifp;
 	double temp[2000];
 
-	ifp = fopen("seriesA.txt", "r");
+	ifp = fopen("../data/seriesA.txt", "r");
 	i = 0;
 	if (!ifp) {
 		printf("Cannot Open File");
