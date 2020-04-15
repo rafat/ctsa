@@ -10,12 +10,12 @@ int main(void) {
 	double *phi, *theta;
 	double *xpred, *amse;
 	arima_object obj;
-	p = 1;
-	d = 0;
-	q = 1;
+	p = 2;
+	d = 2;
+	q = 2;
 
 
-	L = 5;
+	L = 8;
 
 	phi = (double*)malloc(sizeof(double)* p);
 	theta = (double*)malloc(sizeof(double)* q);
@@ -26,7 +26,7 @@ int main(void) {
 	FILE *ifp;
 	double temp[1200];
 
-	ifp = fopen("../data/seriesA.txt", "r");
+	ifp = fopen("../data/itdaily.txt", "r");
 	i = 0;
 	if (!ifp) {
 		printf("Cannot Open File");
@@ -36,7 +36,7 @@ int main(void) {
 		fscanf(ifp, "%lf \n", &temp[i]);
 		i++;
 	}
-	N = i;
+	N = i-L;
 
 	inp = (double*)malloc(sizeof(double)* N);
 	//wmean = mean(temp, N);
