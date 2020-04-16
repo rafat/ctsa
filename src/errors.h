@@ -11,6 +11,8 @@ double me(double *predicted, double *actual, int N);
 
 double mse(double *predicted, double *actual, int N);
 
+double rmse(double *predicted, double *actual, int N);
+
 double mae(double *predicted, double *actual, int N);
 
 double mape(double *predicted, double *actual, int N);

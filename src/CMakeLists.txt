@@ -27,6 +27,7 @@ set(SOURCE_FILES   	boxjenkins.c
 					spectrum.c
 					stats.c
 					talg.c
+					errors.c
                     )
 
 set(HEADER_FILES    boxjenkins.h   	
@@ -56,6 +57,7 @@ set(HEADER_FILES    boxjenkins.h
 					spectrum.h
 					stats.h
 					talg.h
+					errors.h
                     )
 
 add_library(ctsalib STATIC ${SOURCE_FILES} ${HEADER_FILES})

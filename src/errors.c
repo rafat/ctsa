@@ -43,6 +43,16 @@ double mse(double *predicted, double *actual, int N) {
     return err;
 }
 
+double rmse(double *predicted, double *actual, int N) {
+    double err;
+
+    err = mse(predicted,actual,N);
+
+    err = sqrt(err);
+
+    return err;
+}
+
 double mae(double *predicted, double *actual, int N) {
     double err,temp,t;
     int i;
@@ -109,6 +119,8 @@ double mase(double *predicted, double *actual, int N, double *tseries, int lengt
     double err,temp,den;
     double *dif;
     int i;
+
+    // tseries : Only training values are included
 
     dif = (double*)malloc(sizeof(double)* (N-1));
 

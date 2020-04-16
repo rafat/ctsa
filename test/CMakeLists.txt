@@ -22,8 +22,12 @@ add_executable(sarimatest sarimatest.c)
 
 target_link_libraries(sarimatest ctsalib m)
 
+add_executable(misctests misctests.c)
 
-set_target_properties(acftest arimatest artest artest2 pacftest sarimatest
+target_link_libraries(misctests ctsalib m)
+
+
+set_target_properties(acftest arimatest artest artest2 pacftest sarimatest misctests
         PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/test"
 )
