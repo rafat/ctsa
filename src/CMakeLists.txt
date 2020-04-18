@@ -28,6 +28,10 @@ set(SOURCE_FILES   	boxjenkins.c
 					stats.c
 					talg.c
 					errors.c
+					unitroot.c
+					wtmath.c
+					wavefilt.c
+					wavelib.c
                     )
 
 set(HEADER_FILES    boxjenkins.h   	
@@ -58,6 +62,11 @@ set(HEADER_FILES    boxjenkins.h
 					stats.h
 					talg.h
 					errors.h
+					unitroot.h
+					wtmath.h
+					wavefilt.h
+					wavelib.h
+					waveletarima.h
                     )
 
 add_library(ctsalib STATIC ${SOURCE_FILES} ${HEADER_FILES})

@@ -26,8 +26,12 @@ add_executable(misctests misctests.c)
 
 target_link_libraries(misctests ctsalib m)
 
+add_executable(dwttests dwttests.c)
 
-set_target_properties(acftest arimatest artest artest2 pacftest sarimatest misctests
+target_link_libraries(dwttests ctsalib m)
+
+
+set_target_properties(acftest arimatest artest artest2 pacftest sarimatest misctests dwttests
         PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/test"
 )
