@@ -84,7 +84,7 @@ int lls_qr(double *Ai,double *bi,int M,int N,double *xo) {
 	v = (double*) malloc(sizeof(double) * M);
 	AT = (double*) malloc(sizeof(double) * M * N);
 	A = (double*) malloc(sizeof(double) * M * N);
-	w = (double*) malloc(sizeof(double) * 1);
+	w = (double*) malloc(sizeof(double) * N);
 	R = (double*) malloc(sizeof(double) * N * N);
 
 	for(j = 0; j < M;++j) {
@@ -189,6 +189,36 @@ int lls_qr(double *Ai,double *bi,int M,int N,double *xo) {
 	free(A);
 
 	return retcode;
+}
+
+int lls_qr_undetermined(double *Ai,double *bi,int M,int N,double *xo) {
+	int retval;
+	double *A, *bvec, *Q, *R, *z;
+
+	retval = 0;
+	A = (double*) malloc(sizeof(double) * N * M);
+	bvec = (double*) malloc(sizeof(double) * M);
+	Q = (double*) malloc(sizeof(double) * N * M);
+	R = (double*) malloc(sizeof(double) * M * M);
+	z = (double*) malloc(sizeof(double) * M);
+
+	mtranspose(Ai,M,N,A);
+	// A NXM
+
+	qrdecomp(A,N,M,bvec);
+
+	getQR(A,N,M,bvec,Q,R);
+
+	itranspose(R,M,M);
+
+	// Backsubstitution
+
+	free(A);
+	free(bvec);
+	free(Q);
+	free(R);
+	free(z);
+	return retval;
 }
 
 void bidiag(double *A, int M, int N) {
@@ -1369,3 +1399,4 @@ int lls_svd(double *Ai,double *bi,int M,int N,double *xo) {
 
 	return retcode;
 }
+

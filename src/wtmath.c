@@ -578,11 +578,11 @@ int testSWTlength(int N, int J) {
 
 }
 
-int wmaxiter(int sig_len, int filt_len) {
+int wmaxiter(int sig_len) {
 	int lev;
 	double temp;
 
-	temp = log((double)sig_len / ((double)filt_len - 1.0)) / log(2.0);
+	temp = log((double)sig_len);
 	lev = (int)temp;
 
 	return lev;

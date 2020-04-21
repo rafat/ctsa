@@ -8,18 +8,24 @@
 #ifndef MATRIX_H_
 #define MATRIX_H_
 
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
 #include <math.h>
 #include <float.h>
+#include <time.h>
 
 #define CUTOFF 192
 #define TOL 1e-12
 #define BLOCKSIZE 64
+#define TBLOCK 64
 #define SVDMAXITER 50
+#define SIGN(a,b) ((b) >= 0.0 ? fabs(a) : -fabs(a))
+#define RSVD_POWER_ITERATIONS 5
 
 
 #ifdef __cplusplus
@@ -64,6 +70,8 @@ void ctranspose(double *sig, int rows, int cols,double *col);
 
 void mtranspose(double *sig, int rows, int cols,double *col);
 
+void itranspose(double *A, int M, int N);
+
 //int minverse(double *xxt, int p);
 
 void mdisplay(double *A, int row, int col);
@@ -106,11 +114,23 @@ void mmult(double* A, double* B, double* C,int m,int n, int p);
 
 void ludecomp(double *A,int N,int *ipiv);
 
+int rludecomp(double *A, int M, int N, int *ipiv);
+
+void getPLU(double *A, int M , int N, int *ipiv,double *P, double *L, double *U);
+
+void getPU(double *A, int M, int N, int *ipiv, double *P,double *U);
+
+double* marsaglia_generate(double *values, int N, double average, double  deviation);
+
+void random_matrix(double *A, int M, int N);
+
 void linsolve(double *A,int N,double *b,int *ipiv,double *x);
 
 void minverse(double *A,int M,int *ipiv,double *inv);
 
 void eye(double *mat,int N);
+
+void eye_scale(double *mat, int N, double lambda);
 
 double house(double*x,int N,double *v);
 
@@ -130,6 +150,8 @@ int francis_iter(double *A, int N, double *H);
 
 void eig(double *A,int N,double *eigre,double *eigim);
 
+void eigensystem(double *mat, int N, double *eval, double *evec);;
+
 int cholu(double *A, int N);
 
 int bcholu(double *A, int N);
@@ -142,7 +164,11 @@ void svd_sort(double *U,int M,int N,double *V,double *q);
 
 int svd(double *A,int M,int N,double *U,double *V,double *q);
 
+int svd_transpose(double *A, int M, int N, double *U, double *V, double *q);
+
 int rank(double *A, int M,int N);
+
+void rsvd(double *A, int M, int N,int K, int oversample, int n_iter,double *U, double *V, double *S);
 
 #ifdef __cplusplus
 }

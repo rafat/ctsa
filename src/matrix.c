@@ -1,15 +1,6 @@
 
 #include "matrix.h"
 
-/*
- * matrix.c
-
- *
- *  Copyright (c) 2014, Rafat Hussain
- *	License : BSD 3-Clause
- *	See COPYRIGHT for more details
- */
-
 typedef struct {
 	double* a;
 	int b;
@@ -260,6 +251,75 @@ void mtranspose(double *sig, int rows, int cols,double *col) {
 		ctranspose(sig,rows,cols,col);
 	} else {
 		stranspose(sig,rows,cols,col);
+	}
+}
+
+void itranspose(double *A, int M, int N) {
+	int i, j, p, iter;
+	double *buf;
+	double temp;
+
+	if (M == N) {
+		for (i = 0; i < N; ++i) {
+			for (j = i + 1; j < N; ++j) {
+				temp = A[i + j*N];
+				A[i + j*N] = A[j + i*N];
+				A[j + i*N] = temp;
+			}
+		}
+	} else if (M > N) {
+
+		p = M - N;
+		buf = (double*)malloc(sizeof(double)* p * N);
+
+		memcpy(buf, A + N * N, sizeof(*A)*p*N);
+
+		for (i = 0; i < N; ++i) {
+			for (j = i + 1; j < N; ++j) {
+				temp = A[i + j*N];
+				A[i + j*N] = A[j + i*N];
+				A[j + i*N] = temp;
+			}
+		}
+
+		for (i = N - 1; i >= 1; --i) {
+			memmove(A + i*M, A + i*N, sizeof(*A)*M);
+		}
+
+
+		for (i = 0; i < N; ++i) {
+			iter = N + i * M;
+			for (j = 0; j < p; ++j) {
+				A[iter + j] = buf[j*N + i];
+			}
+		}
+
+		free(buf);
+	}
+	else if (M < N) {
+		p = N - M;
+		buf = (double*)malloc(sizeof(double)* p * M);
+
+		for (i = 0; i < M; ++i) {
+			iter = M + i*N;
+			for (j = 0; j < p; ++j) {
+				buf[j*M + i] = A[iter + j];
+			}
+		}
+
+		for (i = 1; i < M; ++i) {
+			memmove(A + i*M, A + i * N, sizeof(*A)*M);
+		}
+
+		for (i = 0; i < M; ++i) {
+			for (j = i + 1; j < M; ++j) {
+				temp = A[i + j*M];
+				A[i + j*M] = A[j + i*M];
+				A[j + i*M] = temp;
+			}
+		}
+		memcpy(A + M*M, buf, sizeof(*A)*p*M);
+		free(buf);
 	}
 }
 
@@ -837,6 +897,342 @@ void ludecomp(double *A,int N,int *ipiv) {
 	pludecomp(A,N,ipiv);
 }
 
+int rludecomp(double *A, int M, int N, int *ipiv) {
+	int k, j, l, c1, c2, mind, tempi;
+	double ld, mult, mval, temp;
+
+
+	for (k = 0; k < M; ++k)
+		ipiv[k] = (double) k;
+
+	if (M > N) {
+		for (k = 0; k < N; ++k) {
+			mval = fabs(A[k*N + k]);
+			mind = k;
+			for (j = k + 1; j < M; ++j) {
+				if (mval < fabs(A[j*N + k])) {
+					mval = A[j*N + k];
+					mind = j;
+				}
+			}
+
+			if (mind != k) {
+				c1 = k *N;
+				c2 = mind * N;
+				tempi = ipiv[mind];
+				ipiv[mind] = ipiv[k];
+				ipiv[k] = tempi;
+				for (j = 0; j < N; j++) {
+					temp = A[c1 + j];
+					*(A + c1 + j) = *(A + c2 + j);
+					*(A + c2 + j) = temp;
+				}
+			}
+
+			c2 = k*N;
+			ld = A[c2 + k];
+			if (ld != 0. && k < N) {
+				for (j = k + 1; j < M; ++j) {
+					c1 = j*N;
+					mult = A[c1 + k] /= ld;
+					//printf("\n k %d j %d mult %f \n",k,j,mult);
+					for (l = k + 1; l < N; ++l) {
+						A[c1 + l] -= mult * A[c2 + l];
+					}
+				}
+			}
+		}
+	}
+	else if (M < N) {
+		for (k = 0; k < M-1; ++k) {
+			mval = fabs(A[k*N + k]);
+			mind = k;
+			for (j = k + 1; j < M; ++j) {
+				if (mval < fabs(A[j*N + k])) {
+					mval = A[j*N + k];
+					mind = j;
+				}
+			}
+
+			if (mind != k) {
+				c1 = k *N;
+				c2 = mind * N;
+				tempi = ipiv[mind];
+				ipiv[mind] = ipiv[k];
+				ipiv[k] = tempi;
+				for (j = 0; j < N; j++) {
+					temp = A[c1 + j];
+					*(A + c1 + j) = *(A + c2 + j);
+					*(A + c2 + j) = temp;
+				}
+			}
+
+			c2 = k*N;
+			ld = A[c2 + k];
+			if (ld != 0.) {
+				for (j = k + 1; j < M; ++j) {
+					c1 = j*N;
+					mult = A[c1 + k] /= ld;
+					//printf("\n k %d j %d mult %f \n",k,j,mult);
+					for (l = k + 1; l < N; ++l) {
+						A[c1 + l] -= mult * A[c2 + l];
+					}
+				}
+			}
+		}
+	}
+	else if (M == N) {
+		pludecomp(A,N,ipiv);
+	}
+
+	//mdisplay(ipiv, 1, M);
+
+	return 0;
+
+	
+}
+
+void getPLU(double *A, int M , int N, int *ipiv,double *P, double *L, double *U) {
+	int i, j,k;
+	// Initialize all the arrays
+	// P - M*M 
+	// M > N
+	// L - M*N , U - N*N
+	// M = N
+	// L - M*M , U M*M
+	// M < N
+	// L - M*M, U - M*N
+
+	if (P) {
+		for (i = 0; i < M*M; ++i) {
+			P[i] = 0.0;
+		}
+		for (j = 0; j < M; ++j) {
+			P[ipiv[j]*M + j] = 1.0;
+		}
+	}
+
+	if (M == N) {
+		if (L) {
+			for (i = 0; i < M; ++i) {
+				for (j = 0; j < i; ++j) {
+					L[i*M + j] = A[i*M + j];
+				}
+				L[i*M + i] = 1.0;
+				for (j = i + 1; j < M; ++j) {
+					L[i*M + j] = 0.0;
+				}
+			}
+		}
+		if (U) {
+			for (i = 0; i < M; ++i) {
+				for (j = 0; j < i; ++j) {
+					U[i*M + j] = 0.0;
+				}
+				for (j = i; j < M; ++j) {
+					U[i*M + j] = A[i*M + j];
+				}
+			}
+		}
+	}
+	else if (M > N) {
+		if (L) {
+			for (i = 0; i < N; ++i) {
+				for (j = 0; j < i; ++j) {
+					L[i*N + j] = A[i*N + j];
+				}
+				L[i*N + i] = 1.0;
+				for (j = i + 1; j < N; ++j) {
+					L[i*N + j] = 0.0;
+				}
+			}
+			memcpy(L + N*N, A + N*N, sizeof(double)*(M - N)*N);
+		}
+		if (U) {
+			for (i = 0; i < N; ++i) {
+				for (j = 0; j < i; ++j) {
+					U[i*N + j] = 0.0;
+				}
+				for (j = i; j < N; ++j) {
+					U[i*N + j] = A[i*N + j];
+				}
+			}
+		}
+	}
+	else if (M < N) {
+		if (L) {
+			for (i = 0; i < M; ++i) {
+				for (j = 0; j < i; ++j) {
+					L[i*M + j] = A[i*N + j];
+				}
+				L[i*M + i] = 1.0;
+				for (j = i + 1; j < M; ++j) {
+					L[i*M + j] = 0.0;
+				}
+			}
+		}
+
+		if (U) {
+			for (i = 0; i < M; ++i) {
+				for (j = 0; j < i; ++j) {
+					U[i*N + j] = 0.0;
+				}
+				for (j = i; j < N; ++j) {
+					U[i*N + j] = A[i*N + j];
+				}
+			}
+		}
+	}
+}
+
+void getPU(double *A, int M, int N, int *ipiv, double *P,double *U) {
+	int i,j,K;
+	int *ipivt;
+	double *L;
+
+	ipivt = (int*)malloc(sizeof(int)*M);
+
+	for (i = 0; i < M; ++i) {
+		ipivt[ipiv[i]] = i;
+	}
+
+	if (M > N) {
+		K = N;
+	}
+	else {
+		K = M;
+	}
+
+	L = (double*)malloc(sizeof(double)*M*K);
+
+	if (M == N) {
+		if (L) {
+			for (i = 0; i < M; ++i) {
+				for (j = 0; j < i; ++j) {
+					L[i*M + j] = A[i*M + j];
+				}
+				L[i*M + i] = 1.0;
+				for (j = i + 1; j < M; ++j) {
+					L[i*M + j] = 0.0;
+				}
+			}
+		}
+		if (U) {
+			for (i = 0; i < M; ++i) {
+				for (j = 0; j < i; ++j) {
+					U[i*M + j] = 0.0;
+				}
+				for (j = i; j < M; ++j) {
+					U[i*M + j] = A[i*M + j];
+				}
+			}
+		}
+	}
+	else if (M > N) {
+		if (L) {
+			for (i = 0; i < N; ++i) {
+				for (j = 0; j < i; ++j) {
+					L[i*N + j] = A[i*N + j];
+				}
+				L[i*N + i] = 1.0;
+				for (j = i + 1; j < N; ++j) {
+					L[i*N + j] = 0.0;
+				}
+			}
+			memcpy(L + N*N, A + N*N, sizeof(double)*(M - N)*N);
+		}
+		if (U) {
+			for (i = 0; i < N; ++i) {
+				for (j = 0; j < i; ++j) {
+					U[i*N + j] = 0.0;
+				}
+				for (j = i; j < N; ++j) {
+					U[i*N + j] = A[i*N + j];
+				}
+			}
+		}
+	}
+	else if (M < N) {
+		if (L) {
+			for (i = 0; i < M; ++i) {
+				for (j = 0; j < i; ++j) {
+					L[i*M + j] = A[i*N + j];
+				}
+				L[i*M + i] = 1.0;
+				for (j = i + 1; j < M; ++j) {
+					L[i*M + j] = 0.0;
+				}
+			}
+		}
+
+		if (U) {
+			for (i = 0; i < M; ++i) {
+				for (j = 0; j < i; ++j) {
+					U[i*N + j] = 0.0;
+				}
+				for (j = i; j < N; ++j) {
+					U[i*N + j] = A[i*N + j];
+				}
+			}
+		}
+	}
+
+	for (i = 0; i < M; ++i) {
+		memcpy(P + i*K, L + ipivt[i] * K, sizeof(double)*K);
+	}
+
+
+	free(ipivt);
+	free(L);
+}
+
+double* marsaglia_generate(double *values, int N, double average, double  deviation)
+{
+	int i;
+	int M;
+	double x, y, rsq, f;
+
+	M = N + N % 2;
+
+
+
+	for (i = 0; i < N - 1; i += 2)
+	{
+		do {
+			x = 2.0 * rand() / (double)RAND_MAX - 1.0;
+			y = 2.0 * rand() / (double)RAND_MAX - 1.0;
+			rsq = x * x + y * y;
+		} while (rsq >= 1. || rsq == 0.);
+		f = sqrt(-2.0 * log(rsq) / rsq);
+		values[i] = x * f;
+		values[i + 1] = y * f;
+	}
+
+	if (M != N) {
+		do {
+			x = 2.0 * rand() / (double)RAND_MAX - 1.0;
+			y = 2.0 * rand() / (double)RAND_MAX - 1.0;
+			rsq = x * x + y * y;
+		} while (rsq >= 1. || rsq == 0.);
+		f = sqrt(-2.0 * log(rsq) / rsq);
+		values[N - 1] = x * f;
+	}
+
+
+	for (i = 0; i < N; ++i) {
+		values[i] = (values[i] * deviation + average);
+	}
+	return values;
+}
+
+void random_matrix(double *A, int M, int N) {
+	int dim;
+	dim = M*N;
+
+	marsaglia_generate(A, dim, 0.0, 1.0);
+}
+
+
 void linsolve(double *A,int N,double *b,int *ipiv,double *x) {
 	int i,j,c1,l;
 	double *y;
@@ -928,6 +1324,22 @@ void eye(double *mat,int N) {
 			}
 		}
 		
+	}
+}
+
+void eye_scale(double *mat, int N, double lambda) {
+	int i, j, t;
+	for (i = 0; i < N; ++i) {
+		for (j = 0; j < N; ++j) {
+			t = i*N;
+			if (i == j) {
+				mat[t + j] = lambda;
+			}
+			else {
+				mat[t + j] = 0.;
+			}
+		}
+
 	}
 }
 
@@ -1040,6 +1452,172 @@ void housemat(double *v, int N,double beta,double *mat) {
 	msub(mat,temp,mat,N,N);
 	
 	free(temp);
+}
+
+static void tred2(double *a, int N, double *d, double *e) {
+	// Modified version of Numerical recipes tred2 alogorithm
+	int l, k, j, i;
+	double scale, hh, h, g, f;
+
+	for (i = N - 1; i > 0; --i) {
+		l = i - 1;
+		h = scale = 0.0;
+
+		if (l > 0) {
+			for (k = 0; k <= l; ++k) {
+				scale +=(double) fabs(a[i*N + k]);
+			}
+			if (scale == 0.0) {
+				e[i] = a[i*N + l];
+			}
+			else {
+				for (k = 0; k <= l; ++k) {
+					a[i*N + k] /= scale;
+					h += a[i*N + k] * a[i*N + k];
+				}
+				f = a[i*N + l];
+				g = (double) (f >= 0.0 ? -sqrt(h) : sqrt(h));
+				e[i] = scale*g;
+				h -= f*g;
+				a[i*N + l] = f - g;
+				f = 0.0;
+
+				for (j = 0; j <= l; ++j) {
+					a[j*N + i] = a[i*N + j] / h;
+					g = 0.0;
+					for (k = 0; k <= j; ++k) {
+						g += a[j*N + k] * a[i*N + k];
+					}
+					for (k = j + 1; k <= l; ++k) {
+						g += a[k*N + j] * a[i*N + k];
+					}
+					e[j] = g / h;
+					f += e[j] * a[i*N + j];
+				}
+				hh = f / (h + h);
+				for (j = 0; j <= l; ++j) {
+					f = a[i*N + j];
+					e[j] = g = e[j] - hh*f;
+					for (k = 0; k <= j; ++k) {
+						a[j*N + k] -= (f*e[k] + g*a[i*N + k]);
+					}
+				}
+			}
+
+		}
+		else {
+			e[i] = a[i*N + l];
+		}
+		d[i] = h;
+	}
+
+	d[0] = 0.0;
+	e[0] = 0.0;
+
+	for (i = 0; i < N; ++i) {
+		l = i - 1;
+		if (d[i]) {
+			for (j = 0; j <= l; ++j) {
+				g = 0.0;
+				for (k = 0; k <= l; ++k) {
+					g += a[i*N+k] * a[k*N+j];
+				}
+				for (k = 0; k <= l; ++k) {
+					a[k*N + j] -= g*a[k*N+i];
+				}
+			}
+		}
+		d[i] = a[i*N+i];
+		a[i*N+i] = 1.0;
+		for (j = 0; j <= l; ++j) {
+			a[j*N+i] = a[i*N+j] = 0.0;
+		}
+	}
+}
+
+static double pythag(double a, double b) {
+	double absa, absb,val;
+	absa = (double) fabs(a);
+	absb = (double) fabs(b);
+
+	if (absa > absb) {
+		val = (double) absa*sqrt(1.0 + (absb / absa)*(absb / absa));
+		return val;
+	}
+	else {
+		val = (double) (absb == 0.0 ? 0.0 : absb*sqrt(1.0 + (absa / absb)*(absa / absb)));
+		return val;
+	}
+}
+
+static void tqli(double *d, int N, double *e, double *z) {
+	int m, l, iter, i, k;
+	double s, r, p, g, f, dd, c, b;
+
+	for (i = 1; i < N; ++i) {
+		e[i - 1] = e[i];
+	}
+	e[N - 1] = 0;
+
+	for (l = 0; l < N; ++l) {
+		iter = 0;
+		do {
+			for (m = l; m < N - 1; ++m) {
+				dd =(double) fabs(d[m]) + fabs(d[m + 1]);
+				if ((double)(fabs(e[m]) + dd) == dd) {
+					break;
+				}
+			}
+			if (m != l) {
+				if (iter++ == 30) {
+					printf("Too many iterations in tqli");
+				}
+				g = (d[l + 1] - d[l]) / (2.0*e[l]);
+				r = pythag(g, 1.0);
+				g = d[m] - d[l] + e[l] / (g + (double) SIGN(r, g)); 
+				s = c = 1.0;
+				p = 0.0;
+				for (i = m - 1; i >= l; --i) {
+					f = s*e[i];
+					b = c*e[i];
+					e[i + 1] = (r = pythag(f, g));
+					if (r == 0.0) {
+						d[i + 1] -= p;
+						e[m] = 0.0;
+						break;
+					}
+					s = f / r;
+					c = g / r;
+					g = d[i + 1] - p;
+					r = (d[i] - g)*s + 2.0*c*b;
+					d[i + 1] = g + (p = s*r);
+					g = c*r - b;
+					for (k = 0; k < N; ++k) {
+						f = z[k*N + i + 1];
+						z[k*N + i + 1] = s*z[k*N + i] + c*f;
+						z[k*N + i] = c*z[k*N + i] - s*f;
+					}
+				}
+				if (r == 0.0 && i >= l) continue;
+				d[l] -= p;
+				e[l] = g;
+				e[m] = 0.0;
+			}
+		} while (m != l);
+	}
+}
+
+void eigensystem(double *mat, int N, double *eval, double *evec) {
+	double *e;
+
+	e = (double*)calloc(N, sizeof(double));
+
+	memcpy(evec, mat, sizeof(double)*N*N);
+
+	tred2(evec, N, eval, e);
+	tqli(eval, N, e, evec);
+
+	free(e);
 }
 
 void qrdecomp(double *A, int M, int N,double *bvec) {
@@ -1915,7 +2493,7 @@ int svd(double *A,int M,int N,double *U,double *V,double *q) {
 	 * The program return error codes
 	 *
 	 *  Code 0 if the computation is successful
-	 *  Code -1 If  M < N . Transpose the matrix such that rows > columns and trye again
+	 *  Code -1 If  M < N . Transpose the matrix such that rows > columns and try again
 	 *  Code 15 if maximum iterations are reached without achieving convergence. Increase SVDMAXITER value
 	 *  in matrix.h header file. Default Value is 50
 	 *
@@ -2302,6 +2880,26 @@ int svd(double *A,int M,int N,double *U,double *V,double *q) {
 	return ierr;
 }
 
+int svd_transpose(double *A, int M, int N, double *U, double *V, double *q) {
+	int ret;
+	/* Call this routine if M < N
+	* U = MXM
+	* V - NXM
+	* Q - MX1
+	* A = (V * diag(Q) * U' )'
+	*/
+
+	if (M >= N) {
+		printf("M>=N. Use svd routine.\n");
+		exit(-1);
+	}
+
+	mtranspose(A, M, N, V);
+
+	ret = svd(V, N, M, V, U, q);
+	return ret;
+}
+
 static int rank_c(double *A, int M,int N) {
 	int i,rnk,ret;
 	double eps,tol,szmax,qmax;
@@ -2358,6 +2956,108 @@ int rank(double *A, int M,int N) {
 
 	free(AT);
 	return rnk;
+
+}
+
+void rsvd(double *A, int M, int N,int K, int oversample, int n_iter,double *U, double *V, double *S) {
+	/*
+	A - MXN matrix
+	K - Rank of approximation being constructed. K <= min(m,n). default value 6
+	L - block size of the normalized power iterations. Default K+2
+	n_iter - number of normalized power iterations to conduct. Default 2
+	U - MXK
+	V - NXK
+	S - Diagonal Matrix KXK
+	*/
+
+	if (n_iter == 0) {
+		printf("Number of power iterations must be >= 1 or set it to < 0 if you want to use default value #RSVD_POWER_ITERATIONS \n");
+		exit(-1);
+	}
+	else if (n_iter < 0) {
+		n_iter = (int)RSVD_POWER_ITERATIONS;
+	}
+
+	int i, j,maxdim,L;
+	double *Q1,*Q2,*AT,*R,*bvec,*uq,*vq,*sq;
+	int *ipiv;
+
+	L = K + oversample;
+
+	maxdim = M > N ? M : N;
+	srand(time(NULL));
+
+	if (M >= N) {
+
+		Q1 = (double*)malloc(sizeof(double)*maxdim*L);
+		Q2 = (double*)malloc(sizeof(double)*maxdim*L);
+		AT = (double*)malloc(sizeof(double)*M*N);
+		ipiv = (int*)malloc(sizeof(int)*maxdim);
+		R = (double*)malloc(sizeof(double)*L*L);
+		bvec = (double*)malloc(sizeof(double)*L*L);
+
+		uq = (double*)malloc(sizeof(double)*L*L);
+		vq = (double*)malloc(sizeof(double)*L*N);
+		sq = (double*)malloc(sizeof(double)*L);
+
+		random_matrix(Q1, N, L);// N*L
+		
+		mtranspose(A, M, N, AT);
+
+		for (i = 0; i < n_iter; ++i) {
+			mmult(A, Q1, Q2, M, N, L);// M*L
+			rludecomp(Q2, M, L, ipiv);
+			getPU(Q2, M, L, ipiv, Q1, NULL);// M*L
+			mmult(AT, Q1, Q2, N, M, L);//N*L
+			rludecomp(Q2, N, L, ipiv);
+			getPU(Q2, N, L, ipiv, Q1, NULL);// N*L
+		}
+
+		mmult(A, Q1, Q2, M, N, L);
+		qrdecomp(Q2, M, L, bvec);
+		getQR(Q2, M, L, bvec, Q1, R);// M*L
+
+		mtranspose(Q1, M, L, Q2);// L*M
+		mmult(Q2, A, Q1, L, M, N);// L* N
+
+		svd_transpose(Q1, L, N, uq, vq, sq);
+		// uq - LXL
+		// vq - NXL
+		//itranspose(vq, N, L);
+
+		for (i = 0; i < N; ++i) {
+			for (j = 0; j < K; ++j) {
+				V[i*K + j] = vq[i*L + j];
+			}
+		}
+
+		memcpy(S, sq, sizeof(double)*K);
+		
+		itranspose(Q2, L, M);
+
+		mmult(Q2, uq, Q1, M, L, L);
+
+		for (i = 0; i < M; ++i) {
+			for (j = 0; j < K; ++j) {
+				U[i*K + j] = Q1[i*L + j];
+			}
+		}
+
+		free(Q1);
+		free(Q2);
+		free(ipiv);
+		free(AT);
+		free(R);
+		free(bvec);
+		free(uq);
+		free(vq);
+		free(sq);
+
+	}
+	else {
+		printf("Randomized SVD is only implemented for tall matrices (rows > columns)");
+		exit(-1);
+	}
 
 }
 

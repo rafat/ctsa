@@ -1,7 +1,5 @@
 #include "unitroot.h"
 
-/*
-
 void ur_df(double *y, int N,const char* type, int lags, const char *selectlags) {
     int lag;
     if (lags < 0) {
@@ -13,4 +11,3 @@ void ur_df(double *y, int N,const char* type, int lags, const char *selectlags) 
     lags++;
     
 }
-*/
