@@ -67,7 +67,7 @@ int lls_normal(double *A,double *b,int M,int N,double *x) {
 	return retcode;
 }
 
-int lls_qr(double *Ai,double *bi,int M,int N,double *xo) {
+static int lls_qr_determined(double *Ai,double *bi,int M,int N,double *xo) {
 	int j,i,k,u,t,retcode,c1,l;
 	double *x,*v,*AT,*w,*bvec,*b,*A,*R;
 	double beta,sum;
@@ -191,9 +191,10 @@ int lls_qr(double *Ai,double *bi,int M,int N,double *xo) {
 	return retcode;
 }
 
-int lls_qr_undetermined(double *Ai,double *bi,int M,int N,double *xo) {
-	int retval;
-	double *A, *bvec, *Q, *R, *z;
+static int lls_qr_undetermined(double *Ai,double *bi,int M,int N,double *xo) {
+	int retval, i,c1,l,j;
+	double *A, *bvec, *Q, *R, *z, *b;
+	double sum;
 
 	retval = 0;
 	A = (double*) malloc(sizeof(double) * N * M);
@@ -201,24 +202,58 @@ int lls_qr_undetermined(double *Ai,double *bi,int M,int N,double *xo) {
 	Q = (double*) malloc(sizeof(double) * N * M);
 	R = (double*) malloc(sizeof(double) * M * M);
 	z = (double*) malloc(sizeof(double) * M);
+	b = (double*) malloc(sizeof(double) * M);
+
+	for(j = 0; j < M;++j) {
+		b[j] = bi[j];
+	}
 
 	mtranspose(Ai,M,N,A);
 	// A NXM
-
 	qrdecomp(A,N,M,bvec);
 
 	getQR(A,N,M,bvec,Q,R);
 
+
 	itranspose(R,M,M);
 
-	// Backsubstitution
+	// Forward Substitution
+
+	z[0] = b[0] / R[0];
+
+	for(i = 1; i < M;i++) {
+		sum = 0.;
+		c1 = i*M;
+		l = i*M+i;
+
+		for(j = 0; j < i;j++) {
+			sum += R[c1 + j] * z[j];
+		}
+		z[i] = (b[i] - sum) / R[l];
+	}
+
+
+	mmult(Q,z,xo,N,M,1);
 
 	free(A);
 	free(bvec);
 	free(Q);
 	free(R);
 	free(z);
+	free(b);
 	return retval;
+}
+
+int lls_qr(double *Ai,double *bi,int M,int N,double *xo) {
+	int ret;
+
+	if (M >= N) {
+		ret = lls_qr_determined(Ai,bi,M,N,xo);
+	} else {
+		ret = lls_qr_undetermined(Ai,bi,M,N,xo);
+	}
+
+	return ret;
 }
 
 void bidiag(double *A, int M, int N) {

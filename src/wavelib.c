@@ -46,7 +46,7 @@ wt_object wt_init(wave_object wave,const char* method, int siglength,int J) {
 		exit(-1);
 	}
 
-	MaxIter = wmaxiter(siglength, size);
+	MaxIter = wmaxiter(siglength);
 
 	if (J > MaxIter) {
 		printf("\n Error - The Signal Can only be iterated %d times using this wavelet. Exiting\n",MaxIter);
@@ -143,7 +143,7 @@ wtree_object wtree_init(wave_object wave, int siglength,int J) {
 	}
 
 
-	MaxIter = wmaxiter(siglength, size);
+	MaxIter = wmaxiter(siglength);
 	if (J > MaxIter) {
 		printf("\n Error - The Signal Can only be iterated %d times using this wavelet. Exiting\n", MaxIter);
 		exit(-1);
@@ -205,7 +205,7 @@ wpt_object wpt_init(wave_object wave, int siglength, int J) {
 	}
 
 
-	MaxIter = wmaxiter(siglength, size);
+	MaxIter = wmaxiter(siglength);
 	if (J > MaxIter) {
 		printf("\n Error - The Signal Can only be iterated %d times using this wavelet. Exiting\n", MaxIter);
 		exit(-1);
