@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "../src/errors.h"
+#include "../src/unitroot.h"
 
 void llsptest() {
 	int M, N,p,ret,i;
@@ -151,8 +152,19 @@ void errortests() {
     free(predicted);
 }
 
+void urtest() {
+	int N;
+
+	N = 10;
+
+	double y[10] = {1,2,3,4,5,6,7,8,9,10};
+
+	ur_df(y,N,NULL,2,NULL);
+}
+
 int main() {
     //errortests();
-	llstest();
+	//llstest();
+	urtest();
     return 0;
 }

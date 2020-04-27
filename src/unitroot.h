@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-
+void ur_df(double *y, int N,const char* type, int lags, const char *selectlags);
 
 #ifdef __cplusplus
 }

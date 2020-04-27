@@ -14,10 +14,10 @@ reg_object reg_init(int N, int p) {
 	 * reg_init initializes the regression object.
 	 * N - number of observation samples. All variables (indepnedent and dependent)
 	 * are of identical length N.
-	 * 
+	 *
 	 * p - Total Number of variables (independent and dependent).
-	 * The base case is p = 2 corresonding to y = b0 + b1 *x + u 
-	 */ 
+	 * The base case is p = 2 corresonding to y = b0 + b1 *x + u
+	 */
 	if ( p < 2) {
 		 printf("The base case is p = 2 corresonding to y = b0 + b1 *x + u \n");
 		 printf("p = Number of Independent Variables (p-1) + Dependent Variable (1) \n");
@@ -30,10 +30,12 @@ reg_object reg_init(int N, int p) {
 	obj->sigma = 0.0;
 	obj->sigma_lower = 0.0;
 	obj->sigma_upper = 0.0;
-	obj->R2[0] = 0.0;
-	obj->R2[1] = 0.0;
+	obj->r2 = obj->R2[0] = 0.0;
+	obj->r2adj = obj->R2[1] = 0.0;
 	obj->df = 0;
-	
+	obj->intercept = 1;
+	strcpy(obj->lls,"qr");
+
 	obj->TSS = 0.0;
 	obj->ESS = 0.0;
 	obj->RSS = 0.0;
@@ -41,15 +43,15 @@ reg_object reg_init(int N, int p) {
 	obj->df_RSS = 0;
 	obj->FStat = 0.0;
 	obj->PVal = 0.0;
-	
+
 	for (i = 0;i < p+1;++i) {
 		(obj->beta+i)->value = 0.0;
 		(obj->beta+i)->lower = 0.0;
 		(obj->beta+i)->upper = 0.0;
 		(obj->beta+i)->stdErr = 0.0;
 	}
-	
-	
+
+
 	return obj;
 }
 
@@ -61,27 +63,27 @@ void linreg_clrm(double *x,double *y, int N, double* b,
 	double *yi;
 	double xm,ym,num,den,sum,den2,den3;
 	double seb1,seb2,a2,ta2,intrvl,chia2,chi1a2;
-	
+
 	/*
 	 * Classic Linear Regression Model
-	 * 
+	 *
 	 * x,y and res are all of same length - N
-	 * 
+	 *
 	 * alpha is used to determine confidence interval limits
 	 * for a given 100*(1-alpha) % confidence interval
-	 * 
-	 * 
+	 *
+	 *
 	 * Alpha takes values between  0 and 1.
-	 * 
+	 *
 	 * For 95% confidence interval, the value of alpha is 0.05
 	 * For 90% confidence interval, the value of alpha is 0.10 etc.
-	 */ 
-	
+	 */
+
 	/*
 	 * Parameters
 	 * b[0] - beta1
 	 * b[1] - beta2
-	 */ 
+	 */
 
 	/*
 	 * var[0] - variance of residuals
@@ -90,19 +92,19 @@ void linreg_clrm(double *x,double *y, int N, double* b,
 	 * var[3] covariance beta1,beta2
 	 * var[4] r^2 Goodness of Fit
 	 */
-	 
+
 	 /*
 	  * ANOVA
-	  * 
+	  *
 	  * anv[0] - TSS Total Sum Of Squares
 	  * anv[1] - ESS Explained Sum Of Squares
 	  * anv[2] - RSS Residual Sum Of Squares
 	  * anv[3] - degrees of freedom of ESS
 	  * anv[4] - degrees of freedom of RSS
 	  * anv[5] - F Statistics = (anv[1] / anv[3]) / (anv[2] / anv[4])
-	  * anv[6] - P value associated with anv[5] used to reject/accept 
+	  * anv[6] - P value associated with anv[5] used to reject/accept
 	  * zero hypothesis
-	  */ 
+	  */
 
 	xi = (double*) malloc (sizeof(double) * N);
 	yi = (double*) malloc (sizeof(double) * N);
@@ -132,7 +134,7 @@ void linreg_clrm(double *x,double *y, int N, double* b,
 		res[i] = y[i] - b[0] - b[1] * x[i];
 		sum += res[i] * res[i];
 	}
-	
+
 
 	var[0] = sum /(N-2);
 	var[1] = den2 * var[0] / (N * den);
@@ -140,36 +142,36 @@ void linreg_clrm(double *x,double *y, int N, double* b,
 	var[3] = -xm * var[2];
 	var[4] = b[1] * b[1] * den / den3;
 	//Confidence Interval Estimations for a given alpha value
-	
+
 	// Find standard errors seb1 and seb2 from variances
-	
+
 	seb1 = sqrt(var[1]);
 	seb2 = sqrt(var[2]);
-	
+
 	a2 = alpha / 2.;
 	df = N - 2; // Number of parameters = 2
-	
+
 	ta2 = tinv(a2,df);
 	intrvl = ta2 * seb1;
-	
+
 	ci_lower[0] = b[0] - intrvl;
 	ci_upper[0] = b[0] + intrvl;
-	
+
 	intrvl = ta2 * seb2;
-	
+
 	ci_lower[1] = b[1] - intrvl;
 	ci_upper[1] = b[1] + intrvl;
-	
+
 	// confidence interval for sigma^2
-	
+
 	chia2 = chiinv(a2,df);
 	chi1a2 = chiinv(1. - a2,df);
-	
+
 	ci_lower[2] = (double) df * var[0] / chi1a2;
 	ci_upper[2] = (double) df * var[0] / chia2;
-	
+
 	// ANOVA
-	
+
 	df = N-2;
 	anv[0] = den3;
 	anv[2] = var[0] * (double) df;
@@ -179,7 +181,7 @@ void linreg_clrm(double *x,double *y, int N, double* b,
 	anv[5] = (anv[1] / anv[3]) / (anv[2] / anv[4]);
 	printf("%lf \n",var[0]);
 	anv[6] = 1.0 - fcdf(anv[5],1,df);
-	
+
 	free(xi);
 	free(yi);
 }
@@ -188,95 +190,121 @@ void zerohyp_clrm(int N,double *b, double *val, double *tval, double *pval) {
 	int df;
 	/*
 	 * Zero Hypothesis Test for CLRM
-	 */ 
-	 
+	 */
+
 	 df = N - 2;
-	 
+
 	 tval[0] = fabs(b[0]) / sqrt(val[1]);
 	 tval[1] = fabs(b[1]) / sqrt(val[2]);
-	 
+
 	 pval[0] = 1.0 - tcdf(fabs(tval[0]),df);
 	 pval[1] = 1.0 - tcdf(fabs(tval[1]),df);
 }
 
 void linreg_multi(int p, double *xi,double *y, int N, double* b,double *sigma2,
 			double *xxti,double *R2,double *res,double alpha,double *anv,
-			double* ci_lower, double* ci_upper) {
+			double* ci_lower, double* ci_upper,char *llsmethod, int intercept) {
+	/*
+	p corresponds to number of coefficients (including the intercept)
+	intercept - 1 : include intercept term. 0 : No intercept term
+	*/
 	double *x,*xt,*seb,*xb;
-	double *xxt,*yxt,*temp1,*temp2,*bt;
+	double *xxt,*yxt,*temp1,*temp2,*bt,*xxt2;
 	int i,df;
 	int *ipiv;
-	double tmp1,sum,ym,ym2,a2,ta2,intrvl,chia2,chi1a2;
+	double tmp1,sum,ym,ym2,a2,ta2,intrvl,chia2,chi1a2,dfi,mss,rss;
 
 	/*
 	 * Matrix Based Multiple Regression
 	 * y has the length N
 	 * xi has the length (p-1) X N. It contains p-1 independent variables
 	 * of length N each
-	 */ 
+	 */
 	 
 	 x = (double*) malloc (sizeof(double) * p * N);
 	 xt = (double*) malloc (sizeof(double) * p * N);
 	 xb = (double*) malloc (sizeof(double) * N);
 	 xxt = (double*) malloc (sizeof(double) * p * p);
-	 //xxti = (double*) malloc (sizeof(double) * p * p);
+	 xxt2 = (double*) malloc (sizeof(double) * p * p);
 	 yxt = (double*) malloc (sizeof(double) * p);
-	 ipiv = (int*) malloc (sizeof(int) * p); 
+	 ipiv = (int*) malloc (sizeof(int) * p);
 	 //yt = (double*) malloc (sizeof(double) * N);
 	 temp1 = (double*) malloc (sizeof(double) * 1);
 	 temp2 = (double*) malloc (sizeof(double) * p);
 	 seb = (double*) malloc (sizeof(double) * p);
 	 bt = (double*) malloc (sizeof(double) * 1);
-	 
+
 	 // Initalize xt matrix - Transpose Matrix is initilaized first to
 	 // deal with column major nature of the X matrix
-	 for (i = 0; i < N;++i) {
+
+	 if (intercept == 1) {
+		 for (i = 0; i < N;++i) {
 		 xt[i] = 1.;
+		 }
+
+	 	for (i = N; i < p*N;++i) {
+			 xt[i] = xi[i-N];
+	 	}
+	 } else if (intercept == 0) {
+		 for (i = 0; i < p*N;++i) {
+			 xt[i] = xi[i];
+	 	}
 	 }
 	 
-	 for (i = N; i < p*N;++i) {
-		 xt[i] = xi[i-N];
-	 }
-	 
+
 	 // Calculate x * x'
-	 
+
 	 mtranspose(xt,p,N,x);
-	 
+
 	 //cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans,ra,cb,ca,1.0,x,ca,xt,cb,0.0,xxt,cb);
 	 mmult(xt,x,xxt,p,N,p);
-	 
+	 memcpy(xxt2,xxt,sizeof(double)*p*p);
+
 	 // Calculate  x' * y
-	 
+
 	 //cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans,ra,cb,ca,1.0,y,ca,xt,cb,0.0,yxt,cb);
 	 mmult(xt,y,yxt,p,N,1);
-	 
+
 	 // Find LU decomposition and then solve Ax = B
 	 // A = L * U where A = xxt
 	 // x is b vector and
 	 // B is yxt
-	 
-	 ludecomp(xxt,p,ipiv);
-	 linsolve(xxt,p,yxt,ipiv,b);
-	 
-	 //Find Variance of the residuals 
-	 
+
+	 //ludecomp(xxt,p,ipiv);
+	 //linsolve(xxt,p,yxt,ipiv,b);
+	 if (!strcmp(llsmethod,"qr")) {
+		 lls_qr(xxt,yxt,p,p,b);
+	 } else if (!strcmp(llsmethod,"normal")) {
+		 lls_normal(xxt,yxt,p,p,b);
+	 } else if (!strcmp(llsmethod,"svd")) {
+		 lls_svd2(xxt,yxt,p,p,b);
+	 } else {
+		 printf("This function only accepts one of three least square methods - \n");
+		 printf(" qr, normal and svd. \n");
+		 exit(-1);
+	 }
+
+	 //Find Variance of the residuals
+
 	 //mtranspose(y,N,1,yt);
 	 df = N - p;
 	 mmult(y,y,bt,1,N,1);
 	 mmult(xt,y,temp2,p,N,1);
 	 mmult(b,temp2,temp1,1,p,1);
-	 
+
 	 *sigma2 = *bt - *temp1;
 	 *sigma2 /= (double) df;
 	 tmp1 = *sigma2;
-	 
+
 	 // Variance-Covariance Matrix of beta parameters
+	 ludecomp(xxt2,p,ipiv);
+	 minverse(xxt2,p,ipiv,xxti);
 	 
-	 minverse(xxt,p,ipiv,xxti);
 	 for(i = 0; i < p*p;++i) {
 		 xxti[i] *= tmp1;
 	 }
-	 
+
+
 	 // r^2 Goodness of fit
 	 sum = 0.;
 	 for(i = 0; i < N;++i) {
@@ -284,76 +312,101 @@ void linreg_multi(int p, double *xi,double *y, int N, double* b,double *sigma2,
 	 }
 	 ym = sum / N;
 	 ym2 = ym * ym;
-	 
+
 	 R2[0] = (*temp1 - N*ym2) / (*bt - N*ym2);
-	 
+
 	 // Adjusted r^2
-	 
-	 R2[1] = 1.0 - (1.0 - R2[0]) * ((double) N - 1.0) / ((double) df);  
-	 
+
+	 dfi = intercept == 1 ? 1.0 : 0.0; 
+
+	 R2[1] = 1.0 - (1.0 - R2[0]) * ((double) N - dfi) / ((double) df);
+
 	 a2 = alpha / 2.;
-	 
+
 	 //Confidence Interval for beta parameters
-	 
+
 	 for(i =0; i < p;++i) {
 		 seb[i] = sqrt(xxti[i*(p+1)]);
-	
+
 		 ta2 = tinv(a2,df);
 		 intrvl = ta2 * seb[i];
-	
+
 		 ci_lower[i] = b[i] - intrvl;
 		 ci_upper[i] = b[i] + intrvl;
-	
+
 	 }
-	 
+
 	 // confidence interval for sigma^2
-	
+
 	 chia2 = chiinv(a2,df);
 	 chi1a2 = chiinv(1. - a2,df);
-	
+
 	 ci_lower[p] = (double) df * tmp1 / chi1a2;
 	 ci_upper[p] = (double) df * tmp1 / chia2;
-	 
+
 	 //Residual
 	 /* u = y - Xb
 	 */
 	 mmult(x,b,xb,N,p,1);
+	 
 	 for(i = 0; i < N;++i) {
 		 res[i] = y[i] - xb[i];
 	 }
-	 
+
+
+	 mss = 0.0;
+	 rss = 0.0;
+
+	 for(i = 0; i < N;++i) {
+		 mss += (xb[i] * xb[i]);
+		 rss += (res[i]*res[i]);
+	 }
+
 	 // ANOVA
-	 
+
 	 /*
 	  * ANOVA
-	  * 
+	  *
 	  * anv[0] - TSS Total Sum Of Squares
 	  * anv[1] - ESS Explained Sum Of Squares
 	  * anv[2] - RSS Residual Sum Of Squares
 	  * anv[3] - degrees of freedom of ESS
 	  * anv[4] - degrees of freedom of RSS
 	  * anv[5] - F Statistics = (R^2/p-1)/((1-R^2)/N-p)
-	  * anv[6] - P value associated with anv[5] used to reject/accept 
+	  * anv[6] - P value associated with anv[5] used to reject/accept
 	  * zero hypothesis
-	  */ 
+	  */
+
+	  if (intercept == 1) {
+		  anv[1] = R2[0] * (*bt - N*ym2);
+		  anv[2] = (1. - R2[0]) * (*bt - N*ym2);
+		  anv[0] = anv[1] + anv[2];
+		  anv[3] = (double) p - 1;
+		  anv[4] = (double) df;
+		  anv[5] = (R2[0]/anv[3])/((1. - R2[0])/anv[4]);
+		  anv[6] = 1.0 - fcdf(anv[5],p-1,df);
+	  } else {
+		  R2[0] = mss/(mss+rss);
+		  R2[1] = 1.0 - (1.0 - R2[0]) * ((double) N - dfi) / ((double) df);
+		  anv[1] = mss;
+		  anv[2] = rss;
+		  anv[0] = anv[1] + anv[2];
+		  anv[3] = (double) p;
+		  anv[4] = (double) df;
+		  anv[5] = (R2[0]/anv[3])/((1. - R2[0])/anv[4]);
+		  anv[6] = 1.0 - fcdf(anv[5],p-1,df);
+	  }
 	  
-	  anv[1] = R2[0] * (*bt - N*ym2);
-	  anv[2] = (1. - R2[0]) * (*bt - N*ym2);
-	  anv[0] = anv[1] + anv[2];
-	  anv[3] = (double) p - 1;
-	  anv[4] = (double) df;
-	  anv[5] = (R2[0]/anv[3])/((1. - R2[0])/anv[4]);
-	  anv[6] = 1.0 - fcdf(anv[5],p-1,df);
-	 
+
 	 free(ipiv);
 	 free(x);
 	 free(xt);
 	 free(xxt);
-	 //free(xxti);
+	 free(xxt2);
 	 free(yxt);
 	 free(temp1);
 	 free(temp2);
-	 free(bt);	
+	 free(bt);
 	 free(seb);
 	 free(xb);
 }
@@ -362,23 +415,23 @@ void zerohyp_multi(int N,double *b,int p, double *varcovar, double *tval, double
 	int df,i;
 	/*
 	 * Zero Hypothesis Test for CLRM
-	 */ 
-	 
+	 */
+
 	 df = N - p;
-	 
+
 	 for(i = 0; i < p; ++i) {
 		 tval[i] = fabs(b[i])/sqrt(varcovar[(p+1)*i]);
 		 pval[i] = 1.0 - tcdf(fabs(tval[i]),df);
 	 }
-	 
+
 }
 
 void zerohyp_val(reg_object obj, double *tval, double *pval) {
 	int df,i;
 	/*
 	 * Zero Hypothesis Test for CLRM
-	 */ 
-	 
+	 */
+
 	 df = obj->N - obj->p;
 	 printf("\n");
 	 printf("%-25s \n","Zero Hypothesis Test t values and Probabilities (One-tailed)");
@@ -394,9 +447,35 @@ void zerohyp_val(reg_object obj, double *tval, double *pval) {
 	}
 }
 
+void setIntercept(reg_object obj,int intercept) {
+	if (intercept == 1) {
+		obj->intercept = 1;
+	} else if (intercept == 0) {
+		obj->intercept = 0;
+		obj->p = obj->p - 1;
+	} else {
+		printf("The variable intercept only accepts 0 or 1 values \n");
+		exit(-1);
+	}
+}
+
+void setLLSMethod(reg_object obj,char *llsmethod) {
+	if (!strcmp(llsmethod,"qr")) {
+		 strcpy(obj->lls,llsmethod);
+	 } else if (!strcmp(llsmethod,"normal")) {
+		 strcpy(obj->lls,llsmethod);
+	 } else if (!strcmp(llsmethod,"svd")) {
+		 strcpy(obj->lls,llsmethod);
+	 } else {
+		 printf("This function only accepts one of three least square methods - \n");
+		 printf(" qr, normal and svd. \n");
+		 exit(-1);
+	 }
+}
+
 void regress(reg_object obj,double *x,double *y,double *res,double *varcovar,double alpha) {
 	double *anv2,*b2,*low,*up,*sigma2;
-	int p,i;
+	int p,i,p2;
 	/*
 	 * obj - Regression object created by reg_init
 	 *  x - Vector containing (p - 1 ) independent regression variables of length N each
@@ -405,8 +484,8 @@ void regress(reg_object obj,double *x,double *y,double *res,double *varcovar,dou
 	 * varcovar - Variance-Covariance Matrix of p regression parameters. Dimension p X p
 	 * alpha is used to determine confidence interval limits
 	 * for a given 100*(1-alpha) % confidence interval
-	 * eg., alpha = 0.05 if you want to determine 95% confidence interval values 
-	 */ 
+	 * eg., alpha = 0.05 if you want to determine 95% confidence interval values
+	 */
 	 p = obj->p;
 	 obj->alpha = alpha;
 	 anv2 = (double*) malloc (sizeof(double) * 7);
@@ -414,15 +493,16 @@ void regress(reg_object obj,double *x,double *y,double *res,double *varcovar,dou
 	 low = (double*) malloc (sizeof(double) * (p+1));
 	 up = (double*) malloc (sizeof(double) * (p+1));
 	 sigma2 = (double*) malloc (sizeof(double) * 1);
-	 
-	 linreg_multi(obj->p,x,y,obj->N,b2,sigma2,varcovar,
-		obj->R2,res,alpha,anv2,low,up);
+
+
+	 linreg_multi(p,x,y,obj->N,b2,sigma2,varcovar,
+		obj->R2,res,alpha,anv2,low,up,obj->lls,obj->intercept);
 	 obj->df = obj->N - obj->p;
-	 
-	 obj->sigma = sigma2[0]; 	
+
+	 obj->sigma = sigma2[0];
 	 obj->sigma_lower = low[p];
 	 obj->sigma_upper = up[p];
-	 
+
 	 obj->TSS = anv2[0];
 	 obj->ESS = anv2[1];
 	 obj->RSS = anv2[2];
@@ -430,14 +510,16 @@ void regress(reg_object obj,double *x,double *y,double *res,double *varcovar,dou
 	 obj->df_RSS = (int) anv2[4];
 	 obj->FStat = anv2[5];
 	 obj->PVal = anv2[6];
-	 
+	 obj->r2 = obj->R2[0];
+	 obj->r2adj = obj->R2[1];
+
 	 for(i = 0; i < p;++i) {
 		 (obj->beta+i)->value = b2[i];
 		 (obj->beta+i)->lower = low[i];
 		 (obj->beta+i)->upper = up[i];
 		 (obj->beta+i)->stdErr = sqrt(varcovar[(p+1)*i]);
 	 }
-	 
+
 	 free(anv2);
 	 free(b2);
 	 free(up);
@@ -462,7 +544,12 @@ void regress_poly(reg_object obj,double *x,double *y,double *res,double *varcova
 	 *
 	 *For more information see the functions regress and reg_init
 	 */
-	polydeg = obj->p - 1;
+	 if (obj->intercept == 1) {
+		 polydeg = obj->p - 1;
+	 } else {
+		 polydeg = obj->p;
+	 }
+	
 
 	if ( polydeg < 1) {
 		printf("The Value of p should be greater than or equal to 2");
@@ -495,8 +582,8 @@ void summary(reg_object obj) {
 	}
 	printf("\n");
 	printf("Residual Variance = %lf \n",obj->sigma);
-	printf("R-Squared = %lf , Adjusted R-Squared = %lf \n",obj->R2[0],obj->R2[1]);	
-	
+	printf("R-Squared = %lf , Adjusted R-Squared = %lf \n",obj->R2[0],obj->R2[1]);
+
 }
 
 void anova(reg_object obj) {
@@ -518,14 +605,14 @@ void confint(reg_object obj) {
 	printf("\n");
 	printf("%-10lf%% Confidence Interval For Parameters And Residual Variance : \n",(1.0 - obj->alpha) * 100);
 	printf("%-25s%-20s%-20s%-20s \n","Parameters",
-	"Value","Lower Limit","Upper Limit");   
-	
+	"Value","Lower Limit","Upper Limit");
+
 	for(i = 0; i < obj->p; ++i) {
 		printf("B%-25d%-20lf%-20lf%-20lf \n",
-	i,(obj->beta+i)->value,(obj->beta+i)->lower,(obj->beta+i)->upper); 
+	i,(obj->beta+i)->value,(obj->beta+i)->lower,(obj->beta+i)->upper);
 	}
 	printf("%-25s%-20lf%-20lf%-20lf \n","Residual Variance",
-	obj->sigma,obj->sigma_lower,obj->sigma_upper); 
+	obj->sigma,obj->sigma_lower,obj->sigma_upper);
 }
 
 double fitted(reg_object obj,double *inp,double *varcovar,double *var) {
@@ -533,44 +620,54 @@ double fitted(reg_object obj,double *inp,double *varcovar,double *var) {
 	double oup;
 	double *y,*x0,*b,*temp;
 	/*
-	 * The function fitted fits input values one vector at a time and outputs one output value
-	 * 
+	 * The function predicts output value at a given input point (vector of size p-1)
+	 *
 	 * inp - ia a  vector of length p-1 values corresponding to each of the p-1
-	 * dependent variables. 
+	 * dependent variables.
 	 * The function returns output value corresponding to the input inp vector of length (p-1).
-	 * 
+	 *
 	 * varcovar - Is the Aurovariance-Covariance matrix that is obtained from the regression function
 	 * var - is a vector of length 2 where
 	 * var[0] - Variance of Mean Prediction
 	 * var[1] - Variance Of Individual Prediction
-	 * 
-	 */ 
+	 *
+	 */
 	p = obj->p;
 	y = (double*) malloc (sizeof(double) * 1);
 	x0 = (double*) malloc (sizeof(double) * p);
 	b = (double*) malloc (sizeof(double) * p);
 	temp = (double*) malloc (sizeof(double) * p);
-	x0[0] = 1.0;
-	
-	b[0] = (obj->beta)->value;
-	
-	for(i = 1; i < p;++i) {
-		x0[i] = inp[i - 1];
-		b[i] = (obj->beta+i)->value;
+
+	if (obj->intercept == 1) {
+		x0[0] = 1.0;
+
+		b[0] = (obj->beta)->value;
+
+		for(i = 1; i < p;++i) {
+			x0[i] = inp[i - 1];
+			b[i] = (obj->beta+i)->value;
+		}
+	} else {
+
+		for(i = 0; i < p;++i) {
+			x0[i] = inp[i];
+			b[i] = (obj->beta+i)->value;
+		}
 	}
 	
+
 	// Output
 	mmult(x0,b,y,1,p,1);
 	oup = *y;
-	
+
 	// Variance Of Mean Prediction
 	mmult(x0,varcovar,temp,1,p,p);
 	mmult(temp,x0,y,1,p,1);
 	var[0] = *y;
-	
+
 	// Variance Of Individual prediction
-	var[1] = obj->sigma + var[0]; 
-	
+	var[1] = obj->sigma + var[0];
+
 	free(temp);
 	free(y);
 	free(x0);
@@ -593,58 +690,58 @@ void linreg_multi2(int p, double *xi,double *y, int N, double* b) {
 	int MONE=-1;
 	double LWKOPT;
 
-	 
+
 	 x = (double*) malloc (sizeof(double) * p * N);
 	 xt = (double*) malloc (sizeof(double) * p * N);
 	 xxt = (double*) malloc (sizeof(double) * p * p);
 	 yxt = (double*) malloc (sizeof(double) * p);
-	 
+
 	 // Initalize x matrix
 	 for (i = 0; i < N;++i) {
 		 x[i] = 1.;
 	 }
-	 
+
 	 for (i = N; i < p*N;++i) {
 		 x[i] = xi[i-N];
 	 }
-	 
+
 	 // Calculate x * x'
 	 ra = p;
 	 ca = N;
 	 rb = N;
 	 cb = p;
-	 
+
 	 mtranspose(x,p,N,xt);
-	 
+
 	 cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans,ra,cb,ca,1.0,x,ca,xt,cb,0.0,xxt,cb);
-	 
+
 	 // Calculate y * x'
 	 ra = 1;
 	 ca = N;
 	 rb = N;
 	 cb = p;
-	 
+
 	 cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans,ra,cb,ca,1.0,y,ca,xt,cb,0.0,yxt,cb);
-	 
-	 
+
+
 	 // Solve linear equations to find b
-	 
+
 	 // Step 1 Use DGETRF to find the LU factorization
-	 
+
 	 lda = p;
 
 	 //info = LAPACKE_dgetrf(LAPACK_ROW_MAJOR,p,p,xxt,lda,ipiv);
 
 	 LAPACK_dgetrf(&p,&p,xxt,&lda,ipiv,&info);
-	 
+
 	 //infoi = LAPACKE_dgetri_work(LAPACK_ROW_MAJOR,p,xxt,lda,ipiv,&LWKOPT,MONE);
 
 	 LAPACK_dgetri(&p,xxt,&lda,ipiv,&LWKOPT,&MONE,&infoi);
-	 
+
 	 LWORK = (int) LWKOPT;
-	 
+
 	 WORK =(double*) malloc (sizeof(double) * LWORK);
-	 
+
 	 //infoi = LAPACKE_dgetri_work(LAPACK_ROW_MAJOR,p,xxt,lda,ipiv,WORK,LWORK);
 
 	 LAPACK_dgetri(&p,xxt,&lda,ipiv,WORK,&LWORK,&infoi);
@@ -655,7 +752,7 @@ void linreg_multi2(int p, double *xi,double *y, int N, double* b) {
 	 rb = p;
 	 cb = p;
 	 cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans,ra,cb,ca,1.0,yxt,ca,xxt,cb,0.0,b,cb);
-	 
+
 	 free(x);
 	 free(xt);
 	 free(xxt);

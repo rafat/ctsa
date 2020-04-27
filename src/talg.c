@@ -192,6 +192,8 @@ int diff(double *sig, int N, int d, double *oup) {
 		oup[i-d] = sum + coeff[0] * sig[i];
 		
 	}
+
+	free(coeff);
 	
 	
 	return Noup;
@@ -233,6 +235,7 @@ int diffs(double *sig, int N, int D,int s, double *oup) {
 		
 	}
 	
+	free(coeff);
 	
 	return Noup;
 }
