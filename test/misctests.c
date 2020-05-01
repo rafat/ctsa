@@ -159,12 +159,49 @@ void urtest() {
 
 	double y[10] = {1,2,3,4,5,6,7,8,9,10};
 
-	ur_df(y,N,NULL,2,NULL);
+	//ur_df(y,N,NULL,2,NULL);
+}
+
+void approxtest() {
+	int i,N, Nout;
+	double *x,*y,*xout,*yout;
+	double ylo,yhi;
+
+	N = 10;
+
+	x = (double*) malloc(sizeof(double)*N);
+	y = (double*) malloc(sizeof(double)*N);
+
+	for(i = 0; i < N; ++i) {
+		x[i] = (double) (i+1);
+		y[i] = x[i] *x[i];
+	}
+
+	ylo = y[0];
+	yhi = y[N-1];
+
+	Nout = 50;
+
+	xout = (double*) malloc(sizeof(double)*Nout);
+	yout = (double*) malloc(sizeof(double)*Nout);
+
+	linspace(xout,Nout,x[0],x[N-1]);
+
+	approx(x,y,N,xout,yout,Nout,ylo,yhi);
+
+	mdisplay(xout,1,Nout);
+	mdisplay(yout,1,Nout);
+
+	free(x);
+	free(y);
+	free(xout);
+	free(yout);
 }
 
 int main() {
     //errortests();
 	//llstest();
-	urtest();
+	//urtest();
+	approxtest();
     return 0;
 }

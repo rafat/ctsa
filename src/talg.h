@@ -43,15 +43,21 @@ void arma_autocovar(double *phi,double *theta,int p,int q,double var,double* aco
 
 int twacf(double *P, int MP, double *Q, int MQ, double *ACF, int MA, double *CVLI, int MXPQ1, double *ALPHA, int MXPQ);
 
-void artrans(int p, double *old, double *new);
+void artrans(int p, double *old, double *new1);
 
-void arinvtrans(int p, double *old, double *new);
+void arinvtrans(int p, double *old, double *new1);
 
-void transall(int p, int q, int P, int Q, double *old, double *new);
+void transall(int p, int q, int P, int Q, double *old, double *new1);
 
-void invtransall(int p, int q, int P, int Q, double *old, double *new);
+void invtransall(int p, int q, int P, int Q, double *old, double *new1);
 
 int invertroot(int q, double *ma);
+
+double interpolate_linear(double *x,double *y, int N, double ylo,double yhi, double z);
+
+void approx(double *x,double *y, int N,double *xout, double *yout,int Nout,double ylo,double yhi);
+
+void linspace(double *x, int N,double xlo,double xhi);
 
 #ifdef __cplusplus
 }

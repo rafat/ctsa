@@ -612,7 +612,7 @@ int twacf(double *P, int MP, double *Q, int MQ, double *ACF, int MA, double *CVL
 	return ifault;
 }
 
-void artrans(int p, double *old, double *new) {
+void artrans(int p, double *old, double *new1) {
 	int j, k;
 	double a;
 	double *temp;
@@ -620,24 +620,24 @@ void artrans(int p, double *old, double *new) {
 	temp = (double*)malloc(sizeof(double)* p);
 
 	for (j = 0; j < p; ++j) {
-		new[j] = tanh(old[j]);
-		temp[j] = new[j];
+		new1[j] = tanh(old[j]);
+		temp[j] = new1[j];
 	}
 
 	for (j = 1; j < p; ++j) {
-		a = new[j];
+		a = new1[j];
 		for (k = 0; k < j; ++k) {
-			temp[k] -= a * new[j - k - 1];
+			temp[k] -= a * new1[j - k - 1];
 		}
 		for (k = 0; k < j; ++k) {
-			new[k] = temp[k];
+			new1[k] = temp[k];
 		}
 	}
 
 	free(temp);
 }
 
-void arinvtrans(int p, double *old, double *new) {
+void arinvtrans(int p, double *old, double *new1) {
 	int j, k;
 	double a;
 	double *temp;
@@ -645,21 +645,21 @@ void arinvtrans(int p, double *old, double *new) {
 	temp = (double*)malloc(sizeof(double)* p);
 
 	for (j = 0; j < p; ++j) {
-		temp[j] = new[j] = old[j];
+		temp[j] = new1[j] = old[j];
 	}
 
 	for (j = p - 1; j > 0; --j) {
-		a = new[j];
+		a = new1[j];
 		for (k = 0; k < j; ++k) {
-			temp[k] = (new[k] + a * new[j - k - 1]) / (1 - a * a);
+			temp[k] = (new1[k] + a * new1[j - k - 1]) / (1 - a * a);
 		}
 		for (k = 0; k < j; ++k) {
-			new[k] = temp[k];
+			new1[k] = temp[k];
 		}
 	}
 
 	for (j = 0; j < p; ++j) {
-		new[j] = atanh(new[j]);
+		new1[j] = atanh(new1[j]);
 	}
 	free(temp);
 }
@@ -786,52 +786,112 @@ int invertroot(int q, double *ma) {
 	return retval;
 }
 
-void transall(int p,int q, int P, int Q, double *old, double *new) {
+void transall(int p,int q, int P, int Q, double *old, double *new1) {
 	int N;
 
 	N = 0;
 
 	if (p != 0) {
-		artrans(p, old, new);
+		artrans(p, old, new1);
 		N = N + p;
 	}
 
 	if (q != 0) {
-		artrans(q, old + N, new + N);
+		artrans(q, old + N, new1 + N);
 		N = N + q;
 	}
 
 	if(P != 0) {
-		artrans(P, old + N, new + N);
+		artrans(P, old + N, new1 + N);
 		N = N + P;
 	}
 
 	if (Q != 0) {
-		artrans(Q, old + N, new + N);
+		artrans(Q, old + N, new1 + N);
 	}
 }
 
-void invtransall(int p, int q, int P, int Q, double *old, double *new) {
+void invtransall(int p, int q, int P, int Q, double *old, double *new1) {
 	int N;
 
 	N = 0;
 
 	if (p != 0) {
-		arinvtrans(p, old, new);
+		arinvtrans(p, old, new1);
 		N = N + p;
 	}
 
 	if (q != 0) {
-		arinvtrans(q, old + N, new + N);
+		arinvtrans(q, old + N, new1 + N);
 		N = N + q;
 	}
 
 	if (P != 0) {
-		arinvtrans(P, old + N, new + N);
+		arinvtrans(P, old + N, new1 + N);
 		N = N + P;
 	}
 
 	if (Q != 0) {
-		arinvtrans(Q, old + N, new + N);
+		arinvtrans(Q, old + N, new1 + N);
 	}
+}
+
+double interpolate_linear(double *x,double *y, int N, double ylo,double yhi, double z) {
+	int i,j,k;
+
+	i = 0;
+	j = N - 1;
+
+	if (z < x[0]) {
+		return ylo;
+	}
+
+	if (z > x[j]) {
+		return yhi;
+	}
+
+	while (i < j-1) {
+		k = (i + j)/2;
+		if (z < x[k]) {
+			j = k;
+		} else {
+			i = k;
+		}
+	}
+
+	if (z == x[j]) {
+		return y[j];
+	}
+
+	if (z == x[i]) {
+		return y[i];
+	}
+
+	return y[i] + (y[j] - y[i])* ((z - x[i])/(x[j] - x[i]));
+}
+
+void linspace(double *x, int N,double xlo,double xhi) {
+    int i;
+    double intv;
+
+    intv = (xhi - xlo)/(double)(N-1);
+    x[0] = xlo;
+    x[N-1] = xhi;
+
+    for(i = 1; i < N-1;++i) {
+        x[i] = xlo + intv * (double) i;
+    }
+}
+
+void approx(double *x,double *y, int N,double *xout, double *yout,int Nout,double ylo,double yhi) {
+    int i;
+
+    for(i = 0; i < Nout;++i) {
+        if (xout[i] == xout[i]) {
+            yout[i] = interpolate_linear(x,y,N,ylo,yhi,xout[i]);
+        } else {
+            yout[i] = xout[i];
+        }
+    }
+
 }
