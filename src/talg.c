@@ -895,3 +895,45 @@ void approx(double *x,double *y, int N,double *xout, double *yout,int Nout,doubl
     }
 
 }
+
+void arrayminmax(double *x, int N, double *amin,double *amax) {
+	int i;
+	*amax = - DBL_MAX;
+	*amin = DBL_MAX;
+
+	for(i = 0; i < N;++i) {
+		*amax = x[i] > *amax ? x[i] : *amax;
+		*amin = x[i] < *amin ? x[i] : *amin;
+	}
+
+}
+
+void cumsum(double *x, int N, double *csum) {
+	int i;
+
+	double sum = 0.0;
+
+	for (i = 0; i < N;++i) {
+		sum += x[i];
+		csum[i] = sum;
+	}
+}
+
+void ppsum(double *x, int N, int l, double *sum) {
+	int i,j;
+	double tmp1, tmp2;
+
+	tmp1 = 0.0;
+
+	for(i = 1; i <= l; ++i) {
+		tmp2 = 0.0;
+		for(j = i; j < N;++j) {
+			tmp2 += (x[j] * x[j-1]);
+		}
+		tmp2 *= 1.0-((double)i/((double)l+1.0));
+		tmp1 += tmp2;
+	}
+	tmp1 /= (double)(N);
+	tmp1 *= 2.0;
+	(*sum) += tmp1;
+}

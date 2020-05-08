@@ -59,6 +59,12 @@ void approx(double *x,double *y, int N,double *xout, double *yout,int Nout,doubl
 
 void linspace(double *x, int N,double xlo,double xhi);
 
+void arrayminmax(double *x, int N, double *amin,double *amax);
+
+void cumsum(double *x, int N, double *csum);
+
+void ppsum(double *x, int N, int l, double *sum);
+
 #ifdef __cplusplus
 }
 #endif

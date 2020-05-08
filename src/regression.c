@@ -18,8 +18,8 @@ reg_object reg_init(int N, int p) {
 	 * p - Total Number of variables (independent and dependent).
 	 * The base case is p = 2 corresonding to y = b0 + b1 *x + u
 	 */
-	if ( p < 2) {
-		 printf("The base case is p = 2 corresonding to y = b0 + b1 *x + u \n");
+	if ( p < 1) {
+		 printf("The base case is p = 1 corresonding to either y = b0 + u or y = b1 *x + u \n");
 		 printf("p = Number of Independent Variables (p-1) + Dependent Variable (1) \n");
 		 exit(1);
 	 }
@@ -378,23 +378,41 @@ void linreg_multi(int p, double *xi,double *y, int N, double* b,double *sigma2,
 	  */
 
 	  if (intercept == 1) {
-		  anv[1] = R2[0] * (*bt - N*ym2);
-		  anv[2] = (1. - R2[0]) * (*bt - N*ym2);
-		  anv[0] = anv[1] + anv[2];
-		  anv[3] = (double) p - 1;
-		  anv[4] = (double) df;
-		  anv[5] = (R2[0]/anv[3])/((1. - R2[0])/anv[4]);
-		  anv[6] = 1.0 - fcdf(anv[5],p-1,df);
+		  if (p == 1) {
+			  anv[1] = R2[0] * (*bt - N*ym2);
+		  	  anv[2] = (1. - R2[0]) * (*bt - N*ym2);
+		      anv[0] = anv[1] + anv[2];
+		      anv[3] = (double) p - dfi;
+		      anv[4] = (double) df;
+		  } else {
+			  anv[1] = R2[0] * (*bt - N*ym2);
+		  	  anv[2] = (1. - R2[0]) * (*bt - N*ym2);
+		      anv[0] = anv[1] + anv[2];
+		      anv[3] = (double) p - dfi;
+		      anv[4] = (double) df;
+		      anv[5] = (R2[0]/anv[3])/((1. - R2[0])/anv[4]);
+			  anv[6] = 1.0 - fcdf(anv[5],p-1,df);
+		  }
 	  } else {
 		  R2[0] = mss/(mss+rss);
 		  R2[1] = 1.0 - (1.0 - R2[0]) * ((double) N - dfi) / ((double) df);
-		  anv[1] = mss;
-		  anv[2] = rss;
-		  anv[0] = anv[1] + anv[2];
-		  anv[3] = (double) p;
-		  anv[4] = (double) df;
-		  anv[5] = (R2[0]/anv[3])/((1. - R2[0])/anv[4]);
-		  anv[6] = 1.0 - fcdf(anv[5],p-1,df);
+		  if ( p == 1) {
+			  anv[1] = mss;
+		      anv[2] = rss;
+		      anv[0] = anv[1] + anv[2];
+		      anv[3] = (double) p;
+		      anv[4] = (double) df;
+			  anv[5] = (R2[0]/anv[3])/((1. - R2[0])/anv[4]);
+			  anv[6] = 1.0 - fcdf(anv[5],p,df);
+		  } else {
+			  anv[1] = mss;
+		      anv[2] = rss;
+		      anv[0] = anv[1] + anv[2];
+		      anv[3] = (double) p;
+		      anv[4] = (double) df;
+		      anv[5] = (R2[0]/anv[3])/((1. - R2[0])/anv[4]);
+		      anv[6] = 1.0 - fcdf(anv[5],p-1,df);
+		  }
 	  }
 	  
 
@@ -452,7 +470,7 @@ void setIntercept(reg_object obj,int intercept) {
 		obj->intercept = 1;
 	} else if (intercept == 0) {
 		obj->intercept = 0;
-		obj->p = obj->p - 1;
+		//obj->p = obj->p - 1;
 	} else {
 		printf("The variable intercept only accepts 0 or 1 values \n");
 		exit(-1);
