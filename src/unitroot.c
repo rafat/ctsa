@@ -48,8 +48,6 @@ void ur_df(double *y, int N,const char* alternative, int *klag, double *statisti
     
     memcpy(Y,x,sizeof(double)*N2);
 
-    mdisplay(Y,1,N2);
-
     z_diff = &x[0];// Length N2
     z_lags_1 = &y[lags-1];// Length N2 *(lags-1)
 
@@ -68,7 +66,6 @@ void ur_df(double *y, int N,const char* alternative, int *klag, double *statisti
         memcpy(XX,y+lags-1,sizeof(double)*N2);
         memcpy(XX+N2,tt,sizeof(double)*N2);
         memcpy(XX+2*N2,x+N2,sizeof(double)*N2*(lags-1));
-        mdisplay(XX,lags+1,N2);
         regress(fit,XX,Y,res,varcovar,alpha);
     } else {
         p = 3;
@@ -79,10 +76,6 @@ void ur_df(double *y, int N,const char* alternative, int *klag, double *statisti
         memcpy(XX+N2,tt,sizeof(double)*N2);
         regress(fit,XX,Y,res,varcovar,alpha);
     }
-
-    summary(fit);
-    anova(fit);
-    confint(fit);
 
     *statistic = (fit->beta+1)->value / (fit->beta+1)->stdErr;
 
