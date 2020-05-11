@@ -82,10 +82,10 @@ void ur_df(double *y, int N,const char* alternative, int *klag, double *statisti
     for(i = 0; i < pN;++i) {
         iter = i * tN;
         arrayminmax(dftable+iter,tN,&ylo,&yhi);
-        tablep[i] = interpolate_linear(nT,dftable+iter,tN,ylo,yhi,(double)N1);
+        tablep[i] = interpolate_linear(nT,dftable+iter,tN,(double)N1);
     }
 
-    interp = interpolate_linear(tablep,prob,pN,prob[0],prob[pN-1],*statistic);
+    interp = interpolate_linear(tablep,prob,pN,*statistic);
 
     //printf("interp %g \n",interp);
 
@@ -112,10 +112,10 @@ void ur_df(double *y, int N,const char* alternative, int *klag, double *statisti
     free_reg(fit);
 }
 
-void ur_kpss(double *y, int N,const char* type,int lshort,double *statistic,double *pval) {
+void ur_kpss(double *y, int N,const char* type,int lshort, int *klag, double *statistic,double *pval) {
     int i,p,l;
     double *tt,*res,*table,*varcovar,*csum;
-    double alpha,eta,s2;
+    double alpha,eta,s2,ylo,yhi;
     reg_object fit;
 
     double tablep[4] = {0.01, 0.025, 0.05, 0.10};
@@ -133,11 +133,10 @@ void ur_kpss(double *y, int N,const char* type,int lshort,double *statistic,doub
 
     if (!strcmp(type,"Trend")) {
             table[0] = 0.216; table[1] = 0.176; table[2] = 0.146; table[3] = 0.119;
-            p = 1;
+            p = 2;
             varcovar = (double*)malloc(sizeof(double)*p*p);
 
             fit = reg_init(N,p);
-            setIntercept(fit,0);
             regress(fit,tt,y,res,varcovar,alpha);
 
         } else if (!strcmp(type,"Level")) {
@@ -171,7 +170,11 @@ void ur_kpss(double *y, int N,const char* type,int lshort,double *statistic,doub
 
     *statistic = eta/s2;
 
-    *pval = interpolate_linear(table,tablep,4,tablep[0],tablep[3],*statistic);
+    arrayminmax(table,4,&ylo,&yhi);
+
+    *pval = interpolate_linear(table,tablep,4,*statistic);
+
+    *klag = l;
 
     free(table);
     free(tt);

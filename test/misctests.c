@@ -165,7 +165,6 @@ void urtest() {
 void approxtest() {
 	int i,N, Nout;
 	double *x,*y,*xout,*yout;
-	double ylo,yhi;
 
 	N = 10;
 
@@ -177,9 +176,6 @@ void approxtest() {
 		y[i] = x[i] *x[i];
 	}
 
-	ylo = y[0];
-	yhi = y[N-1];
-
 	Nout = 50;
 
 	xout = (double*) malloc(sizeof(double)*Nout);
@@ -187,7 +183,12 @@ void approxtest() {
 
 	linspace(xout,Nout,x[0],x[N-1]);
 
-	approx(x,y,N,xout,yout,Nout,ylo,yhi);
+	/* x and y should be sorted in ascending order. x has all unique values
+		xout contains equally spaced Nout values from lowest x[0]
+		to highest x[N-1].Outputs y[out] are Nout interpolated values.
+	*/
+
+	approx(x,y,N,xout,yout,Nout);
 
 	mdisplay(xout,1,Nout);
 	mdisplay(yout,1,Nout);
@@ -221,14 +222,42 @@ void interpolatetest() {
 	arrayminmax(tablei,N,&ylo,&yhi);
 
 
-	out = interpolate_linear(tablet,tablei,N,ylo,yhi,val);
+	out = interpolate_linear(tablet,tablei,N,val);
 
 	printf("OUT %g \n",out);
 
 
 }
 
-void ur_test() {
+void interpolatetest2() {
+	int N,i;
+	double ylo,yhi,val,out;
+
+	double tablei[4] = { 0.216, 0.176, 0.146, 0.119};
+	double tablet[4] = {0.01, 0.025, 0.05, 0.10};
+	int pos[4] = {0,0,0,0};
+
+	val = 0.059;
+	N = 4;
+
+	arrayminmax(tablei,N,&ylo,&yhi);
+
+
+	out = interpolate_linear(tablet,tablei,N,val);
+
+	printf("OUT %g \n",out);
+
+	sort1d_ascending(tablei,4,pos);
+
+	for(i = 0; i < 4; ++i) {
+		printf(" %d ",pos[i]);
+	}
+
+
+
+}
+
+void urdf_test() {
 	int N,k;
 	double stat, pval;
 
@@ -242,10 +271,33 @@ void ur_test() {
 		0.4351815, -0.3259316, 1.148808, 0.9935039, 0.548397, 0.2387317, -0.6279061, 1.360652, -0.6002596, 2.187333, 1.532611, -0.2357004, -1.026421 };
 	
 	N = 100;
-	k = 0;
+	k = -1;
 	const char* alternative = "stationary";
 
 	ur_df(x,N,alternative,&k,&stat,&pval);
+
+	printf("Lag %d Stats %g PVAL %g \n",k,stat,pval);
+}
+
+void urkpss_test() {
+	int N,k,lshort;
+	double stat, pval;
+
+	double x[100] = { -0.5604756, -0.2301775, 1.558708, 0.07050839, 0.1292877, 1.715065, 0.4609162, -1.265061, -0.6868529, -0.445662,
+		1.224082, 0.3598138, 0.4007715, 0.1106827, -0.5558411, 1.786913, 0.4978505, -1.966617, 0.7013559, -0.4727914, -1.067824, -0.2179749,
+		-1.026004, -0.7288912, -0.6250393, -1.686693, 0.837787, 0.1533731, -1.138137, 1.253815, 0.4264642, -0.2950715, 0.8951257, 0.8781335, 0.8215811,
+		0.6886403, 0.5539177, -0.06191171, -0.3059627, -0.380471, -0.694707, -0.2079173, -1.265396, 2.168956, 1.207962, -1.123109, -0.4028848, -0.4666554,
+		0.7799651, -0.08336907, 0.2533185, -0.02854676, -0.04287046, 1.368602, -0.225771, 1.516471, -1.548753, 0.5846137, 0.1238542, 0.2159416, 0.3796395,
+		-0.5023235, -0.3332074, -1.018575, -1.071791, 0.3035286, 0.4482098, 0.05300423, 0.9222675, 2.050085, -0.4910312, -2.309169, 1.005739, -0.7092008,
+		-0.6880086, 1.025571, -0.284773, -1.220718, 0.1813035, -0.1388914, 0.005764186, 0.3852804, -0.37066, 0.6443765, -0.2204866, 0.331782, 1.096839,
+		0.4351815, -0.3259316, 1.148808, 0.9935039, 0.548397, 0.2387317, -0.6279061, 1.360652, -0.6002596, 2.187333, 1.532611, -0.2357004, -1.026421 };
+	
+	N = 100;
+	k = 0;
+	const char* type = "Level";
+	lshort = 1;
+
+	ur_kpss(x,N,type,lshort,&k, &stat,&pval);
 
 	printf("Lag %d Stats %g PVAL %g \n",k,stat,pval);
 }
@@ -257,6 +309,8 @@ int main() {
 	//approxtest();
 	//arraytest();
 	//interpolatetest();
-	ur_test();
+	urdf_test();
+	urkpss_test();
+	//interpolatetest2();
     return 0;
 }

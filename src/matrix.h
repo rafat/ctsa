@@ -48,7 +48,11 @@ double l2norm(double *vec, int N);
 
 int compare (const void* ind1, const void* ind2);
 
+int compare_ascending (const void* ind1, const void* ind2);
+
 void sort1d(double* v,int N, int* pos);
+
+void sort1d_ascending(double* v,int N, int* pos);
 
 //Array Parallel Implementation may have a lot of overhead
 

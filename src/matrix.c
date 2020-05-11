@@ -87,6 +87,16 @@ int compare (const void* ind1, const void* ind2)
 		return 0;
 }
 
+int compare_ascending (const void* ind1, const void* ind2)
+{
+	if (*((vipair *)ind1)->a > *((vipair *)ind2)->a)
+		return 1;
+	else if (*((vipair *)ind1)->a < *((vipair *)ind2)->a)
+		return -1;
+	else
+		return 0;
+}
+
 void sort1d(double* v,int N, int* pos)
 {
     vipair* val = NULL;
@@ -103,6 +113,29 @@ void sort1d(double* v,int N, int* pos)
     }
 
     qsort(val, N, sizeof(vipair), compare);
+
+    for (i = 0; i < N; ++i)
+        pos[i] = val[i].b;
+
+    free(val);
+}
+
+void sort1d_ascending(double* v,int N, int* pos)
+{
+    vipair* val = NULL;
+    int i;
+
+    if (N <= 0)
+        return;
+
+    val = malloc(sizeof(vipair) * N);
+
+    for (i = 0; i < N; ++i) {
+        val[i].a = &v[i];
+        val[i].b = i;
+    }
+
+    qsort(val, N, sizeof(vipair), compare_ascending);
 
     for (i = 0; i < N; ++i)
         pos[i] = val[i].b;

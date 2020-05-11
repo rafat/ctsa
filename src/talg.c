@@ -836,11 +836,90 @@ void invtransall(int p, int q, int P, int Q, double *old, double *new1) {
 	}
 }
 
-double interpolate_linear(double *x,double *y, int N, double ylo,double yhi, double z) {
+double interpolate_linear(double *xin,double *yin, int N, double z) {
 	int i,j,k;
+	double *x,*y;
+	int *pos;
+	double out,ylo,yhi;
+
+	x = (double*)malloc(sizeof(double)*N);
+	y = (double*)malloc(sizeof(double)*N);
+	pos = (int*)malloc(sizeof(int)*N);
+
+	sort1d_ascending(xin,N,pos);
+
+	for(i = 0; i < N;++i) {
+		x[i] = xin[pos[i]];
+		y[i] = yin[pos[i]];
+	}
+
+	ylo= y[0];
+	yhi = y[N-1];
 
 	i = 0;
 	j = N - 1;
+
+	if (z < x[0]) {
+		free(x);
+		free(y);
+		free(pos);
+		return ylo;
+	}
+
+	if (z > x[j]) {
+		free(x);
+		free(y);
+		free(pos);
+		return yhi;
+	}
+
+	while (i < j-1) {
+		k = (i + j)/2;
+		if (z < x[k]) {
+			j = k;
+		} else {
+			i = k;
+		}
+	}
+
+	if (z == x[j]) {
+		out = y[j];
+		free(x);
+		free(y);
+		free(pos);
+		return out;
+	}
+
+	if (z == x[i]) {
+		out = y[i];
+		free(x);
+		free(y);
+		free(pos);
+		return out;
+	}
+
+	out = y[i] + (y[j] - y[i])* ((z - x[i])/(x[j] - x[i]));
+
+	free(x);
+	free(y);
+	free(pos);
+
+	return out;
+}
+
+static double interpolate_linear_sorted_ascending(double *x,double *y, int N, double z) {
+	/*
+		Input x should be sorted in ascending order with all unique values for x. 
+		Input y should have the index ordered on sorted x values.
+	*/
+	int i,j,k;
+	double ylo,yhi;
+
+	i = 0;
+	j = N - 1;
+
+	ylo= y[0];
+	yhi = y[N-1];
 
 	if (z < x[0]) {
 		return ylo;
@@ -883,12 +962,16 @@ void linspace(double *x, int N,double xlo,double xhi) {
     }
 }
 
-void approx(double *x,double *y, int N,double *xout, double *yout,int Nout,double ylo,double yhi) {
+void approx(double *x,double *y, int N,double *xout, double *yout,int Nout) {
     int i;
+	/* x and y should be sorted in ascending order. x has all unique values
+		xout contains equally spaced Nout values from lowest x[0]
+		to highest x[N-1].Outputs y[out] are Nout interpolated values.
+	*/
 
     for(i = 0; i < Nout;++i) {
         if (xout[i] == xout[i]) {
-            yout[i] = interpolate_linear(x,y,N,ylo,yhi,xout[i]);
+            yout[i] = interpolate_linear_sorted_ascending(x,y,N,xout[i]);
         } else {
             yout[i] = xout[i];
         }

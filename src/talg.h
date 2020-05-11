@@ -53,9 +53,9 @@ void invtransall(int p, int q, int P, int Q, double *old, double *new1);
 
 int invertroot(int q, double *ma);
 
-double interpolate_linear(double *x,double *y, int N, double ylo,double yhi, double z);
+double interpolate_linear(double *x,double *y, int N, double z);
 
-void approx(double *x,double *y, int N,double *xout, double *yout,int Nout,double ylo,double yhi);
+void approx(double *x,double *y, int N,double *xout, double *yout,int Nout);
 
 void linspace(double *x, int N,double xlo,double xhi);
 
