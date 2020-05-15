@@ -11,6 +11,8 @@ void ur_df(double *y, int N,const char* alternative, int *klag, double *statisti
 
 void ur_kpss(double *y, int N,const char* type,int lshort, int *klag, double *statistic,double *pval);
 
+void ur_pp(double *y, int N,const char* alternative,const char* type,int lshort, int *klag, double *statistic,double *pval);
+
 #ifdef __cplusplus
 }
 #endif

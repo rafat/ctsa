@@ -1002,21 +1002,27 @@ void cumsum(double *x, int N, double *csum) {
 	}
 }
 
-void ppsum(double *x, int N, int l, double *sum) {
-	int i,j;
-	double tmp1, tmp2;
+void ppsum(double* u, int n, int l, double* sum)
+{
+	/* Copyright (C) 1997-2000  Adrian Trapletti 
+	efficient computation of the sums involved in the Phillips-Perron tests */
+  int i, j;
+  double tmp1, tmp2;
 
-	tmp1 = 0.0;
-
-	for(i = 1; i <= l; ++i) {
-		tmp2 = 0.0;
-		for(j = i; j < N;++j) {
-			tmp2 += (x[j] * x[j-1]);
-		}
-		tmp2 *= 1.0-((double)i/((double)l+1.0));
-		tmp1 += tmp2;
-	}
-	tmp1 /= (double)(N);
-	tmp1 *= 2.0;
-	(*sum) += tmp1;
+  printf("%d %d %g \n ",n,l,*sum);
+  
+  tmp1 = 0.0;
+  for (i=1; i<= l; i++)
+  {
+    tmp2 = 0.0;
+    for (j=i; j< n; j++)  
+    {
+      tmp2 += (u[j]*u[j-i]);
+    }
+    tmp2 *= 1.0-((double)i/((double) l +1.0));
+    tmp1 += tmp2;
+  }
+  tmp1 /= (double) n;
+  tmp1 *= 2.0;
+  (*sum) += tmp1;
 }
