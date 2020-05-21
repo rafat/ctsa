@@ -43,6 +43,8 @@ void conv_directx(fft_type *inp1,int N, fft_type *inp2, int L,fft_type *oup);
 
 //void conv_fft(const conv_object obj,fft_type *inp1,fft_type *inp2,fft_type *oup);
 
+int convolve(const char *type, const char *method, fft_type *inp1,int N, fft_type *inp2, int L,fft_type *oup);
+
 void conv_fft(const conv_object obj,fft_type *inp1,fft_type *inp2,fft_type *oup);
 
 //void free_conv(conv_object object);

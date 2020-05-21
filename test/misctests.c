@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "../src/errors.h"
-#include "../src/unitroot.h"
+#include "../src/seastest.h"
 
 void llsptest() {
 	int M, N,p,ret,i;
@@ -326,6 +326,36 @@ void urpp_test() {
 	printf("Lag %d Stats %g PVAL %g \n",k,stat,pval);
 }
 
+void decomposetest() {
+	int N = 32;
+	double x[32] = {-50, 175, 149, 214, 247, 237, 225, 329, 729, 809,
+       530, 489, 540, 457, 195, 176, 337, 239, 128, 102, 232, 429, 3,
+       98, 43, -141, -77, -13, 125, 361, -45, 184};
+	int f = 2;
+	int ltrend,lseas,lrandom;
+	
+
+	decompose(x,N,f,NULL,"multiplicative",NULL,&ltrend,NULL,&lseas,NULL,&lrandom);
+}
+
+void lagstests() {
+	double *out;
+	int rows,cols;
+	int N = 32;
+	double x[32] = {-50, 175, 149, 214, 247, 237, 225, 329, 729, 809,
+       530, 489, 540, 457, 195, 176, 337, 239, 128, 102, 232, 429, 3,
+       98, 43, -141, -77, -13, 125, 361, -45, 184};
+	int lags = 3;
+
+	out = genLags(x,N,lags,&rows,&cols);
+
+	mdisplay(out,rows,cols);
+
+	free(out);
+}
+
+
+
 int main() {
     //errortests();
 	//llstest();
@@ -333,9 +363,11 @@ int main() {
 	//approxtest();
 	//arraytest();
 	//interpolatetest();
-	urdf_test();
+	//urdf_test();
 	//urkpss_test();
 	//interpolatetest2();
-	urpp_test();
+	//urpp_test();
+	//decomposetest();
+	lagstests();
     return 0;
 }

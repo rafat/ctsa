@@ -26,6 +26,29 @@ int factorf(int M) {
 	return N;
 }
 
+int factor2(int M) {
+	int N;
+	N = M;
+	
+	while (N % 2 == 0){
+		N = N / 2;
+	}
+
+	return N;
+}
+
+int findnext2(int M) {
+	int N;
+	N = M;
+
+	while (factor2(N) != 1) {
+		++N;
+	}
+
+	return N;
+
+}
+
 
 int findnext(int M) {
 	int N;
@@ -110,7 +133,7 @@ void conv_direct(fft_type *inp1,int N, fft_type *inp2, int L,fft_type *oup) {
 		for (k = L; k < M; k++) {
 			oup[k] = 0.0;
 			i++;
-			t1 = L + i;
+			t1 = (fft_type) L + i;
 			tmin = MIN(t1,N);
 			for (m = i; m < tmin;m++) {
 				oup[k]+= inp1[m] * inp2[k-m];
@@ -129,7 +152,7 @@ void conv_direct(fft_type *inp1,int N, fft_type *inp2, int L,fft_type *oup) {
 		for (k = N; k < M; k++) {
 			oup[k] = 0.0;
 			i++;
-			t1 = N + i;
+			t1 = (fft_type) N + i;
 			tmin = MIN(t1,L);
 			for (m = i; m < tmin;m++) {
 				oup[k]+= inp2[m] * inp1[k-m];
@@ -200,6 +223,91 @@ void conv_fft(const conv_object obj,fft_type *inp1,fft_type *inp2,fft_type *oup)
 	free(co);
 	
 	
+}
+
+int convolve(const char *type, const char *method, fft_type *inp1, int N, fft_type *inp2, int L, fft_type *oup) {
+	/*
+
+	method - 'direct' or 'fft'
+	type - One of 'full', 'same' or 'valid'
+	inp1 - First vector of length N
+	inp2 - Second vector of length L
+	oup2 - Output vector of :
+
+	length N+L-1, if type is 'full'
+	length max(N,L), if type is 'same'
+	length max(N,L), - min(N,L) + 1 if type is valid
+
+	*/
+	int M, LB, LS, start, pad, i;
+	fft_type *oup2;
+	conv_object conv;
+
+	M = N + L - 1;
+
+	LB = N >= L ? N : L;
+	LS = LB == N ? L : N;
+
+	oup2 = (fft_type*)malloc(sizeof(fft_type)*M);
+
+	pad = 0;
+
+	if (!strcmp(method, "direct") || method == NULL) {
+
+		conv_direct(inp1, N, inp2, L, oup2);
+
+	}
+	else if (!strcmp(method, "fft")) {
+
+		conv = conv_init(N, L);
+
+		conv_fft(conv, inp1, inp2, oup2);
+
+		free_conv(conv);
+	}
+	else {
+		printf("method - 'direct' or 'fft' \n");
+		exit(-1);
+	}
+
+
+	if (!strcmp(type, "full") || type == NULL) {
+
+		start = 0;
+
+		pad = M;
+
+	}
+	else  if (!strcmp(type, "same")) {
+
+		start = (M - LB) / 2;
+
+		pad = LB;
+
+	}
+	else  if (!strcmp(type, "valid")) {
+
+		start = LS - 1;
+
+		if (LS == 0) {
+			pad = LB;
+		}
+		else {
+			pad = LB - LS + 1;
+		}
+
+	}
+	else {
+		printf("type - One of 'full', 'same' or 'valid' \n");
+		exit(-1);
+	}
+
+	memcpy(oup, oup2 + start, sizeof(fft_type) * pad);
+
+
+	free(oup2);
+
+	return pad;
 }
 
 

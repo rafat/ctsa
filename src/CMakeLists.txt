@@ -29,6 +29,7 @@ set(SOURCE_FILES   	boxjenkins.c
 					talg.c
 					errors.c
 					unitroot.c
+					seastest.c
 					wtmath.c
 					wavefilt.c
 					wavelib.c
@@ -63,6 +64,7 @@ set(HEADER_FILES    boxjenkins.h
 					talg.h
 					errors.h
 					unitroot.h
+					seastest.h
 					wtmath.h
 					wavefilt.h
 					wavelib.h
