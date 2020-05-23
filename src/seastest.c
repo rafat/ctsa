@@ -145,18 +145,18 @@ static double calcOCSBCritVal(int f) {
     return seasonal;
 }
 
-double* genLags(double *y, int N, int maxLags, int *rows, int *cols) {
+double* genLags(double *y, int N, int mlags, int *rows, int *cols) {
     int i;
     double *out;
 
-    if (maxLags <= 0) {
+    if (mlags <= 0) {
         out = (double*)calloc(N,sizeof(double));
         *rows = 1;
         *cols = N;
         return out;
     }
 
-    if (maxLags == 1) {
+    if (mlags == 1) {
         out = (double*) malloc(sizeof(double)*N);
         memcpy(out,y,sizeof(double)*N);
         *rows = 1;
@@ -164,15 +164,157 @@ double* genLags(double *y, int N, int maxLags, int *rows, int *cols) {
         return out;
     }
 
-    out = (double*) malloc(sizeof(double) * (N-maxLags+1)*maxLags);
+    out = (double*) malloc(sizeof(double) * (N-mlags+1)*mlags);
 
-    for(i = 0; i < maxLags;++i) {
-        memcpy(out+(N-maxLags+1)*i,y+maxLags-1-i,sizeof(double)*(N-maxLags+1));
+    for(i = 0; i < mlags;++i) {
+        memcpy(out+(N-mlags+1)*i,y+mlags-1-i,sizeof(double)*(N-mlags+1));
     }
 
-    *rows = maxLags;
-    *cols = N - maxLags + 1;
+    *rows = mlags;
+    *cols = N - mlags + 1;
 
     return out;
 
+}
+
+reg_object fitOCSB(double *x, int N, int f, int lag, int mlags) {
+    int i,j,Nyf,Ny, ylrows, ylcols,p;
+    double *y_fdiff, *y, *ylag, *mf, *res, *varcovar;
+    double *z4_y,*z4_lag,*z4_preds,*z4,*inp,*z5_y,*z5_lag,*z5_preds,*z5,*XX;
+    int Nz4y,Nz5y,mfrows;
+    double alpha;
+    reg_object fit;
+    reg_object fitout;
+
+    y_fdiff = (double*)malloc(sizeof(double)*N);
+    y = (double*)malloc(sizeof(double)*N);
+    double var[2] = {0,0};
+
+    Nyf = diffs(x,N,1,f,y_fdiff);
+    Ny = diff(y_fdiff,Nyf,1,y);
+
+    //mdisplay(y_fdiff,1,Nyf);
+    //mdisplay(y,1,Ny);
+
+    ylag = genLags(y,Ny,lag,&ylrows,&ylcols);
+
+    //mdisplay(ylag,ylrows,ylcols);
+
+    if (mlags > -1) {
+        y = &y[mlags];
+        Ny -= mlags;
+    }
+
+    //mdisplay(y,1,Ny);
+
+    mf = (double*) malloc(sizeof(double)*ylrows*Ny);
+    mfrows = ylrows;
+
+    for(i = 0; i < ylrows;++i) {
+        memcpy(mf+Ny*i,ylag+ylcols*i,sizeof(double)*Ny);
+    }
+
+    //mdisplay(mf,ylrows,Ny);
+
+    p = ylrows + 1;
+    varcovar = (double*)malloc(sizeof(double)*p*p);
+    res = (double*)malloc(sizeof(double)*Ny);
+    alpha = 0.95;
+    fit = reg_init(Ny,p);
+
+    regress(fit,mf,y,res,varcovar,alpha);
+
+    //summary(fit);
+
+    z4_y = &y_fdiff[lag];
+    Nz4y = Nyf - lag;
+    //mdisplay(z4_y,1,Nz4y);
+
+    z4_lag = genLags(y_fdiff,Nyf,lag,&ylrows,&ylcols);
+
+    //mdisplay(z4_lag,ylrows,ylcols);
+
+    inp = (double*) malloc(sizeof(double)*ylcols);
+    z4_preds = (double*) malloc(sizeof(double)*Nz4y);
+    z4 = (double*) malloc(sizeof(double)*Nz4y);
+
+    //printf("nz4y %d ylrows %d ylcols %d",Nz4y,ylrows,ylcols);
+
+    for(i = 0; i < Nz4y;++i) {
+        for(j = 0; j < ylrows;++j) {
+            inp[j] = z4_lag[j*ylcols+i];
+        }
+
+        z4_preds[i] = fitted(fit,inp,varcovar,var);
+        z4[i] = z4_y[i] - z4_preds[i];
+    }
+
+    free(inp);
+
+    //mdisplay(z4_preds,1,Nz4y);
+
+    z5_y = (double*)malloc(sizeof(double)*N);
+
+    Nz5y = diff(x,N,1,z5_y);
+
+    z5_lag = genLags(z5_y,Nz5y,lag,&ylrows,&ylcols);
+
+    z5_y = &z5_y[lag];
+    Nz5y -= lag;
+
+    inp = (double*) malloc(sizeof(double)*ylcols);
+    z5_preds = (double*) malloc(sizeof(double)*Nz5y);
+    z5 = (double*) malloc(sizeof(double)*Nz5y);
+
+    for(i = 0; i < Nz5y;++i) {
+        for(j = 0; j < ylrows;++j) {
+            inp[j] = z5_lag[j*ylcols+i];
+        }
+
+        z5_preds[i] = fitted(fit,inp,varcovar,var);
+        z5[i] = z5_y[i] - z5_preds[i];
+    }
+
+    //mdisplay(z5_preds,1,Nz5y);
+
+    XX = (double*) malloc(sizeof(double)*(mfrows+2) * Ny);
+    memcpy(XX,mf,sizeof(double)*mfrows*Ny);
+    memcpy(XX+mfrows*Ny,z4,sizeof(double)*Ny);
+    memcpy(XX+(mfrows+1)*Ny,z5,sizeof(double)*Ny);
+
+    //mdisplay(XX,mfrows+2,Ny);
+    //mdisplay(y,1,Ny);
+
+    free(varcovar);
+    free(res);
+
+    p = mfrows+2;
+
+    fitout = reg_init(Ny,p);
+    setIntercept(fitout,0);
+
+    varcovar = (double*)malloc(sizeof(double)*p*p);
+    res = (double*)malloc(sizeof(double)*Ny);
+
+    regress(fitout,XX,y,res,varcovar,alpha);
+
+
+    free(y_fdiff);
+    free(y);
+    free(varcovar);
+    free(ylag);
+    free(mf);
+    free(res);
+    free(fit);
+    free(z4_lag);
+    free(inp);
+    free(z4_preds);
+    free(z5_y);
+    free(z5_lag);
+    free(z4);
+    free(z5);
+    free(z5_preds);
+    free(XX);
+
+    return fitout;
 }

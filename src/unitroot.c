@@ -64,7 +64,6 @@ void ur_df(double *y, int N,const char* alternative, int *klag, double *statisti
         XX = (double*)malloc(sizeof(double)*N2*p);
         varcovar = (double*)malloc(sizeof(double)*p*p);
         fit = reg_init(N2,p);
-        setLLSMethod(fit,"normal");
         memcpy(XX,y+lags-1,sizeof(double)*N2);
         memcpy(XX+N2,tt,sizeof(double)*N2);
         memcpy(XX+2*N2,x+N2,sizeof(double)*N2*(lags-1));

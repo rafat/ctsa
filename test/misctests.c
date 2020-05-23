@@ -354,6 +354,25 @@ void lagstests() {
 	free(out);
 }
 
+void ocsbtest() {
+	int N = 32;
+	double x[32] = {-50, 175, 149, 214, 247, 237, 225, 329, 729, 809,
+       530, 489, 540, 457, 195, 176, 337, 239, 128, 102, 232, 429, 3,
+       98, 43, -141, -77, -13, 125, 361, -45, 184};
+	
+	reg_object fit;
+
+	int f = 2;
+	int lags = 3;
+	int mlags = 3;
+
+	fit = fitOCSB(x,N,f,lags,mlags);
+
+	summary(fit);
+
+	free(fit);
+}
+
 
 
 int main() {
@@ -368,6 +387,7 @@ int main() {
 	//interpolatetest2();
 	//urpp_test();
 	//decomposetest();
-	lagstests();
+	//lagstests();
+	ocsbtest();
     return 0;
 }

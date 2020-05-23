@@ -11,6 +11,8 @@ void decompose(double *x,int N, int f,double *filter, const char *type, double *
 
 double* genLags(double *y, int N, int maxLags, int *rows, int *cols);
 
+reg_object fitOCSB(double *x, int N, int f, int lag, int mlags);
+
 
 #ifdef __cplusplus
 }
