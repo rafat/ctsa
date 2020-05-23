@@ -45,6 +45,10 @@ struct reg_set{
 	int df_RSS;
 	double FStat;
 	double PVal;
+	double loglik;
+	double aic;
+	double bic;
+	double aicc;
 	bparam beta[1];
 };
 

@@ -225,6 +225,7 @@ reg_object fitOCSB(double *x, int N, int f, int lag, int mlags) {
     regress(fit,mf,y,res,varcovar,alpha);
 
     //summary(fit);
+    //printf("loglik %g aic %g bic %g aicc %g \n",fit->loglik,fit->aic,fit->bic,fit->aicc);
 
     z4_y = &y_fdiff[lag];
     Nz4y = Nyf - lag;
@@ -317,4 +318,8 @@ reg_object fitOCSB(double *x, int N, int f, int lag, int mlags) {
     free(XX);
 
     return fitout;
+}
+
+void OCSBtest(double *x, int N, int f, int mlags, const char *method) {
+
 }

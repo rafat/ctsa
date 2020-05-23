@@ -10,7 +10,7 @@
 
 #include "conv.h"
 #include "pdist.h"
-#include "matrix.h"
+#include "lls.h"
 
 #ifdef __cplusplus
 extern "C" {

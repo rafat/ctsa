@@ -43,6 +43,10 @@ reg_object reg_init(int N, int p) {
 	obj->df_RSS = 0;
 	obj->FStat = 0.0;
 	obj->PVal = 0.0;
+	obj->loglik = 0.0;
+	obj->aic = 0.0;
+	obj->bic = 0.0;
+	obj->aicc = 0.0;
 
 	for (i = 0;i < p+1;++i) {
 		(obj->beta+i)->value = 0.0;
@@ -493,7 +497,8 @@ void setLLSMethod(reg_object obj,char *llsmethod) {
 
 void regress(reg_object obj,double *x,double *y,double *res,double *varcovar,double alpha) {
 	double *anv2,*b2,*low,*up,*sigma2;
-	int p,i,p2;
+	int p,i,p2,k,dfm;
+	double ssr,N2,pi;
 	/*
 	 * obj - Regression object created by reg_init
 	 *  x - Vector containing (p - 1 ) independent regression variables of length N each
@@ -511,6 +516,8 @@ void regress(reg_object obj,double *x,double *y,double *res,double *varcovar,dou
 	 low = (double*) malloc (sizeof(double) * (p+1));
 	 up = (double*) malloc (sizeof(double) * (p+1));
 	 sigma2 = (double*) malloc (sizeof(double) * 1);
+
+	 pi = 3.141592653589793;
 
 
 	 linreg_multi(p,x,y,obj->N,b2,sigma2,varcovar,
@@ -537,6 +544,25 @@ void regress(reg_object obj,double *x,double *y,double *res,double *varcovar,dou
 		 (obj->beta+i)->upper = up[i];
 		 (obj->beta+i)->stdErr = sqrt(varcovar[(p+1)*i]);
 	 }
+
+	 // Log Likelihood
+
+	 N2 = (double)(obj->N) / 2.0;
+
+	 ssr = 0.0;
+
+	 for(i = 0; i < obj->N;++i) {
+		 ssr += (res[i]*res[i]);
+	 }
+
+	 obj->loglik = - N2 * log(2*pi) - N2 * log(ssr/(double)obj->N) - N2;
+
+	 k = obj->intercept == 1 ? 1 : 0;
+	 dfm = obj->intercept == 1 ? p - 1 : p;
+
+	 obj->aic = -2.0 * obj->loglik + 2.0 * (double) (k + dfm);
+	 obj->bic = -2.0 * obj->loglik + log((double)obj->N) * (double) (k + dfm);
+	 obj->aicc = obj->aic + 2.0 * dfm * ((double)obj->N / ((double)obj->N - dfm - 1.0) - 1.0);
 
 	 free(anv2);
 	 free(b2);

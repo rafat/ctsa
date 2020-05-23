@@ -369,6 +369,7 @@ void ocsbtest() {
 	fit = fitOCSB(x,N,f,lags,mlags);
 
 	summary(fit);
+	printf("loglik %g aic %g bic %g aicc %g \n",fit->loglik,fit->aic,fit->bic,fit->aicc);
 
 	free(fit);
 }
