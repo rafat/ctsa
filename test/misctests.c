@@ -361,17 +361,38 @@ void ocsbtest() {
        98, 43, -141, -77, -13, 125, 361, -45, 184};
 	
 	reg_object fit;
+	double *tval,*pval;
+	int i;
+	const char *method = "aic";
 
 	int f = 2;
 	int lags = 3;
 	int mlags = 3;
 
-	fit = fitOCSB(x,N,f,lags,mlags);
+	/* fit = fitOCSB(x,N,f,lags,mlags);
 
 	summary(fit);
-	printf("loglik %g aic %g bic %g aicc %g \n",fit->loglik,fit->aic,fit->bic,fit->aicc);
+	confint(fit);
+	anova(fit);
+	printf("loglik %g aic %g bic %g aicc %g rank %d \n",fit->loglik,fit->aic,fit->bic,fit->aicc,fit->rank);
+
+	tval = (double*)calloc(fit->p,sizeof(double));
+	pval = (double*)calloc(fit->p,sizeof(double));
+
+	zerohyp_val(fit,tval,pval);
+
+	for(i = 0; i < fit->p; ++i) {
+		tval[i] = (fit->beta+i)->value/(fit->beta+i)->stdErr;
+		printf("B%-25d%-20lf \n",i,tval[i]);
+	} */
+
+	OCSBtest(x,N,f,mlags,method);
+
+	
 
 	free(fit);
+	free(tval);
+	free(pval);
 }
 
 

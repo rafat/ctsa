@@ -144,6 +144,10 @@ static int lls_qr_determined(double *Ai,double *bi,int M,int N,double *xo) {
 		}
 	}
 
+	//Calculate Rank of R
+
+	retcode = rank(R,N,N);
+
 
 	for(j = 0; j < N;++j) {
 		v[j] = 1;
@@ -213,6 +217,8 @@ static int lls_qr_undetermined(double *Ai,double *bi,int M,int N,double *xo) {
 	qrdecomp(A,N,M,bvec);
 
 	getQR(A,N,M,bvec,Q,R);
+
+	retval = rank(R,M,M);
 
 
 	itranspose(R,M,M);

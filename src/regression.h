@@ -38,6 +38,7 @@ struct reg_set{
 	char lls[10];
 	int df;
 	int intercept;
+	int rank; // Use method "qr" to calculate the rank
 	double TSS;
 	double ESS;
 	double RSS;
@@ -64,7 +65,7 @@ void zerohyp_clrm(int N,double *b, double *val, double *tval, double *pval);
 
 void linreg_multi(int p, double *xi,double *y, int N, double* b,double *sigma2,
 			double *xxti,double *R2,double *res,double alpha,double *anv,
-			double* ci_lower, double* ci_upper,char *llsmethod, int intercept);
+			double* ci_lower, double* ci_upper,int *rank,char *llsmethod, int intercept);
 		
 void zerohyp_multi(int N,double *b,int p, double *varcovar, double *tval, double *pval);
 

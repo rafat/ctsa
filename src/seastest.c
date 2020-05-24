@@ -214,7 +214,7 @@ reg_object fitOCSB(double *x, int N, int f, int lag, int mlags) {
         memcpy(mf+Ny*i,ylag+ylcols*i,sizeof(double)*Ny);
     }
 
-    //mdisplay(mf,ylrows,Ny);
+    mdisplay(mf,ylrows,Ny);
 
     p = ylrows + 1;
     varcovar = (double*)malloc(sizeof(double)*p*p);
@@ -224,7 +224,7 @@ reg_object fitOCSB(double *x, int N, int f, int lag, int mlags) {
 
     regress(fit,mf,y,res,varcovar,alpha);
 
-    //summary(fit);
+    summary(fit);
     //printf("loglik %g aic %g bic %g aicc %g \n",fit->loglik,fit->aic,fit->bic,fit->aicc);
 
     z4_y = &y_fdiff[lag];
@@ -320,6 +320,116 @@ reg_object fitOCSB(double *x, int N, int f, int lag, int mlags) {
     return fitout;
 }
 
-void OCSBtest(double *x, int N, int f, int mlags, const char *method) {
+static double getCVal(reg_object fit,const char *method) {
+    double crit;
 
+    if(!strcmp(method,"aic") || !strcmp(method,"AIC")) {
+        crit = fit->aic;
+    } else if(!strcmp(method,"bic") || !strcmp(method,"BIC")) {
+        crit = fit->bic;
+    } else if(!strcmp(method,"aicc") || !strcmp(method,"AICc") || !strcmp(method,"AICc")) {
+        crit = fit->aicc;
+    } else {
+        printf("Only three criterions are accepted - aic, bic and aicc \n");
+        exit(-1);
+    }
+
+    return crit;
+}
+
+static int checkAllNans(double *icvals,int N) {
+    int i;
+
+    for(i = 0; i < N;++i) {
+        if (icvals[i] == icvals[i]) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+static int getBestIndex(double *icvals,int N) {
+    int bind,i;
+    double best;
+
+    best = icvals[0] == icvals[0] ? icvals[0] : DBL_MAX;
+    bind = icvals[0] == icvals[0] ? 0 : -1;
+
+    for(i = 1; i < N;++i) {
+        if (icvals[i] < best && icvals[i] == icvals[i]) {
+            bind = i;
+            best = icvals[i];
+        }
+    }
+
+    return bind;
+}
+
+void OCSBtest(double *x, int N, int f, int mlags, const char *method) {
+    int i, bestindex,allnans,maxlag;
+    double stat,crit;
+    double *tval,*icvals;
+    reg_object fit;
+    reg_object *list = (reg_object*)malloc(sizeof(reg_object)*mlags);
+    reg_object crit_reg = NULL;
+
+    icvals = (double*) malloc(sizeof(double)*mlags);
+
+    maxlag = mlags;
+    if (mlags > 0 && strcmp(method,"fixed")) {
+
+        for(i = 1; i <= mlags;++i) {
+            list[i-1] = fitOCSB(x,N,f,i,mlags);
+            icvals[i-1] = getCVal(list[i-1],method);
+            printf("icvals %g",icvals[i-1]);
+        }
+
+        allnans = checkAllNans(icvals,mlags);
+
+        if (allnans == 1) {
+            printf("All lag values up to 'maxlag' produced singular matrices. Use different method. \n");
+            exit(-1);
+        }
+
+        bestindex = getBestIndex(icvals,mlags);
+        maxlag = bestindex-1;
+        crit_reg = list[bestindex];
+
+    }
+
+    if (maxlag <= 0) {
+        fit = crit_reg;
+    } else {
+        fit = fitOCSB(x,N,f,maxlag,maxlag);
+
+        if (fit->rank != fit->p && fit->rank == fit->rank) {
+            if (crit_reg == NULL) {
+                printf("Could not find a solution. Try a different method. \n");
+                exit(-1);
+            } else {
+                fit = crit_reg;
+            }
+        }
+    }
+
+    tval = (double*) malloc(sizeof(double)*fit->p);
+
+    for(i = 0; i < fit->p; ++i) {
+		tval[i] = (fit->beta+i)->value/(fit->beta+i)->stdErr;
+	}
+
+    mdisplay(tval,1,fit->p);
+
+    for(i = 0; i < mlags;++i) {
+        free_reg(list[i]);
+    }
+
+    crit = calcOCSBCritVal(f);
+
+    printf("crit %g \n",crit);
+
+    free(list);
+    free(icvals);
+    free(tval);
 }

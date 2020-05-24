@@ -207,7 +207,7 @@ void zerohyp_clrm(int N,double *b, double *val, double *tval, double *pval) {
 
 void linreg_multi(int p, double *xi,double *y, int N, double* b,double *sigma2,
 			double *xxti,double *R2,double *res,double alpha,double *anv,
-			double* ci_lower, double* ci_upper,char *llsmethod, int intercept) {
+			double* ci_lower, double* ci_upper,int *rank, char *llsmethod, int intercept) {
 	/*
 	p corresponds to number of coefficients (including the intercept)
 	intercept - 1 : include intercept term. 0 : No intercept term
@@ -277,11 +277,13 @@ void linreg_multi(int p, double *xi,double *y, int N, double* b,double *sigma2,
 	 //ludecomp(xxt,p,ipiv);
 	 //linsolve(xxt,p,yxt,ipiv,b);
 	 if (!strcmp(llsmethod,"qr")) {
-		 lls_qr(xxt,yxt,p,p,b);
+		 *rank = lls_qr(xxt,yxt,p,p,b);
 	 } else if (!strcmp(llsmethod,"normal")) {
 		 lls_normal(xxt,yxt,p,p,b);
+		 printf("Warning - This method will not calculate the rank of the regression. Use method qr instead. \n");
 	 } else if (!strcmp(llsmethod,"svd")) {
 		 lls_svd2(xxt,yxt,p,p,b);
+		 printf("Warning - This method will not calculate the rank of the regression. Use method qr instead. \n");
 	 } else {
 		 printf("This function only accepts one of three least square methods - \n");
 		 printf(" qr, normal and svd. \n");
@@ -486,8 +488,10 @@ void setLLSMethod(reg_object obj,char *llsmethod) {
 		 strcpy(obj->lls,llsmethod);
 	 } else if (!strcmp(llsmethod,"normal")) {
 		 strcpy(obj->lls,llsmethod);
+		 printf("Warning - This method will not calculate the rank of the regression. Use method qr instead. \n");
 	 } else if (!strcmp(llsmethod,"svd")) {
 		 strcpy(obj->lls,llsmethod);
+		 printf("Warning - This method will not calculate the rank of the regression. use method qr instead. \n");
 	 } else {
 		 printf("This function only accepts one of three least square methods - \n");
 		 printf(" qr, normal and svd. \n");
@@ -521,7 +525,7 @@ void regress(reg_object obj,double *x,double *y,double *res,double *varcovar,dou
 
 
 	 linreg_multi(p,x,y,obj->N,b2,sigma2,varcovar,
-		obj->R2,res,alpha,anv2,low,up,obj->lls,obj->intercept);
+		obj->R2,res,alpha,anv2,low,up,&obj->rank,obj->lls,obj->intercept);
 	 obj->df = obj->N - obj->p;
 
 	 obj->sigma = sigma2[0];
