@@ -215,7 +215,7 @@ reg_object fitOCSB(double *x, int N, int f, int lag, int mlags) {
         memcpy(mf+Ny*i,ylag+ylcols*i,sizeof(double)*Ny);
     }
 
-    mdisplay(mf,ylrows,Ny);
+    //mdisplay(mf,ylrows,Ny);
 
     p = ylrows + 1;
     varcovar = (double*)malloc(sizeof(double)*p*p);
@@ -225,7 +225,7 @@ reg_object fitOCSB(double *x, int N, int f, int lag, int mlags) {
 
     regress(fit,mf,y2,res,varcovar,alpha);
 
-    summary(fit);
+    //summary(fit);
     //printf("loglik %g aic %g bic %g aicc %g \n",fit->loglik,fit->aic,fit->bic,fit->aicc);
 
     z4_y = &y_fdiff[lag];
@@ -274,7 +274,7 @@ reg_object fitOCSB(double *x, int N, int f, int lag, int mlags) {
         }
 
         z5_preds[i] = fitted(fit,inp,varcovar,var);
-        z5[i] = z5_y[i] - z5_preds[i];
+        z5[i] = z5_y2[i] - z5_preds[i];
     }
 
     //mdisplay(z5_preds,1,Nz5y);
@@ -400,7 +400,7 @@ void OCSBtest(double *x, int N, int f, int mlags, const char *method) {
 
     }
 
-    if (maxlag <= 0) {
+    /* if (maxlag <= 0) {
         fit = crit_reg;
     } else {
         fit = fitOCSB(x,N,f,maxlag,maxlag);
@@ -412,6 +412,19 @@ void OCSBtest(double *x, int N, int f, int mlags, const char *method) {
             } else {
                 fit = crit_reg;
             }
+        }
+    } */
+
+    fit = fitOCSB(x,N,f,maxlag,maxlag);
+
+    printf("\n\n%d\n\n",fit->rank);
+
+    if (fit->rank != fit->p && fit->rank == fit->rank) {
+        if (crit_reg == NULL) {
+            printf("Could not find a solution. Try a different method. \n");
+            exit(-1);
+        } else {
+            fit = crit_reg;
         }
     }
 

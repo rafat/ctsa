@@ -1282,8 +1282,8 @@ void linsolve(double *A,int N,double *b,int *ipiv,double *x) {
 		y[i] = 0.;
 		x[i] = 0.;
 		if ( A[i*N + i] == 0.) {
-			printf("The Matrix system does not have a unique solution");
-			exit(1);
+			printf("Warning : The Matrix system does not have a unique solution");
+			//exit(1);
 		}
 		//printf("\n B %d",ipiv[i]);
 	}
