@@ -181,6 +181,7 @@ reg_object fitOCSB(double *x, int N, int f, int lag, int mlags) {
     int i,j,Nyf,Ny, ylrows, ylcols,p;
     double *y_fdiff, *y, *ylag, *mf, *res, *varcovar;
     double *z4_y,*z4_lag,*z4_preds,*z4,*inp,*z5_y,*z5_lag,*z5_preds,*z5,*XX;
+    double *y2,*z5_y2;
     int Nz4y,Nz5y,mfrows;
     double alpha;
     reg_object fit;
@@ -201,7 +202,7 @@ reg_object fitOCSB(double *x, int N, int f, int lag, int mlags) {
     //mdisplay(ylag,ylrows,ylcols);
 
     if (mlags > -1) {
-        y = &y[mlags];
+        y2 = &y[mlags];
         Ny -= mlags;
     }
 
@@ -222,7 +223,7 @@ reg_object fitOCSB(double *x, int N, int f, int lag, int mlags) {
     alpha = 0.95;
     fit = reg_init(Ny,p);
 
-    regress(fit,mf,y,res,varcovar,alpha);
+    regress(fit,mf,y2,res,varcovar,alpha);
 
     summary(fit);
     //printf("loglik %g aic %g bic %g aicc %g \n",fit->loglik,fit->aic,fit->bic,fit->aicc);
@@ -260,7 +261,7 @@ reg_object fitOCSB(double *x, int N, int f, int lag, int mlags) {
 
     z5_lag = genLags(z5_y,Nz5y,lag,&ylrows,&ylcols);
 
-    z5_y = &z5_y[lag];
+    z5_y2 = &z5_y[lag];
     Nz5y -= lag;
 
     inp = (double*) malloc(sizeof(double)*ylcols);
@@ -297,25 +298,26 @@ reg_object fitOCSB(double *x, int N, int f, int lag, int mlags) {
     varcovar = (double*)malloc(sizeof(double)*p*p);
     res = (double*)malloc(sizeof(double)*Ny);
 
-    regress(fitout,XX,y,res,varcovar,alpha);
+    regress(fitout,XX,y2,res,varcovar,alpha);
 
-
+	
     free(y_fdiff);
-    free(y);
     free(varcovar);
     free(ylag);
     free(mf);
     free(res);
-    free(fit);
+    free_reg(fit);
     free(z4_lag);
     free(inp);
     free(z4_preds);
+    free(y);
     free(z5_y);
     free(z5_lag);
     free(z4);
     free(z5);
     free(z5_preds);
     free(XX);
+ 
 
     return fitout;
 }
@@ -422,7 +424,7 @@ void OCSBtest(double *x, int N, int f, int mlags, const char *method) {
     mdisplay(tval,1,fit->p);
 
     for(i = 0; i < mlags;++i) {
-        free_reg(list[i]);
+		free_reg(list[i]);
     }
 
     crit = calcOCSBCritVal(f);
