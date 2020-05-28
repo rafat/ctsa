@@ -356,6 +356,8 @@ void lagstests() {
 
 void ocsbtest() {
 	int N = 32;
+	int differencing_term;
+	double stats,crit;
 	double x[32] = {-50, 175, 149, 214, 247, 237, 225, 329, 729, 809,
        530, 489, 540, 457, 195, 176, 337, 239, 128, 102, 232, 429, 3,
        98, 43, -141, -77, -13, 125, 361, -45, 184};
@@ -367,7 +369,11 @@ void ocsbtest() {
 	int lags = 3;
 	int mlags = 3;
 
-	OCSBtest(x,N,f,mlags,method);
+	OCSBtest(x,N,f,mlags,method,&stats,&crit);
+
+	differencing_term = stats > crit ? 1 : 0;
+
+	printf("Differencing Term %d \n",differencing_term);
 
 }
 
@@ -410,6 +416,8 @@ void ocsbtest2() {
 
 void airpassengerstest() {
 	int N = 144;
+	int differencing_term;
+	double stats,crit;
 	double x[144] = {112, 118, 132, 129, 121, 135, 148, 148, 136, 119, 104, 118,
         115, 126, 141, 135, 125, 149, 170, 170, 158, 133, 114, 140,
         145, 150, 178, 163, 172, 178, 199, 199, 184, 162, 146, 166,
@@ -430,12 +438,18 @@ void airpassengerstest() {
 	int lags = 3;
 	int mlags = 3;
 
-	OCSBtest(x,N,f,mlags,method);
+	OCSBtest(x,N,f,mlags,method,&stats,&crit);
+
+	differencing_term = stats > crit ? 1 : 0;
+
+	printf("Differencing Term %d \n",differencing_term);
 
 }
 
 void ausbeertest() {
 	int N = 211;
+	int differencing_term;
+	double stats,crit;
 	double x[211] = {284., 213., 227., 308.,
                      262., 228., 236., 320.,
                      272., 233., 237., 313.,
@@ -497,12 +511,18 @@ void ausbeertest() {
 	int lags = 3;
 	int mlags = 3;
 
-	OCSBtest(x,N,f,mlags,method);
+	OCSBtest(x,N,f,mlags,method,&stats,&crit);
+
+	differencing_term = stats > crit ? 1 : 0;
+
+	printf("Differencing Term %d \n",differencing_term);
 
 }
 
 void sunspotstest() {
 	FILE *ifp;
+	int differencing_term;
+	double stats,crit;
 	double temp[3000];
 	double *x;
     ifp = fopen("../data/sunspots.txt", "r");
@@ -534,9 +554,11 @@ void sunspotstest() {
 	int lags = 3;
 	int mlags = 3;
 
-	OCSBtest(x,N,f,mlags,method);
+	OCSBtest(x,N,f,mlags,method,&stats,&crit);
 
-	printf("N %g %g \n",x[0],x[N-1]);
+	differencing_term = stats > crit ? 1 : 0;
+
+	printf("Differencing Term %d \n",differencing_term);
 
 	fclose(ifp);
 	free(x);
@@ -544,6 +566,71 @@ void sunspotstest() {
 
 }
 
+void psorttest() {
+	int N = 10;
+	int NI = 2;
+	double a[10] = {0.7,-2.3,2.8,9,-4,7.4,-11.6,4.6,16,0};
+	int mid[2] = {0,0};
+
+	psort_(a,N,mid,NI);
+
+	for(int i = 0; i < NI; ++i) {
+		printf("%d ",mid[i]);
+	}
+	mdisplay(a,1,N);
+}
+
+
+void stltest() {
+	double x[144] = {112, 118, 132, 129, 121, 135, 148, 148, 136, 119, 104, 118,
+        115, 126, 141, 135, 125, 149, 170, 170, 158, 133, 114, 140,
+        145, 150, 178, 163, 172, 178, 199, 199, 184, 162, 146, 166,
+        171, 180, 193, 181, 183, 218, 230, 242, 209, 191, 172, 194,
+        196, 196, 236, 235, 229, 243, 264, 272, 237, 211, 180, 201,
+        204, 188, 235, 227, 234, 264, 302, 293, 259, 229, 203, 229,
+        242, 233, 267, 269, 270, 315, 364, 347, 312, 274, 237, 278,
+        284, 277, 317, 313, 318, 374, 413, 405, 355, 306, 271, 306,
+        315, 301, 356, 348, 355, 422, 465, 467, 404, 347, 305, 336,
+        340, 318, 362, 348, 363, 435, 491, 505, 404, 359, 310, 337,
+        360, 342, 406, 396, 420, 472, 548, 559, 463, 407, 362, 405,
+        417, 391, 419, 461, 472, 535, 622, 606, 508, 461, 390, 432
+	};
+
+	int N = 144;
+	int f = 12;
+	const char* s_window_type = "period";
+	double *seasonal,*trend,*remainder;
+	int *robust = NULL;
+
+	seasonal = (double*)calloc(N,sizeof(double));
+	trend = (double*)calloc(N,sizeof(double));
+	remainder = (double*)calloc(N,sizeof(double));
+
+	stl(x,N,f,s_window_type,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,seasonal,trend,remainder);
+
+	mdisplay(seasonal,1,N);
+	mdisplay(trend,1,N);
+	mdisplay(remainder,1,N);
+	free(seasonal);
+	free(trend);
+	free(remainder);
+}
+
+static void nulls(double *x, int *N) {
+	if (x == NULL) {
+		//*x = 4.5;
+		*N = 2;
+	}
+}
+
+void nulltest() {
+	double *x = NULL;
+	int N;
+
+	nulls(x,&N);
+
+	printf("N %d ",N);
+}
 
 int main() {
     //errortests();
@@ -562,6 +649,9 @@ int main() {
 	//ocsbtest2();
 	//airpassengerstest();
 	//ausbeertest();
-	sunspotstest();
+	//sunspotstest();
+	//psorttest();
+	stltest();
+	//nulltest();
     return 0;
 }

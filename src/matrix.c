@@ -66,6 +66,14 @@ double signx(double x) {
 	return sgn;
 }
 
+int iabs(int a) {
+	if (a < 0) {
+		return (-1 * a);
+	}
+
+	return a;
+}
+
 double l2norm(double *vec, int N) {
 	double l2, sum;
 	int i;

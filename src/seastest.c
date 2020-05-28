@@ -135,6 +135,137 @@ void decompose(double *x,int N, int f,double *filter, const char *type, double *
     free(seasonalmeans);
 }
 
+static int nextOdd(int x) {
+    int y;
+    if (x%2 == 0) {
+        y = x+1;
+    } else {
+        y = x;
+    }
+
+    return y;
+} 
+
+static int degCheck(int deg) {
+    if ( deg < 0 || deg > 1) {
+        printf("Degree must be either 0 or 1 \n");
+        exit(-1);
+    }
+    return deg;
+}
+
+static void cycle(int N, int f, int *cyc) {
+    int i;
+
+    for(i = 0; i < N;++i) {
+        cyc[i] = i%f;
+    }
+}
+
+static void applySeasonalMean(double *x,int N,int *cycle,int f) {
+    int i;
+    double *seasonal_means;
+    int *cval;
+
+    seasonal_means = (double*)calloc(f,sizeof(double)*f);
+    cval = (int*)calloc(f,sizeof(int)*f);
+
+    for(i = 0; i < N;++i) {
+        cval[cycle[i]] += 1;
+        seasonal_means[cycle[i]] += x[i];
+    }
+
+    for(i = 0; i < f;++i) {
+        seasonal_means[i] /= (double) cval[i];
+    }
+
+    for(i = 0; i < N;++i) {
+        x[i] = seasonal_means[cycle[i]];
+    }
+
+    free(seasonal_means);
+    free(cval);
+}
+
+void stl(double *x,int N,int f, const char *s_window_type,int *s_window, int *s_degree, int *t_window, int *t_degree,int *l_window,int *l_degree,
+    int *s_jump, int *t_jump, int *l_jump, int *robust,int *inner, int *outer,double *seasonal,double *trend, double *remainder) {
+    
+    double *rw,*work;
+    int *seas_cycle;
+    int i;
+    int s_window_,s_degree_,t_window_,t_degree_,l_window_,l_degree_,s_jump_,t_jump_,l_jump_,inner_,outer_,periodic_,robust_;
+
+    if (f < 2 || N < 2*f) {
+        printf("Series is not periodic or has less than two periods. \n");
+        exit(-1);
+    }
+
+    //Default Values
+
+    periodic_ = 0;
+
+    if (!strcmp(s_window_type,"period")) {
+        periodic_ = 1;
+        s_window_ = 10 * N + 1;
+        s_degree_ = 0;
+    } else {
+        if (s_window == NULL) {
+            printf("Error. Either set s_window_type to period or assign an integer value to s_window \n");
+            exit(-1);
+        } else {
+            s_window_ = *s_window;
+        }
+    }
+
+    if (t_window == NULL) {
+        t_window_ = nextOdd(ceil( 1.5 * f / (1.0 - 1.5 / (double) s_window_)));
+    }
+
+    s_degree_ = (s_degree == NULL) ? 0 : *s_degree;
+
+    //if (t_window == NULL) *t_window = 0;
+    t_degree_ = (t_degree == NULL) ? 1 : *t_degree;
+    l_window_ = (l_window == NULL) ? nextOdd(f) : *l_window;
+    l_degree_ = (l_degree == NULL) ? t_degree_ : *l_degree;
+    s_jump_ = (s_jump == NULL) ? ceil((double)s_window_ / 10.0) : *s_jump;
+    t_jump_ = (t_jump == NULL) ? ceil((double)t_window_ / 10.0) : *t_jump;
+    l_jump_ = (l_jump == NULL) ? ceil((double)l_window_ / 10.0) : *l_jump;
+
+    robust_ = (robust == NULL) ? 0 : *robust;
+    inner_ = (inner == NULL) ? (robust_ ? 1 : 2) : *inner;
+    outer_ = (inner == NULL) ? (robust_ ? 15 : 0) : *outer;
+
+    
+    s_degree_ = degCheck(s_degree_);
+    t_degree_ = degCheck(t_degree_);
+    l_degree_ = degCheck(l_degree_);
+
+    
+
+    // Initialize work vectors
+
+    rw = (double*)calloc(N,sizeof(double));
+    work = (double*)calloc((N+2*f)*5,sizeof(double));
+    seas_cycle = (int*)calloc(N,sizeof(int));
+
+
+    stl_(x,&N,&f,&s_window_,&t_window_,&l_window_,&s_degree_,&t_degree_,&l_degree_,&s_jump_,&t_jump_,&l_jump_,&inner_,&outer_,rw,seasonal,trend,work);
+	
+
+    if (periodic_) {
+        cycle(N,f,seas_cycle);
+        applySeasonalMean(seasonal,N,seas_cycle,f);
+    }
+
+    for (i = 0; i < N;++i) {
+        remainder[i] = x[i] - seasonal[i] - trend[i];
+    }
+
+    free(rw);
+    free(work);
+    free(seas_cycle);
+}
+
 static double calcOCSBCritVal(int f) {
     double log_f,seasonal;
 
@@ -368,9 +499,8 @@ static int getBestIndex(double *icvals,int N) {
     return bind;
 }
 
-void OCSBtest(double *x, int N, int f, int mlags, const char *method) {
+void OCSBtest(double *x, int N, int f, int mlags, const char *method,double *statistics,double *critical) {
     int i, bestindex,allnans,maxlag;
-    double stat,crit;
     double *tval,*icvals;
     reg_object fit;
     reg_object *list = (reg_object*)malloc(sizeof(reg_object)*mlags);
@@ -440,9 +570,8 @@ void OCSBtest(double *x, int N, int f, int mlags, const char *method) {
 		free_reg(list[i]);
     }
 
-    crit = calcOCSBCritVal(f);
-
-    printf("crit %g \n",crit);
+    *critical = calcOCSBCritVal(f);
+    *statistics = tval[fit->p-1];
 
     free(list);
     free(icvals);

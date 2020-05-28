@@ -44,6 +44,8 @@ int imin(int a, int b);
 
 double signx(double x);
 
+int iabs(int a);
+
 double l2norm(double *vec, int N);
 
 int compare (const void* ind1, const void* ind2);
