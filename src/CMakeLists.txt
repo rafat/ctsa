@@ -1,6 +1,7 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-set(SOURCE_FILES   	boxjenkins.c
+set(SOURCE_FILES   	boxcox.c
+					boxjenkins.c
 					brent.c
 					conjgrad.c
 					conv.c
@@ -26,6 +27,7 @@ set(SOURCE_FILES   	boxjenkins.c
 					secant.c
 					spectrum.c
 					stats.c
+					stl.c
 					talg.c
 					errors.c
 					unitroot.c
@@ -35,7 +37,8 @@ set(SOURCE_FILES   	boxjenkins.c
 					wavelib.c
                     )
 
-set(HEADER_FILES    boxjenkins.h   	
+set(HEADER_FILES    boxcox.h
+					boxjenkins.h   	
 					brent.h		
 					conjgrad.h
 					conv.h
@@ -61,6 +64,7 @@ set(HEADER_FILES    boxjenkins.h
 					secant.h
 					spectrum.h
 					stats.h
+					stl.h
 					talg.h
 					errors.h
 					unitroot.h

@@ -1027,861 +1027,491 @@ void ppsum(double* u, int n, int l, double* sum)
   (*sum) += tmp1;
 }
 
-/*
+/* Common Block Declarations */
 
-STL routines converted to C using f2c and then modified to integrate with
-the rest of the code.
+struct spans_1_ {
+    double spans[3];
+};
 
-c     
-c     from netlib/a/stl: no authorship nor copyright claim in the source;
-c     presumably by the authors of 
-c     
-c     R.B. Cleveland, W.S.Cleveland, J.E. McRae, and I. Terpenning,
-c     STL: A Seasonal-Trend Decomposition Procedure Based on Loess, 
-c     Statistics Research Report, AT&T Bell Laboratories.
-c     
-c     Converted to double precision by B.D. Ripley 1999.
-c     Indented, goto labels renamed, many goto's replaced by `if then {else}'
-c     (using Emacs), many more comments;  by M.Maechler 2001-02.
-c     
+#define spans_1 (*(struct spans_1_ *) &spans_)
 
-*/
+struct consts_1_ {
+    double big, sml, eps;
+};
 
-void stl_(double *y, int *n, int *np, int *ns, int *nt, int *nl, int *isdeg, int *itdeg, int *
-	ildeg, int *nsjump, int *ntjump, int *nljump, int *ni, int *no, double *rw, double *season, double *trend, 
-	double *work)
-{
-    /* System generated locals */
-    int work_dim1, work_offset, i__1;
+#define consts_1 (*(struct consts_1_ *) &consts_)
 
-    /* Local variables */
-    int i__, k, newnl, newnp, newns, newnt;
-	int userw;
+/* Initialized data */
 
-/* Arg */
-/* 	n                   : length(y) */
-/* 	ns, nt, nl          : spans        for `s', `t' and `l' smoother */
-/* 	isdeg, itdeg, ildeg : local degree for `s', `t' and `l' smoother */
-/* 	nsjump,ntjump,nljump: ........     for `s', `t' and `l' smoother */
-/*       ni, no              : number of inner and outer (robust) iterations */
-/* Var */
-    /* Parameter adjustments */
-    --trend;
-    --season;
-    --rw;
-    --y;
-    work_dim1 = *n + 2 * *np;
-    work_offset = 1 + work_dim1;
-    work -= work_offset;
+struct {
+    double e_1[3];
+    } spans_ = { .05f, .2f, .5f };
 
-    /* Function Body */
-    userw = 0;
-    i__1 = *n;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	trend[i__] = 0.0;
-/* L1: */
-    }
-/* the three spans must be at least three and odd: */
-    newns = imax(3,*ns);
-    newnt = imax(3,*nt);
-    newnl = imax(3,*nl);
-    if (newns % 2 == 0) {
-	++newns;
-    }
-    if (newnt % 2 == 0) {
-	++newnt;
-    }
-    if (newnl % 2 == 0) {
-	++newnl;
-    }
-/* periodicity at least 2: */
-    newnp = imax(2,*np);
-    k = 0;
-/* --- outer loop -- robustnes iterations */
-L100:
-    stlstp_(&y[1], n, &newnp, &newns, &newnt, &newnl, isdeg, itdeg, ildeg, 
-	    nsjump, ntjump, nljump, ni, &userw, &rw[1], &season[1], &trend[1],
-	     &work[work_offset]);
-    ++k;
-    if (k > *no) {
-	goto L10;
-    }
-    i__1 = *n;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	work[i__ + work_dim1] = trend[i__] + season[i__];
-/* L3: */
-    }
-    stlrwt_(&y[1], n, &work[work_dim1 + 1], &rw[1]);
-    userw = 1;
-    goto L100;
-/* --- end Loop */
-L10:
-/*     robustness weights when there were no robustness iterations: */
-    if (*no <= 0) {
-	i__1 = *n;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    rw[i__] = 1.0;
-/* L15: */
-	}
-    }
-} 
+struct {
+    double e_1[3];
+    } consts_ = { 1e20f, 1e-7f, .001f };
 
-int stless_(double *y, int *n, int *len, int *ideg, int *njump, int *userw, double *rw, double *ys,
-	 double *res)
-{
-    /* System generated locals */
-    int i__1, i__2, i__3;
-    double d__1;
-
-    /* Local variables */
-    int i__, j, k;
-    int ok;
-    int nsh;
-    double delta;
-    int nleft, newnj, nright;
-
-/* Arg */
-/* Var */
-    /* Parameter adjustments */
-    --res;
-    --ys;
-    --rw;
-    --y;
-
-    /* Function Body */
-    if (*n < 2) {
-	ys[1] = y[1];
-	return 0;
-    }
-/* Computing MIN */
-    i__1 = *njump, i__2 = *n - 1;
-    newnj = imin(i__1,i__2);
-    if (*len >= *n) {
-	nleft = 1;
-	nright = *n;
-	i__1 = *n;
-	i__2 = newnj;
-	for (i__ = 1; i__2 < 0 ? i__ >= i__1 : i__ <= i__1; i__ += i__2) {
-	    d__1 = (double) i__;
-	    stlest_(&y[1], n, len, ideg, &d__1, &ys[i__], &nleft, &nright, &
-		    res[1], userw, &rw[1], &ok);
-	    if (! ok) {
-		ys[i__] = y[i__];
-	    }
-/* L20: */
-	}
-    } else {
-	if (newnj == 1) {
-	    nsh = (*len + 1) / 2;
-	    nleft = 1;
-	    nright = *len;
-	    i__2 = *n;
-	    for (i__ = 1; i__ <= i__2; ++i__) {
-		if (i__ > nsh && nright != *n) {
-		    ++nleft;
-		    ++nright;
-		}
-		d__1 = (double) i__;
-		stlest_(&y[1], n, len, ideg, &d__1, &ys[i__], &nleft, &nright,
-			 &res[1], userw, &rw[1], &ok);
-		if (! ok) {
-		    ys[i__] = y[i__];
-		}
-/* L30: */
-	    }
-	} else {
-	    nsh = (*len + 1) / 2;
-	    i__2 = *n;
-	    i__1 = newnj;
-	    for (i__ = 1; i__1 < 0 ? i__ >= i__2 : i__ <= i__2; i__ += i__1) {
-		if (i__ < nsh) {
-		    nleft = 1;
-		    nright = *len;
-		} else if (i__ >= *n - nsh + 1) {
-		    nleft = *n - *len + 1;
-		    nright = *n;
-		} else {
-		    nleft = i__ - nsh + 1;
-		    nright = *len + i__ - nsh;
-		}
-		d__1 = (double) i__;
-		stlest_(&y[1], n, len, ideg, &d__1, &ys[i__], &nleft, &nright,
-			 &res[1], userw, &rw[1], &ok);
-		if (! ok) {
-		    ys[i__] = y[i__];
-		}
-/* L40: */
-	    }
-	}
-    }
-    if (newnj != 1) {
-	i__1 = *n - newnj;
-	i__2 = newnj;
-	for (i__ = 1; i__2 < 0 ? i__ >= i__1 : i__ <= i__1; i__ += i__2) {
-	    delta = (ys[i__ + newnj] - ys[i__]) / (double) newnj;
-	    i__3 = i__ + newnj - 1;
-	    for (j = i__ + 1; j <= i__3; ++j) {
-		ys[j] = ys[i__] + delta * (double) (j - i__);
-/* L47: */
-	    }
-/* L45: */
-	}
-	k = (*n - 1) / newnj * newnj + 1;
-	if (k != *n) {
-	    d__1 = (double) (*n);
-	    stlest_(&y[1], n, len, ideg, &d__1, &ys[*n], &nleft, &nright, &
-		    res[1], userw, &rw[1], &ok);
-	    if (! ok) {
-		ys[*n] = y[*n];
-	    }
-	    if (k != *n - 1) {
-		delta = (ys[*n] - ys[k]) / (double) (*n - k);
-		i__2 = *n - 1;
-		for (j = k + 1; j <= i__2; ++j) {
-		    ys[j] = ys[k] + delta * (double) (j - k);
-/* L55: */
-		}
-	    }
-	}
-    }
-	return 0;
-} /* stless_ */
-
-int stlest_(double *y, int *n, int *len, int *ideg, double *xs, double *ys, int *nleft, int *
-	nright, double *w, int *userw, double *rw, int *ok)
+static int smooth_(int *n, double *x, double *y, double *w, double *span, int *iper, double *vsmlsq, double *smo, double *acvr)
 {
     /* System generated locals */
     int i__1;
-    double d__1, d__2;
-
+    double r__1;
+    double d__1;
 
     /* Local variables */
-    double a, b, c__, h__;
-    int j;
-    double r__, h1, h9, range;
+    double a, h__;
+    int i__, j, j0, in, it;
+    double xm, ym, wt, sy, fbo, fbw;
+    int ibw;
+    double var, tmp;
+    double xti;
+    int out;
+    double xto;
+    double cvar;
+    int jper;
 
-/* Arg */
-/* Var */
     /* Parameter adjustments */
-    --rw;
+    --acvr;
+    --smo;
     --w;
     --y;
-
-    /* Function Body */
-    range = (double) (*n) - 1.;
-/* Computing MAX */
-    d__1 = *xs - (double) (*nleft), d__2 = (double) (*nright) - *xs;
-    h__ = pmax(d__1,d__2);
-    if (*len > *n) {
-	h__ += (double) ((*len - *n) / 2);
-    }
-    h9 = h__ * .999;
-    h1 = h__ * .001;
-    a = 0.0;
-    i__1 = *nright;
-    for (j = *nleft; j <= i__1; ++j) {
-	r__ = (d__1 = (double) j - *xs, fabs(d__1));
-	if (r__ <= h9) {
-	    if (r__ <= h1) {
-		w[j] = 1.0;
-	    } else {
-/* Computing 3rd power */
-		d__2 = r__ / h__;
-/* Computing 3rd power */
-		d__1 = 1.f - d__2 * (d__2 * d__2);
-		w[j] = d__1 * (d__1 * d__1);
-	    }
-	    if (*userw) {
-		w[j] = rw[j] * w[j];
-	    }
-	    a += w[j];
-	} else {
-	    w[j] = 0.0;
-	}
-/* L60: */
-    }
-    if (a <= 0.0) {
-	*ok = 0;
-    } else {
-	*ok = 1;
-	i__1 = *nright;
-	for (j = *nleft; j <= i__1; ++j) {
-	    w[j] /= a;
-/* L69: */
-	}
-	if (h__ > 0.f && *ideg > 0) {
-	    a = 0.f;
-	    i__1 = *nright;
-	    for (j = *nleft; j <= i__1; ++j) {
-		a += w[j] * (double) j;
-/* L73: */
-	    }
-	    b = *xs - a;
-	    c__ = 0.0;
-	    i__1 = *nright;
-	    for (j = *nleft; j <= i__1; ++j) {
-/* Computing 2nd power */
-		d__1 = (double) j - a;
-		c__ += w[j] * (d__1 * d__1);
-/* L75: */
-	    }
-	    if (sqrt(c__) > range * .001) {
-		b /= c__;
-		i__1 = *nright;
-		for (j = *nleft; j <= i__1; ++j) {
-		    w[j] *= b * ((double) j - a) + 1.0;
-/* L79: */
-		}
-	    }
-	}
-	*ys = 0.0;
-	i__1 = *nright;
-	for (j = *nleft; j <= i__1; ++j) {
-	    *ys += w[j] * y[j];
-/* L81: */
-	}
-    }
-    return 0;
-} /* stlest_ */
-
-int stlfts_(double *x, int *n, int *np, double *trend, double *work)
-{
-    /* System generated locals */
-    int i__1;
-	int c__3 = 3;
-
-    /* Parameter adjustments */
-    --work;
-    --trend;
     --x;
 
     /* Function Body */
-    stlma_(&x[1], n, np, &trend[1]);
-    i__1 = *n - *np + 1;
-    stlma_(&trend[1], &i__1, np, &work[1]);
-    i__1 = *n - (*np << 1) + 2;
-    stlma_(&work[1], &i__1, &c__3, &trend[1]);
-    return 0;
-} /* stlfts_ */
-
-int stlma_(double *x, int *n, int *len, double *ave)
-{
-    /* System generated locals */
-    int i__1;
-
-    /* Local variables */
-    int i__, j, k, m;
-    double v, flen;
-    int newn;
-
-/* Moving Average (aka "running mean") */
-/* ave(i) := mean(x{j}, j = max(1,i-k),..., min(n, i+k)) */
-/*           for i = 1,2,..,n */
-/* Arg */
-/* Var */
-    /* Parameter adjustments */
-    --ave;
-    --x;
-
-    /* Function Body */
-    newn = *n - *len + 1;
-    flen = (double) (*len);
-    v = 0.0;
-    i__1 = *len;
+    xm = 0.f;
+    ym = xm;
+    var = ym;
+    cvar = var;
+    fbw = cvar;
+    jper = iabs(*iper);
+    ibw = *span * .5 * *n + .5;
+    if (ibw < 2) {
+	ibw = 2;
+    }
+    it = (ibw << 1) + 1;
+    i__1 = it;
     for (i__ = 1; i__ <= i__1; ++i__) {
-	v += x[i__];
-/* L3: */
-    }
-    ave[1] = v / flen;
-    if (newn > 1) {
-	k = *len;
-	m = 0;
-	i__1 = newn;
-	for (j = 2; j <= i__1; ++j) {
-	    ++k;
-	    ++m;
-	    v = v - x[m] + x[k];
-	    ave[j] = v / flen;
-/* L7: */
+	j = i__;
+	if (jper == 2) {
+	    j = i__ - ibw - 1;
 	}
+	xti = x[j];
+	if (j >= 1) {
+	    goto L10;
+	}
+	j = *n + j;
+	xti = x[j] - 1.0;
+L10:
+	wt = w[j];
+	fbo = fbw;
+	fbw += wt;
+	if (fbw > 0.0) {
+	    xm = (fbo * xm + wt * xti) / fbw;
+	}
+	if (fbw > 0.0) {
+	    ym = (fbo * ym + wt * y[j]) / fbw;
+	}
+	tmp = 0.0;
+	if (fbo > 0.0) {
+	    tmp = fbw * wt * (xti - xm) / fbo;
+	}
+	var += tmp * (xti - xm);
+	cvar += tmp * (y[j] - ym);
+/* L20: */
     }
-    return 0;
-} /* stlma_ */
-
-int stlstp_(double *y, int *n, int *np, int *ns, int *nt, int *nl, int *isdeg, int *itdeg, int 
-	*ildeg, int *nsjump, int *ntjump, int *nljump, int *ni, int *userw, double *rw, double *season,
-	double *trend, double *work)
-{
-    /* System generated locals */
-    int work_dim1, work_offset, i__1, i__2;
-
-    /* Local variables */
-    int i__, j;
-	int c_false = 0;
-
-/* Arg */
-/* Var */
-    /* Parameter adjustments */
-    --trend;
-    --season;
-    --rw;
-    --y;
-    work_dim1 = *n + 2 * *np;
-    work_offset = 1 + work_dim1;
-    work -= work_offset;
-
-    /* Function Body */
-    i__1 = *ni;
+    i__1 = *n;
     for (j = 1; j <= i__1; ++j) {
-	i__2 = *n;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    work[i__ + work_dim1] = y[i__] - trend[i__];
-/* L1: */
+	out = j - ibw - 1;
+	in = j + ibw;
+	if (jper != 2 && (out < 1 || in > *n)) {
+	    goto L60;
 	}
-	stlss_(&work[work_dim1 + 1], n, np, ns, isdeg, nsjump, userw, &rw[1], 
-		&work[(work_dim1 << 1) + 1], &work[work_dim1 * 3 + 1], &work[(
-		work_dim1 << 2) + 1], &work[work_dim1 * 5 + 1], &season[1]);
-	i__2 = *n + (*np << 1);
-	stlfts_(&work[(work_dim1 << 1) + 1], &i__2, np, &work[work_dim1 * 3 + 
-		1], &work[work_dim1 + 1]);
-	stless_(&work[work_dim1 * 3 + 1], n, nl, ildeg, nljump, &c_false, &
-		work[(work_dim1 << 2) + 1], &work[work_dim1 + 1], &work[
-		work_dim1 * 5 + 1]);
-	i__2 = *n;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    season[i__] = work[*np + i__ + (work_dim1 << 1)] - work[i__ + 
-		    work_dim1];
-/* L3: */
+	if (out >= 1) {
+	    goto L30;
 	}
-	i__2 = *n;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    work[i__ + work_dim1] = y[i__] - season[i__];
-/* L5: */
+	out = *n + out;
+	xto = x[out] - 1.0;
+	xti = x[in];
+	goto L50;
+L30:
+	if (in <= *n) {
+	    goto L40;
 	}
-	stless_(&work[work_dim1 + 1], n, nt, itdeg, ntjump, userw, &rw[1], &
-		trend[1], &work[work_dim1 * 3 + 1]);
-/* L80: */
+	in -= *n;
+	xti = x[in] + 1.0;
+	xto = x[out];
+	goto L50;
+L40:
+	xto = x[out];
+	xti = x[in];
+L50:
+	wt = w[out];
+	fbo = fbw;
+	fbw -= wt;
+	tmp = 0.0;
+	if (fbw > 0.0) {
+	    tmp = fbo * wt * (xto - xm) / fbw;
+	}
+	var -= tmp * (xto - xm);
+	cvar -= tmp * (y[out] - ym);
+	if (fbw > 0.0) {
+	    xm = (fbo * xm - wt * xto) / fbw;
+	}
+	if (fbw > 0.0) {
+	    ym = (fbo * ym - wt * y[out]) / fbw;
+	}
+	wt = w[in];
+	fbo = fbw;
+	fbw += wt;
+	if (fbw > 0.0) {
+	    xm = (fbo * xm + wt * xti) / fbw;
+	}
+	if (fbw > 0.0) {
+	    ym = (fbo * ym + wt * y[in]) / fbw;
+	}
+	tmp = 0.0;
+	if (fbo > 0.0) {
+	    tmp = fbw * wt * (xti - xm) / fbo;
+	}
+	var += tmp * (xti - xm);
+	cvar += tmp * (y[in] - ym);
+L60:
+	a = 0.0;
+	if (var > *vsmlsq) {
+	    a = cvar / var;
+	}
+	smo[j] = a * (x[j] - xm) + ym;
+	if (*iper <= 0) {
+	    goto L80;
+	}
+	h__ = 0.0;
+	if (fbw > 0.0) {
+	    h__ = 1.0 / fbw;
+	}
+	if (var > *vsmlsq) {
+/* Computing 2nd power */
+	    d__1 = x[j] - xm;
+	    h__ += d__1 * d__1 / var;
+	}
+	acvr[j] = 0.0;
+	a = 1.0 - w[j] * h__;
+	if (a <= 0.0) {
+	    goto L70;
+	}
+	acvr[j] = (r__1 = y[j] - smo[j], fabs(r__1)) / a;
+	goto L80;
+L70:
+	if (j <= 1) {
+	    goto L80;
+	}
+	acvr[j] = acvr[j - 1];
+L80:
+	;
+    }
+    j = 1;
+L90:
+    j0 = j;
+    sy = smo[j] * w[j];
+    fbw = w[j];
+    if (j >= *n) {
+	goto L110;
+    }
+L100:
+    if (x[j + 1] > x[j]) {
+	goto L110;
+    }
+    ++j;
+    sy += w[j] * smo[j];
+    fbw += w[j];
+    if (j < *n) {
+	goto L100;
+    }
+L110:
+    if (j <= j0) {
+	goto L130;
+    }
+    a = 0.0;
+    if (fbw > 0.0) {
+	a = sy / fbw;
+    }
+    i__1 = j;
+    for (i__ = j0; i__ <= i__1; ++i__) {
+	smo[i__] = a;
+/* L120: */
+    }
+L130:
+    ++j;
+    if (j <= *n) {
+	goto L90;
     }
     return 0;
-} /* stlstp_ */
+} /* smooth_ */
 
-int stlrwt_(double *y, int *n, double *fit, double *rw)
+
+static int supsmu_(int *n, double *x, double *y, double *w, int *iper, double *span, double *alpha, double *smo, double *sc)
 {
     /* System generated locals */
-    int i__1;
+    int sc_dim1, sc_offset, i__1;
+    double r__1, r__2;
     double d__1, d__2;
 
     /* Local variables */
-    int i__;
-    double r__, c1, c9;
-    int mid[2];
-    double cmad;
-	int c__2 = 2;
+    double a, f, h__;
+    int i__, j;
+    double sw, sy;
+    int jper;
+    double scale, resmin;
+    double vsmlsq;
 
-/* Robustness Weights */
-/* 	rw_i := B( |y_i - fit_i| / (6 M) ),   i = 1,2,...,n */
-/* 		where B(u) = (1 - u^2)^2  * 1[|u| < 1]   {Tukey's biweight} */
-/* 		and   M := median{ |y_i - fit_i| } */
-/* Arg */
-/* Var */
+
+/* ------------------------------------------------------------------ */
+
+/* super-smoother. */
+
+/* Friedman J.H. (1984). A variable span smoother. Department of Statistics, */
+/*    Stanford University, Technical Report LCS5. */
+
+/* version 10/10/84. */
+
+/* coded  and copyright (c) 1984 by: */
+
+/*                        Jerome H. Friedman */
+/*                     Department of Statistics */
+/*                               and */
+/*                Stanford Linear Accelerator Center */
+/*                        Stanford University */
+
+/* all rights reserved. */
+
+
+/* input: */
+/*    n : number of observations (x,y - pairs). */
+/*    x(n) : ordered abscissa values. */
+/*    y(n) : corresponding ordinate (response) values. */
+/*    w(n) : weight for each (x,y) observation. */
+/*    iper : periodic variable flag. */
+/*       iper=1 => x is ordered interval variable. */
+/*       iper=2 => x is a periodic variable with values */
+/*                 in the range (0.0,1.0) and period 1.0. */
+/*    span : smoother span (fraction of observations in window). */
+/*           span=0.0 => automatic (variable) span selection. */
+/*    alpha : controles high frequency (small span) penality */
+/*            used with automatic span selection (bass tone control). */
+/*            (alpha.le.0.0 or alpha.gt.10.0 => no effect.) */
+/* output: */
+/*   smo(n) : smoothed ordinate (response) values. */
+/* scratch: */
+/*   sc(n,7) : internal working storage. */
+
+/* note: */
+/*    for small samples (n < 40) or if there are substantial serial */
+/*    correlations between obserations close in x - value, then */
+/*    a prespecified fixed span smoother (span > 0) should be */
+/*    used. reasonable span values are 0.2 to 0.4. */
+
+/* ------------------------------------------------------------------ */
+
     /* Parameter adjustments */
-    --rw;
-    --fit;
+    sc_dim1 = *n;
+    sc_offset = 1 + sc_dim1;
+    sc -= sc_offset;
+    --smo;
+    --w;
     --y;
+    --x;
 
     /* Function Body */
+    if (x[*n] > x[1]) {
+	goto L30;
+    }
+    sy = 0.0;
+    sw = sy;
     i__1 = *n;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	rw[i__] = (d__1 = y[i__] - fit[i__], fabs(d__1));
-/* L7: */
-    }
-    mid[0] = *n / 2 + 1;
-    mid[1] = *n - mid[0] + 1;
-    psort_(&rw[1], *n, mid, c__2);
-    cmad = (rw[mid[0]] + rw[mid[1]]) * 3.0;
-/*     = 6 * MAD */
-    c9 = cmad * .999;
-    c1 = cmad * .001;
-    i__1 = *n;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	r__ = (d__1 = y[i__] - fit[i__], fabs(d__1));
-	if (r__ <= c1) {
-	    rw[i__] = 1.f;
-	} else if (r__ <= c9) {
-/* Computing 2nd power */
-	    d__2 = r__ / cmad;
-/* Computing 2nd power */
-	    d__1 = 1.f - d__2 * d__2;
-	    rw[i__] = d__1 * d__1;
-	} else {
-	    rw[i__] = 0.0;
-	}
-/* L10: */
-    }
-    return 0;
-} /* stlrwt_ */
-
-int stlss_(double *y, int *n, int *np, int *ns, int *isdeg, int *nsjump, int *userw, double *rw, 
-	double *season, double *work1, double *work2, double *work3, double *work4)
-{
-    /* System generated locals */
-    int i__1, i__2, i__3;
-	int c__1 = 1;
-
-    /* Local variables */
-    int i__, j, k, m;
-    int ok;
-    double xs;
-    int nleft, nright;
-
-/* 	called by stlstp() at the beginning of each (inner) iteration */
-
-/* Arg */
-/* Var */
-    /* Parameter adjustments */
-    --work4;
-    --work3;
-    --work2;
-    --work1;
-    --rw;
-    --y;
-    --season;
-
-    /* Function Body */
-    if (*np < 1) {
-	return 0;
-    }
-    i__1 = *np;
     for (j = 1; j <= i__1; ++j) {
-	k = (*n - j) / *np + 1;
-	i__2 = k;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    work1[i__] = y[(i__ - 1) * *np + j];
+	sy += w[j] * y[j];
+	sw += w[j];
 /* L10: */
-	}
-	if (*userw) {
-	    i__2 = k;
-	    for (i__ = 1; i__ <= i__2; ++i__) {
-		work3[i__] = rw[(i__ - 1) * *np + j];
-/* L12: */
-	    }
-	}
-	stless_(&work1[1], &k, ns, isdeg, nsjump, userw, &work3[1], &work2[2],
-		 &work4[1]);
-	xs = 0.;
-	nright = imin(*ns,k);
-	stlest_(&work1[1], &k, ns, isdeg, &xs, &work2[1], &c__1, &nright, &
-		work4[1], userw, &work3[1], &ok);
-	if (! ok) {
-	    work2[1] = work2[2];
-	}
-	xs = (double) (k + 1);
-/* Computing MAX */
-	i__2 = 1, i__3 = k - *ns + 1;
-	nleft = imax(i__2,i__3);
-	stlest_(&work1[1], &k, ns, isdeg, &xs, &work2[k + 2], &nleft, &k, &
-		work4[1], userw, &work3[1], &ok);
-	if (! ok) {
-	    work2[k + 2] = work2[k + 1];
-	}
-	i__2 = k + 2;
-	for (m = 1; m <= i__2; ++m) {
-	    season[(m - 1) * *np + j] = work2[m];
-/* L18: */
-	}
-/* L200: */
+    }
+    a = 0.0;
+    if (sw > 0.0) {
+	a = sy / sw;
+    }
+    i__1 = *n;
+    for (j = 1; j <= i__1; ++j) {
+	smo[j] = a;
+/* L20: */
     }
     return 0;
-} /* stlss_ */
-
-
-void stlez_(double *y, int *n, int *np, int *ns, int *isdeg, int *itdeg,int *robust, int *no, 
-	double *rw, double *season, double *trend, double *work)
-{
-    /* System generated locals */
-    int work_dim1, work_offset, i__1, i__2;
-    double d__1;
-
-    /* Local variables */
-    int i__, j, ni, nl, nt;
-    double difs, dift, mins, mint, maxs, maxt;
-    int ildeg;
-    double maxds, maxdt;
-    int newnp, newns, nljump, nsjump, ntjump;
-	int c_false = 0;
-	int c_true = 1;
-
-		// Robust
-
-/* Arg */
-/* Var */
-    /* Parameter adjustments */
-    --trend;
-    --season;
-    --rw;
-    --y;
-    work_dim1 = *n + 2 * *np;
-    work_offset = 1 + work_dim1;
-    work -= work_offset;
-
-    /* Function Body */
-    ildeg = *itdeg;
-    newns = imax(3,*ns);
-    if (newns % 2 == 0) {
-	++newns;
+L30:
+    i__ = *n / 4;
+    j = i__ * 3;
+    scale = x[j] - x[i__];
+L40:
+    if (scale > 0.f) {
+	goto L50;
     }
-    newnp = imax(2,*np);
-    nt = newnp * 1.5 / (1 - 1.5 / newns) + .5;
-    nt = imax(3,nt);
-    if (nt % 2 == 0) {
-	++nt;
+    if (j < *n) {
+	++j;
     }
-    nl = newnp;
-    if (nl % 2 == 0) {
-	++nl;
+    if (i__ > 1) {
+	--i__;
     }
-    if (*robust) {
-	ni = 1;
-    } else {
-	ni = 2;
+    scale = x[j] - x[i__];
+    goto L40;
+L50:
+/* Computing 2nd power */
+    r__1 = consts_1.eps * scale;
+    vsmlsq = r__1 * r__1;
+    jper = *iper;
+    if (*iper == 2 && (x[1] < 0.0 || x[*n] > 1.0)) {
+	jper = 1;
     }
-/* Computing MAX */
-    i__1 = 1, i__2 = (int) ((double) newns / 10 + .9);
-    nsjump = imax(i__1,i__2);
-/* Computing MAX */
-    i__1 = 1, i__2 = (int) ((double) nt / 10 + .9);
-    ntjump = imax(i__1,i__2);
-/* Computing MAX */
-    i__1 = 1, i__2 = (int) ((double) nl / 10 + .9);
-    nljump = imax(i__1,i__2);
+    if (jper < 1 || jper > 2) {
+	jper = 1;
+    }
+    if (*span <= 0.0) {
+	goto L60;
+    }
+    smooth_(n, &x[1], &y[1], &w[1], span, &jper, &vsmlsq, &smo[1], &sc[
+	    sc_offset]);
+    return 0;
+L60:
+    for (i__ = 1; i__ <= 3; ++i__) {
+	smooth_(n, &x[1], &y[1], &w[1], &spans_1.spans[i__ - 1], &jper, &
+		vsmlsq, &sc[((i__ << 1) - 1) * sc_dim1 + 1], &sc[sc_dim1 * 7 
+		+ 1]);
+	i__1 = -jper;
+	smooth_(n, &x[1], &sc[sc_dim1 * 7 + 1], &w[1], &spans_1.spans[1], &
+		i__1, &vsmlsq, &sc[(i__ << 1) * sc_dim1 + 1], &h__);
+/* L70: */
+    }
     i__1 = *n;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	trend[i__] = 0.0;
-/* L2: */
+    for (j = 1; j <= i__1; ++j) {
+	resmin = consts_1.big;
+	for (i__ = 1; i__ <= 3; ++i__) {
+	    if (sc[j + (i__ << 1) * sc_dim1] >= resmin) {
+		goto L80;
+	    }
+	    resmin = sc[j + (i__ << 1) * sc_dim1];
+	    sc[j + sc_dim1 * 7] = spans_1.spans[i__ - 1];
+L80:
+	    ;
+	}
+	if (*alpha > 0.f && *alpha <= 10.f && resmin < sc[j + sc_dim1 * 6] && 
+		resmin > 0.f) {
+/* Computing MAX */
+	    r__1 = consts_1.sml, r__2 = resmin / sc[j + sc_dim1 * 6];
+	    d__1 = (double) pmax(r__1,r__2);
+	    d__2 = (double) (10.0 - *alpha);
+	    sc[j + sc_dim1 * 7] += (spans_1.spans[2] - sc[j + sc_dim1 * 7]) * 
+		    pow(d__1, d__2);
+	}
+/* L90: */
     }
-    stlstp_(&y[1], n, &newnp, &newns, &nt, &nl, isdeg, itdeg, &ildeg, &nsjump,
-	     &ntjump, &nljump, &ni, &c_false, &rw[1], &season[1], &trend[1], &
-	    work[work_offset]);
-    *no = 0;
-    if (*robust) {
-	j = 1;
-/*        Loop  --- 15 robustness iterations */
-L100:
-	if (j <= 15) {
-	    i__1 = *n;
-	    for (i__ = 1; i__ <= i__1; ++i__) {
-		work[i__ + work_dim1 * 6] = season[i__];
-		work[i__ + work_dim1 * 7] = trend[i__];
-		work[i__ + work_dim1] = trend[i__] + season[i__];
-/* L35: */
-	    }
-	    stlrwt_(&y[1], n, &work[work_dim1 + 1], &rw[1]);
-	    stlstp_(&y[1], n, &newnp, &newns, &nt, &nl, isdeg, itdeg, &ildeg, 
-		    &nsjump, &ntjump, &nljump, &ni, &c_true, &rw[1], &season[
-		    1], &trend[1], &work[work_offset]);
-	    ++(*no);
-	    maxs = work[work_dim1 * 6 + 1];
-	    mins = work[work_dim1 * 6 + 1];
-	    maxt = work[work_dim1 * 7 + 1];
-	    mint = work[work_dim1 * 7 + 1];
-	    maxds = (d__1 = work[work_dim1 * 6 + 1] - season[1], fabs(d__1));
-	    maxdt = (d__1 = work[work_dim1 * 7 + 1] - trend[1], fabs(d__1));
-	    i__1 = *n;
-	    for (i__ = 2; i__ <= i__1; ++i__) {
-		if (maxs < work[i__ + work_dim1 * 6]) {
-		    maxs = work[i__ + work_dim1 * 6];
-		}
-		if (maxt < work[i__ + work_dim1 * 7]) {
-		    maxt = work[i__ + work_dim1 * 7];
-		}
-		if (mins > work[i__ + work_dim1 * 6]) {
-		    mins = work[i__ + work_dim1 * 6];
-		}
-		if (mint > work[i__ + work_dim1 * 7]) {
-		    mint = work[i__ + work_dim1 * 7];
-		}
-		difs = (d__1 = work[i__ + work_dim1 * 6] - season[i__], fabs(
-			d__1));
-		dift = (d__1 = work[i__ + work_dim1 * 7] - trend[i__], fabs(
-			d__1));
-		if (maxds < difs) {
-		    maxds = difs;
-		}
-		if (maxdt < dift) {
-		    maxdt = dift;
-		}
-/* L137: */
-	    }
-	    if (maxds / (maxs - mins) < .01 && maxdt / (maxt - mint) < .01) 
-		    {
-		goto L300;
-	    }
-/* L151: */
-	    ++j;
+    i__1 = -jper;
+    smooth_(n, &x[1], &sc[sc_dim1 * 7 + 1], &w[1], &spans_1.spans[1], &i__1, &
+	    vsmlsq, &sc[(sc_dim1 << 1) + 1], &h__);
+    i__1 = *n;
+    for (j = 1; j <= i__1; ++j) {
+	if (sc[j + (sc_dim1 << 1)] <= spans_1.spans[0]) {
+	    sc[j + (sc_dim1 << 1)] = spans_1.spans[0];
+	}
+	if (sc[j + (sc_dim1 << 1)] >= spans_1.spans[2]) {
+	    sc[j + (sc_dim1 << 1)] = spans_1.spans[2];
+	}
+	f = sc[j + (sc_dim1 << 1)] - spans_1.spans[1];
+	if (f >= 0.f) {
 	    goto L100;
 	}
-/*        end Loop */
-L300:
+	f = -f / (spans_1.spans[1] - spans_1.spans[0]);
+	sc[j + (sc_dim1 << 2)] = (1.f - f) * sc[j + sc_dim1 * 3] + f * sc[j + 
+		sc_dim1];
+	goto L110;
+L100:
+	f /= spans_1.spans[2] - spans_1.spans[1];
+	sc[j + (sc_dim1 << 2)] = (1.f - f) * sc[j + sc_dim1 * 3] + f * sc[j + 
+		sc_dim1 * 5];
+L110:
 	;
-    } else {
-/*     	.not. robust */
-	i__1 = *n;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    rw[i__] = 1.0;
-/* L150: */
-	}
     }
-} 
-
-int psort_(double *a, int n, int *ind, int ni)
-{
-    int i__, j, k, l, m, p;
-    double t;
-    int ij, il[16], jl, iu[16], ju;
-    int tt;
-    int indl[16], indu[16];
+    i__1 = -jper;
+    smooth_(n, &x[1], &sc[(sc_dim1 << 2) + 1], &w[1], spans_1.spans, &i__1, &
+	    vsmlsq, &smo[1], &h__);
+    return 0;
+} /* supsmu_ */
 
 
-/* Partial Sorting ; used for Median (MAD) computation only */
+/* --------------------------------------------------------------- */
 
-/* Arg */
-/* Var */
-    /* Parameter adjustments */
-    --a;
-    --ind;
+/* this sets the compile time (default) values for various */
+/* internal parameters : */
 
-    /* Function Body */
-    if (n < 0 || ni < 0) {
-	return 0;
-    }
-    if (n < 2 || ni == 0) {
-	return 0;
-    }
-    jl = 1;
-    ju = ni;
-    indl[0] = 1;
-    indu[0] = ni;
-    i__ = 1;
-    j = n;
-    m = 1;
-/* Outer Loop */
-L161:
-    if (i__ < j) {
-	goto L10;
-    }
-/*  _Loop_ */
-L166:
-    --m;
-    if (m == 0) {
-	return 0;
-    }
-    i__ = il[m - 1];
-    j = iu[m - 1];
-    jl = indl[m - 1];
-    ju = indu[m - 1];
-    if (! (jl <= ju)) {
-	goto L166;
-    }
-/*     while (j - i > 10) */
-L173:
-    if (! (j - i__ > 10)) {
-	goto L174;
-    }
-L10:
-    k = i__;
-    ij = (i__ + j) / 2;
-    t = a[ij];
-    if (a[i__] > t) {
-	a[ij] = a[i__];
-	a[i__] = t;
-	t = a[ij];
-    }
-    l = j;
-    if (a[j] < t) {
-	a[ij] = a[j];
-	a[j] = t;
-	t = a[ij];
-	if (a[i__] > t) {
-	    a[ij] = a[i__];
-	    a[i__] = t;
-	    t = a[ij];
+/* spans : span values for the three running linear smoothers. */
+/* spans(1) : tweeter span. */
+/* spans(2) : midrange span. */
+/* spans(3) : woofer span. */
+/* (these span values should be changed only with care.) */
+/* big : a large representable floating point number. */
+/* sml : a small number. should be set so that (sml)**(10.0) does */
+/*       not cause floating point underflow. */
+/* eps : used to numerically stabilize slope calculations for */
+/*       running linear fits. */
+
+/* these parameter values can be changed by declaring the */
+/* relevant labeled common in the main program and resetting */
+/* them with executable statements. */
+
+/* ----------------------------------------------------------------- */
+
+void supsmu(double *x, int N, double *y,double *w, int periodic,double span, double alpha,double *oup) {
+	/* input: */
+	/*    N : number of observations (x,y - pairs). */
+	/*    x(N) : ordered abscissa values. */
+	/*    y(N) : corresponding ordinate (response) values. */
+	/*    w(N) : weight for each (x,y) observation. set to NULL if all weights are equal. */
+	/*    periodic : periodic variable flag. */
+	/*       iper=1 => x is ordered interval variable. */
+	/*       iper=2 => x is a periodic variable with values */
+	/*                 in the range (0.0,1.0) and period 1.0. */
+	/*    span : smoother span (fraction of observations in window). */
+	/*           span=0.0 => automatic (variable) span selection. */
+	/*    alpha : controles high frequency (small span) penality */
+	/*            used with automatic span selection (bass tone control). */
+	/*            (alpha.le.0.0 or alpha.gt.10.0 => no effect.). Set to -1.0 */
+	/* output: */
+	/*   oup(N) : smoothed ordinate (response) values. */
+	double *sc,*weights;
+	int iper,i;
+
+	sc = (double*)calloc(N*7,sizeof(double));
+
+	if (periodic == 1 || periodic == 2) {
+		iper = periodic;
+	} else {
+		printf("periodic only takes two values - 1 or 2 \n");
+		printf(" 1 : x is ordered interval variable \n");
+		printf("2 : x is a periodic variable with values in the range (0.0,1.0) and period 1.0.\n");
+		exit(-1);
 	}
-    }
-L181:
-    --l;
-    if (a[l] <= t) {
-	tt = a[l];
-L186:
-	++k;
-/* L187: */
-	if (! (a[k] >= t)) {
-	    goto L186;
+
+	if (span < 0.0 || span > 1.0) {
+		printf("The fractional data span to use (0 <= span < 1).If specified, then use the given fixed span.\n");
+        printf("If set to zero (default) then use a variable span.\n");
+		exit(-1);
 	}
-	if (k > l) {
-	    goto L183;
+
+	if (w == NULL) {
+		weights = (double*)calloc(N,sizeof(double));
+		for(i = 0; i < N;++i) {
+			weights[i] = 1.0;
+		}
+		supsmu_(&N, x, y, weights, &iper, &span, &alpha, oup, sc);
+		free(weights);
+	} else {
+		supsmu_(&N, x, y, w, &iper, &span, &alpha, oup, sc);
 	}
-	a[l] = a[k];
-	a[k] = tt;
-    }
-/* L182: */
-    goto L181;
-L183:
-    indl[m - 1] = jl;
-    indu[m - 1] = ju;
-    p = m;
-    ++m;
-    if (l - i__ <= j - k) {
-	il[p - 1] = k;
-	iu[p - 1] = j;
-	j = l;
-L193:
-	if (jl > ju) {
-	    goto L166;
-	}
-	if (ind[ju] > j) {
-	    --ju;
-	    goto L193;
-	}
-	indl[p - 1] = ju + 1;
-    } else {
-	il[p - 1] = i__;
-	iu[p - 1] = l;
-	i__ = k;
-L200:
-	if (jl > ju) {
-	    goto L166;
-	}
-	if (ind[jl] < i__) {
-	    ++jl;
-	    goto L200;
-	}
-	indu[p - 1] = jl - 1;
-    }
-    goto L173;
-/*     end while */
-L174:
-    if (i__ != 1) {
-	--i__;
-L209:
-	++i__;
-	if (i__ == j) {
-	    goto L166;
-	}
-	t = a[i__ + 1];
-	if (a[i__] > t) {
-	    k = i__;
-/*           repeat */
-L216:
-	    a[k + 1] = a[k];
-	    --k;
-	    if (! (t >= a[k])) {
-		goto L216;
-	    }
-/*           until  t >= a(k) */
-	    a[k + 1] = t;
-	}
-	goto L209;
-    }
-    goto L161;
-/* End Outer Loop */
-} /* psort_ */
+
+	
+
+	free(sc);
+}
