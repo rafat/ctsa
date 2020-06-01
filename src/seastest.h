@@ -22,6 +22,8 @@ void modstl(double *x, int N, int f, int *s_window,double *lambda, double *seaso
 
 void mstl(double *x, int N, int *f, int *Nseas, int *s_window,double *lambda,int *iterate, double **seasonal, double *trend,double *remainder);
 
+void SHtest(double *x, int N, int *f, int Nseas, double *season);
+
 #ifdef __cplusplus
 }
 #endif

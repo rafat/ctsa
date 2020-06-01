@@ -417,7 +417,8 @@ void ocsbtest2() {
 void airpassengerstest() {
 	int N = 144;
 	int differencing_term;
-	double stats,crit;
+	double stats,crit,critsh;
+	double season[1] = {0.0};
 	double x[144] = {112, 118, 132, 129, 121, 135, 148, 148, 136, 119, 104, 118,
         115, 126, 141, 135, 125, 149, 170, 170, 158, 133, 114, 140,
         145, 150, 178, 163, 172, 178, 199, 199, 184, 162, 146, 166,
@@ -433,7 +434,7 @@ void airpassengerstest() {
 	
 	int i;
 	const char *method = "aic";
-
+	int Nseas = 1;
 	int f = 12;
 	int lags = 3;
 	int mlags = 3;
@@ -442,14 +443,21 @@ void airpassengerstest() {
 
 	differencing_term = stats > crit ? 1 : 0;
 
-	printf("Differencing Term %d \n",differencing_term);
+	printf("OCSB Differencing Term %d stats %g crit %g \n",differencing_term,stats,crit);
+
+	critsh = 0.64;
+
+	SHtest(x,N,&f,Nseas,season);
+
+	printf("SH Differencing Term %d season %g crit %g \n",differencing_term,*season,critsh);
 
 }
 
 void ausbeertest() {
 	int N = 211;
 	int differencing_term;
-	double stats,crit;
+	double stats,crit,critsh;
+	double season[1] = {0.0};
 	double x[211] = {284., 213., 227., 308.,
                      262., 228., 236., 320.,
                      272., 233., 237., 313.,
@@ -506,7 +514,7 @@ void ausbeertest() {
 	
 	int i;
 	const char *method = "aicc";
-
+	int Nseas = 1;
 	int f = 4;
 	int lags = 3;
 	int mlags = 3;
@@ -515,7 +523,13 @@ void ausbeertest() {
 
 	differencing_term = stats > crit ? 1 : 0;
 
-	printf("Differencing Term %d \n",differencing_term);
+	printf("OCSB Differencing Term %d stats %g crit %g \n",differencing_term,stats,crit);
+
+	critsh = 0.64;
+
+	SHtest(x,N,&f,Nseas,season);
+
+	printf("SH Differencing Term %d season %g crit %g \n",differencing_term,*season,critsh);
 
 }
 
@@ -926,6 +940,32 @@ void supersmoothertest() {
 	free(oup);
 }
 
+void shtest() {
+	int N = 32;
+	int differencing_term,Nseas;
+	double crit;
+	double *season;
+	double x[32] = {-50, 175, 149, 214, 247, 237, 225, 329, 729, 809,
+       530, 489, 540, 457, 195, 176, 337, 239, 128, 102, 232, 429, 3,
+       98, 43, -141, -77, -13, 125, 361, -45, 184};
+	
+	int i;
+	int f = 2;
+	
+	Nseas = 1;
+	crit = 0.64;
+
+	season = (double*) malloc(sizeof(double)*Nseas);
+
+	SHtest(x,N,&f,Nseas,season);
+
+	differencing_term = *season > crit ? 1 : 0;
+
+	printf("stat %g Differencing Term %d \n",*season,differencing_term);
+
+	free(season);
+}
+
 int main() {
     //errortests();
 	//llstest();
@@ -942,7 +982,7 @@ int main() {
 	//ocsbtest();
 	//ocsbtest2();
 	//airpassengerstest();
-	//ausbeertest();
+	ausbeertest();
 	//sunspotstest();
 	//psorttest();
 	//stltest();
@@ -952,6 +992,7 @@ int main() {
 	//supersmoothertest();
 	//modstltest();
 	//modstltest2();
-	mstltest();
+	//mstltest();
+	//shtest();
     return 0;
 }

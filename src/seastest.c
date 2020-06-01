@@ -54,7 +54,7 @@ void decompose(double *x,int N, int f,double *filter, const char *type, double *
 
     convolve("valid","direct",x,N,filt,f,cout);
 
-    mdisplay(cout,1,clen);
+    //mdisplay(cout,1,clen);
 
     if (!isOdd) {
         clen--;
@@ -73,7 +73,7 @@ void decompose(double *x,int N, int f,double *filter, const char *type, double *
         }
     }
 
-    mdisplay(detrend,1,clen);
+    //mdisplay(detrend,1,clen);
 
     findMeans(detrend,clen,f,seasonalmeans);
 
@@ -345,7 +345,7 @@ void mstl(double *x, int N, int *f, int *Nseas, int *s_window,double *lambda,int
                     deseas[k] += seas[iter+k];
                 }
                 freq = (int) msts[i];
-                stl(deseas,N,freq,"null",s_window,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,seas+iter,trend,remainder);
+                stl(deseas,N,freq,"null",&s_window_,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,seas+iter,trend,remainder);
                 for(k = 0; k < N;++k) {
                     deseas[k] -= seas[iter+k];
                 }
@@ -634,7 +634,7 @@ void OCSBtest(double *x, int N, int f, int mlags, const char *method,double *sta
         for(i = 1; i <= mlags;++i) {
             list[i-1] = fitOCSB(x,N,f,i,mlags);
             icvals[i-1] = getCVal(list[i-1],method);
-            printf("icvals %g",icvals[i-1]);
+            //printf("icvals %g",icvals[i-1]);
         }
 
         allnans = checkAllNans(icvals,mlags);
@@ -667,7 +667,7 @@ void OCSBtest(double *x, int N, int f, int mlags, const char *method,double *sta
 
     fit = fitOCSB(x,N,f,maxlag,maxlag);
 
-    printf("\n\n%d\n\n",fit->rank);
+    //printf("\n\n%d\n\n",fit->rank);
 
     if (fit->rank != fit->p && fit->rank == fit->rank) {
         if (crit_reg == NULL) {
@@ -684,7 +684,7 @@ void OCSBtest(double *x, int N, int f, int mlags, const char *method,double *sta
 		tval[i] = (fit->beta+i)->value/(fit->beta+i)->stdErr;
 	}
 
-    mdisplay(tval,1,fit->p);
+    //mdisplay(tval,1,fit->p);
 
     for(i = 0; i < mlags;++i) {
 		free_reg(list[i]);
@@ -696,4 +696,41 @@ void OCSBtest(double *x, int N, int f, int mlags, const char *method,double *sta
     free(list);
     free(icvals);
     free(tval);
+}
+
+void SHtest(double *x, int N, int *f, int Nseas, double *season) {
+    int i,j;
+    double **seasonal, *trend, *remainder, *vari;
+    double vare,tmp1;
+
+    seasonal = (double**)calloc(Nseas,sizeof(double*));
+    for(i = 0; i < Nseas;++i) {
+        seasonal[i] = (double*)calloc(N,sizeof(double));
+    }
+    trend = (double*)calloc(N,sizeof(double));
+    remainder = (double*)calloc(N,sizeof(double));
+    vari = (double*)calloc(N,sizeof(double));
+
+    mstl(x, N,f,&Nseas,NULL,NULL,NULL,seasonal,trend,remainder);
+
+    vare = var(remainder,N);
+
+    for(j = 0; j < Nseas; ++j) {
+
+        for(i = 0; i < N;++i) {
+            vari[i] = remainder[i] + seasonal[j][i];
+        }
+
+        tmp1 = 1.0 - vare/var(vari,N);
+
+        tmp1 = tmp1 < 1 ? tmp1 : 1;
+
+        season[j] = tmp1 > 0 ? tmp1 : 0;
+
+    }
+
+    free(seasonal);
+    free(trend);
+    free(remainder);
+    free(vari);
 }
