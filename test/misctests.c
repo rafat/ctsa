@@ -250,7 +250,7 @@ void interpolatetest2() {
 	sort1d_ascending(tablei,4,pos);
 
 	for(i = 0; i < 4; ++i) {
-		printf(" %d ",pos[i]);
+		printf(" %d %g %g",pos[i],tablei[i],tablei[pos[i]]);
 	}
 
 
@@ -616,6 +616,229 @@ void stltest() {
 	free(remainder);
 }
 
+void modstltest() {
+	double x[144] = {112, 118, 132, 129, 121, 135, 148, 148, 136, 119, 104, 118,
+        115, 126, 141, 135, 125, 149, 170, 170, 158, 133, 114, 140,
+        145, 150, 178, 163, 172, 178, 199, 199, 184, 162, 146, 166,
+        171, 180, 193, 181, 183, 218, 230, 242, 209, 191, 172, 194,
+        196, 196, 236, 235, 229, 243, 264, 272, 237, 211, 180, 201,
+        204, 188, 235, 227, 234, 264, 302, 293, 259, 229, 203, 229,
+        242, 233, 267, 269, 270, 315, 364, 347, 312, 274, 237, 278,
+        284, 277, 317, 313, 318, 374, 413, 405, 355, 306, 271, 306,
+        315, 301, 356, 348, 355, 422, 465, 467, 404, 347, 305, 336,
+        340, 318, 362, 348, 363, 435, 491, 505, 404, 359, 310, 337,
+        360, 342, 406, 396, 420, 472, 548, 559, 463, 407, 362, 405,
+        417, 391, 419, 461, 472, 535, 622, 606, 508, 461, 390, 432
+	};
+
+	int N = 144;
+	int f = 12;
+	double *seasonal,*trend,*remainder;
+	int s_window = 13;
+	double lambda;
+
+	seasonal = (double*)calloc(N,sizeof(double));
+	trend = (double*)calloc(N,sizeof(double));
+	remainder = (double*)calloc(N,sizeof(double));
+
+	//stl(x,N,f,s_window_type,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,seasonal,trend,remainder);
+
+	modstl(x,N,f,&s_window,NULL,seasonal,trend,remainder);
+
+	mdisplay(seasonal,1,N);
+	mdisplay(trend,1,N);
+	mdisplay(remainder,1,N);
+	free(seasonal);
+	free(trend);
+	free(remainder);
+}
+
+void modstltest2() {
+	int N = 211;
+	double x[211] = {284., 213., 227., 308.,
+                     262., 228., 236., 320.,
+                     272., 233., 237., 313.,
+                     261., 227., 250., 314.,
+                     286., 227., 260., 311.,
+                     295., 233., 257., 339.,
+                     279., 250., 270., 346.,
+                     294., 255., 278., 363.,
+                     313., 273., 300., 370.,
+                     331., 288., 306., 386.,
+                     335., 288., 308., 402.,
+                     353., 316., 325., 405.,
+                     393., 319., 327., 442.,
+                     383., 332., 361., 446.,
+                     387., 357., 374., 466.,
+                     410., 370., 379., 487.,
+                     419., 378., 393., 506.,
+                     458., 387., 427., 565.,
+                     465., 445., 450., 556.,
+                     500., 452., 435., 554.,
+                     510., 433., 453., 548.,
+                     486., 453., 457., 566.,
+                     515., 464., 431., 588.,
+                     503., 443., 448., 555.,
+                     513., 427., 473., 526.,
+                     548., 440., 469., 575.,
+                     493., 433., 480., 576.,
+                     475., 405., 435., 535.,
+                     453., 430., 417., 552.,
+                     464., 417., 423., 554.,
+                     459., 428., 429., 534.,
+                     481., 416., 440., 538.,
+                     474., 440., 447., 598.,
+                     467., 439., 446., 567.,
+                     485., 441., 429., 599.,
+                     464., 424., 436., 574.,
+                     443., 410., 420., 532.,
+                     433., 421., 410., 512.,
+                     449., 381., 423., 531.,
+                     426., 408., 416., 520.,
+                     409., 398., 398., 507.,
+                     432., 398., 406., 526.,
+                     428., 397., 403., 517.,
+                     435., 383., 424., 521.,
+                     421., 402., 414., 500.,
+                     451., 380., 416., 492.,
+                     428., 408., 406., 506.,
+                     435., 380., 421., 490.,
+                     435., 390., 412., 454.,
+                     416., 403., 408., 482.,
+                     438., 386., 405., 491.,
+                     427., 383., 394., 473.,
+                     420., 390., 410.};
+	int f = 4;
+	double *seasonal,*trend,*remainder;
+	int s_window = 13;
+	double lambda;
+
+	seasonal = (double*)calloc(N,sizeof(double));
+	trend = (double*)calloc(N,sizeof(double));
+	remainder = (double*)calloc(N,sizeof(double));
+
+	//stl(x,N,f,s_window_type,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,seasonal,trend,remainder);
+
+	modstl(x,N,f,&s_window,NULL,seasonal,trend,remainder);
+
+	mdisplay(seasonal,1,N);
+	mdisplay(trend,1,N);
+	mdisplay(remainder,1,N);
+	free(seasonal);
+	free(trend);
+	free(remainder);
+}
+
+void mstltest2() {
+	double x[144] = {112, 118, 132, 129, 121, 135, 148, 148, 136, 119, 104, 118,
+        115, 126, 141, 135, 125, 149, 170, 170, 158, 133, 114, 140,
+        145, 150, 178, 163, 172, 178, 199, 199, 184, 162, 146, 166,
+        171, 180, 193, 181, 183, 218, 230, 242, 209, 191, 172, 194,
+        196, 196, 236, 235, 229, 243, 264, 272, 237, 211, 180, 201,
+        204, 188, 235, 227, 234, 264, 302, 293, 259, 229, 203, 229,
+        242, 233, 267, 269, 270, 315, 364, 347, 312, 274, 237, 278,
+        284, 277, 317, 313, 318, 374, 413, 405, 355, 306, 271, 306,
+        315, 301, 356, 348, 355, 422, 465, 467, 404, 347, 305, 336,
+        340, 318, 362, 348, 363, 435, 491, 505, 404, 359, 310, 337,
+        360, 342, 406, 396, 420, 472, 548, 559, 463, 407, 362, 405,
+        417, 391, 419, 461, 472, 535, 622, 606, 508, 461, 390, 432
+	};
+
+	int N = 144,i,j;
+	int Nseas = 1;
+	int f[1] = {12};
+	int iterate = 2;
+	double **seasonal,*trend,*remainder;
+	int s_window = 13;
+	double lambda;
+
+	seasonal = (double**)calloc(Nseas,sizeof(double*));
+	trend = (double*)calloc(N,sizeof(double));
+	remainder = (double*)calloc(N,sizeof(double));
+
+	for(i = 0; i < Nseas;++i) {
+		seasonal[i] = (double*)calloc(N,sizeof(double));
+	}
+
+	mstl(x, N,f,&Nseas,&s_window,NULL,&iterate,seasonal,trend,remainder);
+
+	for(i = 0; i < Nseas;++i) {
+		printf("\n Seasonal%d :\n",f[i]);
+		for(j = 0; j < N;++j) {
+			printf("%g ",seasonal[i][j]);
+		}
+		printf("\n\n");
+	}
+
+	mdisplay(trend,1,N);
+	mdisplay(remainder,1,N);
+	free(seasonal);
+	free(trend);
+	free(remainder);
+}
+
+void mstltest() {
+	FILE *ifp;
+	double temp[5000];
+	double *x;
+    ifp = fopen("../data/taylor.txt", "r");
+	int N;
+	int i,j;
+
+	if (!ifp) {
+		printf("Cannot Open File");
+		exit(100);
+	}
+	while (!feof(ifp)) {
+		fscanf(ifp, "%lf \n", &temp[i]);
+		i++;
+	}
+
+	N = i;
+
+	printf("N %d \n",N);
+
+	x = (double*) malloc(sizeof(double)*N);
+
+	for(i = 0; i < N;++i) {
+		x[i] = temp[i];
+	}
+	int Nseas = 2;
+	int f[2] = {48,336};
+	int iterate = 2;
+	double **seasonal,*trend,*remainder;
+	int s_window = 13;
+	double lambda;
+
+	seasonal = (double**)calloc(Nseas,sizeof(double*));
+	trend = (double*)calloc(N,sizeof(double));
+	remainder = (double*)calloc(N,sizeof(double));
+
+	for(i = 0; i < Nseas;++i) {
+		seasonal[i] = (double*)calloc(N,sizeof(double));
+	}
+
+	mstl(x, N,f,&Nseas,&s_window,NULL,&iterate,seasonal,trend,remainder);
+
+	for(i = 0; i < Nseas;++i) {
+		printf("\n Seasonal%d :\n",f[i]);
+		for(j = 0; j < N;++j) {
+			printf("%g ",seasonal[i][j]);
+		}
+		printf("\n\n");
+	}
+
+	mdisplay(trend,1,N);
+	mdisplay(remainder,1,N);
+
+	printf("\n %g %g %g %g \n",x[0],x[1],x[N-2],x[N-1]);
+	free(seasonal);
+	free(trend);
+	free(remainder);
+	free(x);
+	fclose(ifp);
+}
+
 static void nulls(double *x, int *N) {
 	if (x == NULL) {
 		//*x = 4.5;
@@ -726,6 +949,9 @@ int main() {
 	//nulltest();
 	//epstest();
 	//boxcoxtest();
-	supersmoothertest();
+	//supersmoothertest();
+	//modstltest();
+	//modstltest2();
+	mstltest();
     return 0;
 }

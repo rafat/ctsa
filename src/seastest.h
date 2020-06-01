@@ -18,6 +18,10 @@ void OCSBtest(double *x, int N, int f, int mlags, const char *method,double *sta
 void stl(double *x,int N,int f, const char *s_window_type,int *s_window, int *s_degree, int *t_window, int *t_degree,int *l_window,int *l_degree,
     int *s_jump, int *t_jump, int *l_jump, int *robust,int *inner, int *outer,double *seasonal,double *trend, double *remainder);
 
+void modstl(double *x, int N, int f, int *s_window,double *lambda, double *seasonal, double *trend,double *remainder);
+
+void mstl(double *x, int N, int *f, int *Nseas, int *s_window,double *lambda,int *iterate, double **seasonal, double *trend,double *remainder);
+
 #ifdef __cplusplus
 }
 #endif

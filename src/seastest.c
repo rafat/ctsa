@@ -266,6 +266,126 @@ void stl(double *x,int N,int f, const char *s_window_type,int *s_window, int *s_
     free(seas_cycle);
 }
 
+void modstl(double *x, int N, int f, int *s_window,double *lambda, double *seasonal, double *trend,double *remainder) {
+    int i, s_window_;
+    double *y,*t;
+
+
+    s_window_ = (s_window == NULL) ? 13 : *s_window;
+
+    y = (double*)malloc(sizeof(double)*N);
+
+    if (lambda != NULL) {
+        boxcox(x,N,lambda,y);
+    } else {
+        memcpy(y,x,sizeof(double)*N);
+    }
+
+    if (f > 1) {
+        stl(y,N,f,"null",&s_window_,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,seasonal,trend,remainder);
+    } else {
+        t = (double*) malloc(sizeof(double)*N);
+        for(i = 0; i < N;++i) {
+            t[i] = i;
+        }
+        supsmu(t,N,y,NULL,1,0,-1.0,trend);
+        for(i = 0; i < N;++i) {
+            seasonal[i] = 0.0;
+            remainder[i] = y[i] - trend[i];
+        }
+        free(t);
+    }
+
+    free(y);
+}
+
+void mstl(double *x, int N, int *f, int *Nseas, int *s_window,double *lambda,int *iterate, double **seasonal, double *trend,double *remainder) {
+    int i,j,k,s_window_,Niter,iterate_,iter,freq;
+    double *y,*t,*deseas;
+    double *msts,*seas;
+    int *pos;
+
+    Niter = 0;
+
+    s_window_ = (s_window == NULL) ? 13 : *s_window;
+    iterate_ = (iterate == NULL) ? 2 : *iterate;
+
+    y = (double*)malloc(sizeof(double)*N);
+
+    if (lambda != NULL) {
+        boxcox(x,N,lambda,y);
+    } else {
+        memcpy(y,x,sizeof(double)*N);
+    }
+
+    msts = (double*)malloc(sizeof(double)*(*Nseas));
+
+    for(i = 0; i < *Nseas;++i) {
+        if (f[i] < N / 2) {
+            msts[Niter] = (double) f[i];
+            Niter++;
+        }
+    }
+
+    pos = (int*)malloc(sizeof(int)*Niter);
+
+    sort1d_ascending(msts,Niter,pos);
+
+    if (Niter > 0) {
+
+        seas = (double*)calloc(Niter*N,sizeof(double));
+        deseas = (double*)calloc(N,sizeof(double));
+
+        memcpy(deseas,y,sizeof(double)*N);
+
+        for(j = 0; j < iterate_;++j) {
+            for(i = 0; i < Niter;++i) {
+                iter = i * N;
+                for(k = 0; k < N;++k) {
+                    deseas[k] += seas[iter+k];
+                }
+                freq = (int) msts[i];
+                stl(deseas,N,freq,"null",s_window,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,seas+iter,trend,remainder);
+                for(k = 0; k < N;++k) {
+                    deseas[k] -= seas[iter+k];
+                }
+                f[i] = freq;
+            }
+        }
+
+        for(i = 0; i < N;++i) {
+            remainder[i] = deseas[i] - trend[i];
+        }
+        for(i = 0; i < Niter;++i) {
+            iter = i * N;
+            for(j = 0; j < N;++j) {
+                seasonal[i][j] = seas[iter+j];
+            }
+        }
+
+        *Nseas = Niter;
+
+        free(seas);
+        free(deseas);
+    } else {
+        t = (double*) malloc(sizeof(double)*N);
+        for(i = 0; i < N;++i) {
+            t[i] = i;
+        }
+        supsmu(t,N,y,NULL,1,0,-1.0,trend);
+        for(i = 0; i < N;++i) {
+            remainder[i] = y[i] - trend[i];
+        }
+        *Nseas = 0;
+        free(t);
+    }
+
+
+    free(y);
+    free(pos);
+    free(msts);
+}
+
 static double calcOCSBCritVal(int f) {
     double log_f,seasonal;
 
