@@ -1,6 +1,7 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-set(SOURCE_FILES   	boxcox.c
+set(SOURCE_FILES   	autoutils.c
+					boxcox.c
 					boxjenkins.c
 					brent.c
 					conjgrad.c
@@ -37,7 +38,8 @@ set(SOURCE_FILES   	boxcox.c
 					wavelib.c
                     )
 
-set(HEADER_FILES    boxcox.h
+set(HEADER_FILES    autoutils.h
+					boxcox.h
 					boxjenkins.h   	
 					brent.h		
 					conjgrad.h

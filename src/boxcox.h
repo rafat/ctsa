@@ -8,6 +8,8 @@
 extern "C" {
 #endif
 
+int checkConstant(double *x, int N);
+
 void boxcox_eval(double *x, int N, double lambda,double *bxcx);
 
 double inv_boxcox_eval(double *x,int N, double lambda,double *bxcx);

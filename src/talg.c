@@ -1009,7 +1009,7 @@ void ppsum(double* u, int n, int l, double* sum)
   int i, j;
   double tmp1, tmp2;
 
-  printf("%d %d %g \n ",n,l,*sum);
+  //printf("%d %d %g \n ",n,l,*sum);
   
   tmp1 = 0.0;
   for (i=1; i<= l; i++)

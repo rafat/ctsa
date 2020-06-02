@@ -1,6 +1,6 @@
 #include "boxcox.h"
 
-static int checkConstant(double *x, int N) {
+int checkConstant(double *x, int N) {
     int i, cc;
     double diff;
     cc = 0;

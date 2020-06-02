@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "../src/errors.h"
-#include "../src/seastest.h"
+#include "../src/autoutils.h"
 
 void llsptest() {
 	int M, N,p,ret,i;
@@ -271,12 +271,11 @@ void urdf_test() {
 		0.4351815, -0.3259316, 1.148808, 0.9935039, 0.548397, 0.2387317, -0.6279061, 1.360652, -0.6002596, 2.187333, 1.532611, -0.2357004, -1.026421 };
 	
 	N = 100;
-	k = -1;
 	const char* alternative = "stationary";
 
-	ur_df(x,N,alternative,&k,&stat,&pval);
+	ur_df(x,N,alternative,NULL,&stat,&pval);
 
-	printf("Lag %d Stats %g PVAL %g \n",k,stat,pval);
+	printf("Stats %g PVAL %g \n",stat,pval);
 }
 
 void urkpss_test() {
@@ -297,9 +296,9 @@ void urkpss_test() {
 	const char* type = "Level";
 	lshort = 1;
 
-	ur_kpss(x,N,type,lshort,&k, &stat,&pval);
+	ur_kpss(x,N,type,lshort,NULL, &stat,&pval);
 
-	printf("Lag %d Stats %g PVAL %g \n",k,stat,pval);
+	printf("Stats %g PVAL %g \n",stat,pval);
 }
 
 void urpp_test() {
@@ -321,9 +320,9 @@ void urpp_test() {
 	const char* alternative = "stationary";
 	lshort = 1;
 
-	ur_pp(x,N,alternative,type,lshort,&k, &stat,&pval);
+	ur_pp(x,N,alternative,type,lshort,NULL, &stat,&pval);
 
-	printf("Lag %d Stats %g PVAL %g \n",k,stat,pval);
+	printf("Stats %g PVAL %g \n",stat,pval);
 }
 
 void decomposetest() {
@@ -966,6 +965,52 @@ void shtest() {
 	free(season);
 }
 
+void nsdiffstest() {
+	double x[144] = {112, 118, 132, 129, 121, 135, 148, 148, 136, 119, 104, 118,
+        115, 126, 141, 135, 125, 149, 170, 170, 158, 133, 114, 140,
+        145, 150, 178, 163, 172, 178, 199, 199, 184, 162, 146, 166,
+        171, 180, 193, 181, 183, 218, 230, 242, 209, 191, 172, 194,
+        196, 196, 236, 235, 229, 243, 264, 272, 237, 211, 180, 201,
+        204, 188, 235, 227, 234, 264, 302, 293, 259, 229, 203, 229,
+        242, 233, 267, 269, 270, 315, 364, 347, 312, 274, 237, 278,
+        284, 277, 317, 313, 318, 374, 413, 405, 355, 306, 271, 306,
+        315, 301, 356, 348, 355, 422, 465, 467, 404, 347, 305, 336,
+        340, 318, 362, 348, 363, 435, 491, 505, 404, 359, 310, 337,
+        360, 342, 406, 396, 420, 472, 548, 559, 463, 407, 362, 405,
+        417, 391, 419, 461, 472, 535, 622, 606, 508, 461, 390, 432
+	};
+
+	int N = 144;
+	int f = 12;
+	double alpha = 0.05;
+	const char *test = "seas";
+	int max_D = 1;
+	int D;
+
+	//d = ndiffs(x,N,&alpha,test,&max_d);
+
+	D = nsdiffs(x,N,f,&alpha,test,&max_D);
+
+	printf("%d \n",D);
+}
+
+void ndiffstest() {
+	double x[144] = {-50, 175, 149, 214, 247, 237, 225, 329, 729, 809,
+       530, 489, 540, 457, 195, 176, 337, 239, 128, 102, 232, 429, 3,
+       98, 43, -141, -77, -13, 125, 361, -45, 184
+	};
+
+	int N = 32;
+	double alpha = 0.05;
+	const char *test = "pp";
+	int max_d = 2;
+	int d;
+
+	d = ndiffs(x,N,&alpha,test,&max_d);
+
+	printf("%d \n",d);
+}
+
 int main() {
     //errortests();
 	//llstest();
@@ -982,7 +1027,7 @@ int main() {
 	//ocsbtest();
 	//ocsbtest2();
 	//airpassengerstest();
-	ausbeertest();
+	//ausbeertest();
 	//sunspotstest();
 	//psorttest();
 	//stltest();
@@ -994,5 +1039,7 @@ int main() {
 	//modstltest2();
 	//mstltest();
 	//shtest();
+	//ndiffstest();
+	nsdiffstest();
     return 0;
 }

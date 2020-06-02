@@ -6,6 +6,17 @@
 */
 
 void ur_df(double *y, int N,const char* alternative, int *klag, double *statistic,double *pval) {
+    /*
+    y - Time Series data of length N
+    alternative - "stationary" or "explosive"
+
+    klag - Length of the lag. Uses pow((double)N - 1.0, 1.0/3.0) if klag == NULL
+    Outputs
+
+    statistic - Test statistic
+    pval - p-value used to determine null hypothesis
+
+    */
     int lag,lags,N1,i,j,N2,p,k,pN,tN,Nout,iter;
     double *x,*z,*res,*XX,*Y,*tt,*varcovar,*tablep;
     reg_object fit;
@@ -20,11 +31,7 @@ void ur_df(double *y, int N,const char* alternative, int *klag, double *statisti
     tN = 6;
     Nout = 50;
 
-    if (*klag < 0) {
-        lags = (int) pow((double)N - 1.0, 1.0/3.0);
-    } else {
-        lags = *klag;
-    }
+    lags = (klag == NULL) ? (int) pow((double)N - 1.0, 1.0/3.0) : *klag;
 
     alpha = 0.95;
     lag = lags;
@@ -98,7 +105,7 @@ void ur_df(double *y, int N,const char* alternative, int *klag, double *statisti
         exit(-1);
     }
 
-    *klag = lags - 1;
+    if (klag != NULL) *klag = lags - 1;
     
 
     free(z);
@@ -113,6 +120,19 @@ void ur_df(double *y, int N,const char* alternative, int *klag, double *statisti
 }
 
 void ur_kpss(double *y, int N,const char* type,int lshort, int *klag, double *statistic,double *pval) {
+    /*
+    y - Time Series data of length N
+    type - "Level" or "Trend"
+    lshort - determines the length of lag used. lshort = 1 => lag = 4.0 * pow(((double) N)/100.0,0.25)
+    else lag = 12.0 * pow(((double) N)/100.0,0.25). It can be bypassed by parameter klag
+    klag - Length of the lag. Set it to > 0 instead of NULL if you wnat it to bypass lshort. Set it to NULL or negative otherwise
+
+    Outputs
+
+    statistic - Test statistic
+    pval - p-value used to determine null hypothesis
+
+    */
     int i,p,l;
     double *tt,*res,*table,*varcovar,*csum;
     double alpha,eta,s2,ylo,yhi;
@@ -166,6 +186,10 @@ void ur_kpss(double *y, int N,const char* type,int lshort, int *klag, double *st
         l = (int) 12.0 * pow(((double) N)/100.0,0.25);
     }
 
+    if (klag != NULL && *klag > 0) {
+        l = *klag;
+    }
+
     ppsum(res,N,l,&s2);
 
     *statistic = eta/s2;
@@ -174,7 +198,7 @@ void ur_kpss(double *y, int N,const char* type,int lshort, int *klag, double *st
 
     *pval = interpolate_linear(table,tablep,4,*statistic);
 
-    *klag = l;
+    if (klag != NULL) *klag = l;
 
     free(table);
     free(tt);
@@ -185,6 +209,20 @@ void ur_kpss(double *y, int N,const char* type,int lshort, int *klag, double *st
 }
 
 void ur_pp(double *y, int N,const char* alternative,const char* type,int lshort, int *klag, double *statistic,double *pval) {
+    /*
+    y - Time Series data of length N
+    alternative - "stationary" or "explosive"
+    type - "Z(alpha)" or "Z(t_alpha)"
+    lshort - determines the length of lag used. lshort = 1 => lag = 4.0 * pow(((double) N)/100.0,0.25)
+    else lag = 12.0 * pow(((double) N)/100.0,0.25). It can be bypassed by parameter klag
+    klag - Length of the lag. Set it to > 0 instead of NULL if you wnat it to bypass lshort. Set it to NULL or negative otherwise
+
+    Outputs
+
+    statistic - Test statistic
+    pval - p-value used to determine null hypothesis
+
+    */
     int i,j,N1,N2,p,l,pN,tN,iter;
     double *z,*yt,*yt1,*tt,*XX,*varcovar,*res,*table,*tablep;
     double at,nssqr_res,trm1,trm2,trm3,trm4,dx,alpha,s2,tstat;
@@ -243,8 +281,8 @@ void ur_pp(double *y, int N,const char* alternative,const char* type,int lshort,
 
     regress(fit,XX,yt,res,varcovar,at);
 
-    summary(fit);
-    anova(fit);
+    //summary(fit);
+    //anova(fit);
 
     nssqr_res = 0.0;
 
@@ -260,6 +298,10 @@ void ur_pp(double *y, int N,const char* alternative,const char* type,int lshort,
         l = (int) 4.0 * pow(((double) N1)/100.0,0.25);
     } else {
         l = (int) 12.0 * pow(((double) N1)/100.0,0.25);
+    }
+
+    if (klag != NULL && *klag > 0) {
+        l = *klag;
     }
 
     ppsum(res,N1,l,&nssqr_res);
@@ -279,7 +321,7 @@ void ur_pp(double *y, int N,const char* alternative,const char* type,int lshort,
 
     dx = trm1-trm2+trm3-trm4;
 
-    printf("dx %g \n",dx);    
+    //printf("dx %g \n",dx);    
 
     if (!strcmp(type,"Z(alpha)")) {
         table = &dftable[0];
@@ -294,15 +336,11 @@ void ur_pp(double *y, int N,const char* alternative,const char* type,int lshort,
         exit(-1);
     }
 
-    printf("stat %g (fit->beta+2)->value %g \n",*statistic,(fit->beta+2)->value);
+    //printf("stat %g (fit->beta+2)->value %g \n",*statistic,(fit->beta+2)->value);
 
-    for(i = 0; i < tN*pN;++i) {
-        printf("%g ",table[i]);
-    }
+    //printf("\n ss1 %g ss2 %g \n",s2,nssqr_res);
 
-    printf("\n ss1 %g ss2 %g \n",s2,nssqr_res);
-
-    *klag = l;
+    if (klag != NULL) *klag = l;
 
     
     for(i = 0; i < pN;++i) {
@@ -312,7 +350,7 @@ void ur_pp(double *y, int N,const char* alternative,const char* type,int lshort,
     
     interp = interpolate_linear(tablep,prob,pN,*statistic);
 
-    printf("interp %g \n",interp);
+    //printf("interp %g \n",interp);
 
     if (!strcmp(alternative,"stationary")) {
         *pval = interp;
