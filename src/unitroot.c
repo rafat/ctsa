@@ -5,6 +5,13 @@
  Adrian Trapletti and Kurt Hornik (2019). tseries: Time Series Analysis and Computational Finance. R package version 0.10-47. 
 */
 
+/* 
+ ur_pp2
+ C version of the R code by
+ Bernhard Pfaff [aut, cre], Eric Zivot [ctb], Matthieu Stigler [ctb]. urca: Unit Root and Cointegration Tests for Time Series Data
+ License Information : https://cran.r-project.org/web/packages/urca/urca.pdf
+*/
+
 void ur_df(double *y, int N,const char* alternative, int *klag, double *statistic,double *pval) {
     /*
     y - Time Series data of length N
@@ -370,4 +377,262 @@ void ur_pp(double *y, int N,const char* alternative,const char* type,int lshort,
     free(varcovar);
     free(res);
     free(tablep);
+}
+
+void ur_pp2(double *x, int N,const char* type,const char* model,int lshort, int *klag,double *cval,double *cprobs, double *auxstat,int *laux,double *teststat) {
+    /* 
+    ur_pp2
+    C version of the R code by
+    Bernhard Pfaff [aut, cre], Eric Zivot [ctb], Matthieu Stigler [ctb]. urca: Unit Root and Cointegration Tests for Time Series Data
+    License Information : https://cran.r-project.org/web/packages/urca/urca.pdf
+    */
+    double *y,*y_li,*trend,*XX,*varcovar,*res,*tt,*coprods,*weights;
+    int *idx;
+    int N1, lmax, i,p, N12,len,iter;
+    double N1d,at,my_tstat,beta_tstat,s,sum_res,sum_ymy,sum_y2,ymean,tstat;
+    double myybar,myy,mty,my,sum_y,sig,lambda,lambda_prime,M,my_stat,beta_stat;
+    reg_object fit;
+
+    N1 = N - 1;
+    y = &x[1];// length N1
+    y_li = &x[0];// Length N1
+
+    if (lshort == 1) {
+        lmax = (int) 4.0 * pow(((double) N1)/100.0,0.25);
+    } else {
+        lmax = (int) 12.0 * pow(((double) N1)/100.0,0.25);
+    }
+
+    if (klag != NULL && *klag > 0) {
+        lmax = *klag;
+    }
+
+    if (!strcmp(model,"trend")) {
+        cval[0] = -3.9638-8.353/N1-47.44/(N1*N1);
+        cval[1] = -3.4126-4.039/N1-17.83/(N1*N1);
+        cval[2] = -3.1279-2.418/N1-7.58/(N1*N1);
+        cprobs[0] = 0.01;
+        cprobs[1] = 0.05;
+        cprobs[2] = 0.1;
+
+        //mdisplay(cval,1,3);
+        trend = (double*)malloc(sizeof(double)*N1);
+        tt = (double*)malloc(sizeof(double)*N1);
+        N1d = (double) N1 / 2.0;
+
+        for(i = 1; i <= N1;++i) {
+            trend[i-1] = (double)i - N1d;
+            tt[i-1] = (double) i;
+        } 
+
+        p = 3;
+        varcovar = (double*)malloc(sizeof(double)*p*p);
+        XX = (double*)malloc(sizeof(double)*2*N1);
+        res = (double*)malloc(sizeof(double)*N1);
+
+        memcpy(XX,y_li,sizeof(double)*N1);
+        memcpy(XX+N1,trend,sizeof(double)*N1);
+
+        at = 0.95;
+
+        fit = reg_init(N1,p);
+
+        regress(fit,XX,y,res,varcovar,at);
+
+        /*summary(fit);
+        anova(fit);
+        mdisplay(res,1,N1);
+        mdisplay(XX,2,N1);
+        mdisplay(y,1,N1);
+        */
+
+        my_tstat = (fit->beta+0)->value/(fit->beta+0)->stdErr;
+        beta_tstat = (fit->beta+2)->value/(fit->beta+2)->stdErr;
+
+        //printf("c1 %g c2 %g \n",my_tstat,beta_tstat);
+
+        sum_res = 0.0;
+        sum_ymy = 0.0;
+        sum_y2 = 0.0;
+        sum_y = 0.0;
+        mty = 0.0;
+
+        ymean = mean(y,N1);
+        N12 = N1 * N1;
+
+        for(i = 0; i < N1;++i) {
+            sum_res += (res[i] *res[i]);
+            sum_ymy += (y[i] - ymean)*(y[i] - ymean);
+            sum_y2 += (y[i] *y[i]);
+            mty += (tt[i]*y[i]);
+            sum_y += y[i];
+        }
+
+        s = 1.0 /(double)N1 * sum_res;
+        myybar = 1.0 / (double) N12 *sum_ymy;
+        myy = 1.0 / (double) N12 *sum_y2;
+        mty = pow((double)N1, -2.5) * mty;
+        my = pow((double)N1, -1.5) * sum_y;
+
+        //printf("c1 %g c2 %g s %g sum_ymy %g sum_y2 %g mty %g my %g \n",my_tstat,beta_tstat,s,myybar,myy,mty,my);
+
+        idx = (int*)malloc(sizeof(int)*lmax);
+        coprods = (double*)malloc(sizeof(double)*lmax);
+        weights = (double*)malloc(sizeof(double)*lmax);
+
+        for(i = 0; i < lmax;++i) {
+            idx[i] = i+1;
+        }
+
+        for(i = 0; i < lmax;++i) {
+            iter = idx[i];
+            len = N1 - iter;
+            mmult(res+iter,res,coprods+i,1,len,1);
+        }
+
+        for(i = 0; i < lmax;++i) {
+            weights[i] = 1.0 - (double) idx[i] / (double) (lmax+1);
+        }
+
+        //mdisplay(weights,1,lmax);
+
+        mmult(weights,coprods,&sig,1,lmax,1);
+
+        sig = s + 2.0 * sig / (double) N1;
+        lambda = 0.5 * (sig - s);
+        lambda_prime = lambda/sig;
+        M = (1-pow((double)N1, -2.0))*myy - 12*mty*mty + 12.0*(1.0 + 1.0/(double)N1)*mty*my - (4 + 6/(double)N1 + 2/(double)(N1*N1))*my*my;
+        my_stat = sqrt(s/sig)*my_tstat - lambda_prime*sqrt(sig)*my/(sqrt(M)*sqrt((M+my*my)));
+        beta_stat = sqrt(s/sig)*beta_tstat - lambda_prime*sqrt(sig)*(0.5*my - mty)/(sqrt(M/12)*sqrt(myybar));
+        auxstat[0] = my_stat;
+        auxstat[1] = beta_stat;
+
+        *laux = 2;
+
+        if (!strcmp(type,"Z-tau")) {
+            tstat = ((fit->beta+1)->value - 1.0)/(fit->beta+1)->stdErr;
+            *teststat = sqrt(s/sig)*tstat-lambda_prime*sqrt(sig)/sqrt(M);
+        } else if (!strcmp(type,"Z-alpha")) {
+            *teststat = (double)N1 * ((fit->beta+1)->value - 1.0) - lambda/M;
+            cval[0] = cval[1] = cval[2] = NAN;
+        }
+
+        //printf("sig %g lambda %g lambda_prime %g M %g my_stat %g beta_stat %g teststat %g \n",sig,lambda,lambda_prime,M,my_stat,beta_stat,*teststat);
+
+
+        free(trend);
+        free(varcovar);
+        free(XX);
+        free(res);
+        free(tt);
+        free(idx);
+        free(coprods);
+        free(weights);
+        free_reg(fit);
+    } else if (!strcmp(model,"constant")) {
+        cval[0] = -3.4335-5.999/(double)N1-29.25/(double)(N1*N1);
+        cval[1] = -2.8621-2.738/(double)N1-8.36/(double)(N1*N1);
+        cval[2] = -2.5671-1.438/(double)N1-4.48/(double)(N1*N1);
+        cprobs[0] = 0.01;
+        cprobs[1] = 0.05;
+        cprobs[2] = 0.1;
+
+        //mdisplay(cval,1,3);
+
+        p = 2;
+        varcovar = (double*)malloc(sizeof(double)*p*p);
+        XX = (double*)malloc(sizeof(double)*N1);
+        res = (double*)malloc(sizeof(double)*N1);
+
+        memcpy(XX,y_li,sizeof(double)*N1);
+
+        at = 0.95;
+
+        fit = reg_init(N1,p);
+
+        regress(fit,XX,y,res,varcovar,at);
+
+        //summary(fit);
+        //anova(fit);
+        //mdisplay(res,1,N1);
+        //mdisplay(XX,2,N1);
+        //mdisplay(y,1,N1);
+
+        my_tstat = (fit->beta+0)->value/(fit->beta+0)->stdErr;
+
+        sum_res = 0.0;
+        sum_ymy = 0.0;
+        sum_y2 = 0.0;
+        sum_y = 0.0;
+
+        ymean = mean(y,N1);
+        N12 = N1 * N1;
+
+        for(i = 0; i < N1;++i) {
+            sum_res += (res[i] *res[i]);
+            sum_ymy += (y[i] - ymean)*(y[i] - ymean);
+            sum_y2 += (y[i] *y[i]);
+            sum_y += y[i];
+        }
+
+        s = 1.0 /(double)N1 * sum_res;
+        myybar = 1.0 / (double) N12 *sum_ymy;
+        myy = 1.0 / (double) N12 *sum_y2;
+        my = pow((double)N1, -1.5) * sum_y;
+
+        //printf("c1 %g s %g sum_ymy %g sum_y2 %g my %g \n",my_tstat,s,myybar,myy,my);
+
+        idx = (int*)malloc(sizeof(int)*lmax);
+        coprods = (double*)malloc(sizeof(double)*lmax);
+        weights = (double*)malloc(sizeof(double)*lmax);
+
+        for(i = 0; i < lmax;++i) {
+            idx[i] = i+1;
+        }
+
+        for(i = 0; i < lmax;++i) {
+            iter = idx[i];
+            len = N1 - iter;
+            mmult(res+iter,res,coprods+i,1,len,1);
+        }
+
+        for(i = 0; i < lmax;++i) {
+            weights[i] = 1.0 - (double) idx[i] / (double) (lmax+1);
+        }
+
+        //mdisplay(coprods,1,lmax);
+
+        //mdisplay(weights,1,lmax);
+
+        mmult(weights,coprods,&sig,1,lmax,1);
+
+        sig = s + 2.0 * sig / (double) N1;
+        lambda = 0.5 * (sig - s);
+        lambda_prime = lambda/sig;
+
+        my_stat = sqrt(s/sig)*my_tstat - lambda_prime*sqrt(sig)*my/(sqrt(myy)*sqrt(myybar));
+        auxstat[0] = my_stat;
+        *laux = 1;
+
+        if (!strcmp(type,"Z-tau")) {
+            tstat = ((fit->beta+1)->value - 1.0)/(fit->beta+1)->stdErr;
+            *teststat = sqrt(s/sig)*tstat-lambda_prime*sqrt(sig)/sqrt(myybar);
+        } else if (!strcmp(type,"Z-alpha")) {
+            *teststat = (double)N1 * ((fit->beta+1)->value - 1.0) - lambda/myybar;
+            cval[0] = cval[1] = cval[2] = NAN;
+        }
+
+        //printf("sig %g lambda %g lambda_prime %g my_stat %g teststat %g \n",sig,lambda,lambda_prime,my_stat,*teststat);
+        
+
+
+
+        free(varcovar);
+        free(XX);
+        free(res);
+        free(idx);
+        free(coprods);
+        free(weights);
+        free_reg(fit);
+    }
 }

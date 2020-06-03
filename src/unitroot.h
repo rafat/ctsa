@@ -13,6 +13,8 @@ void ur_kpss(double *y, int N,const char* type,int lshort, int *klag, double *st
 
 void ur_pp(double *y, int N,const char* alternative,const char* type,int lshort, int *klag, double *statistic,double *pval);
 
+void ur_pp2(double *x, int N,const char* type,const char* model,int lshort, int *klag,double *cval,double *cprobs, double *auxstat,int *laux,double *teststat);
+
 #ifdef __cplusplus
 }
 #endif

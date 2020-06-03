@@ -4,7 +4,12 @@ static int runstattests(double *x, int N, const char * test,double alpha) {
     int diff,klag,lshort;
     const char *alternative;
     const char *type;
+    const char *model;
     double stat, pval;
+    double cval[3] = {0,0,0};
+	double cprobs[3] = {0,0,0};
+	double auxstat[2] = {0,0};
+	int laux,pN;
 
     if (!strcmp(test,"kpss")) {
         type = "Level";
@@ -19,11 +24,14 @@ static int runstattests(double *x, int N, const char * test,double alpha) {
         //printf("ADF stat %g pval %g \n",stat,pval);
         diff = (pval > alpha) ? 1 : 0;
     } else if (!strcmp(test,"pp")) {
-        alternative = "stationary";
-        type = "Z(t_alpha)";
+        model = "constant";
+        type = "Z-tau";
         lshort = 1;
-        ur_pp(x,N,alternative,type,lshort,NULL, &stat,&pval);
-        //printf("PP stat %g pval %g \n",stat,pval);
+        pN = 3;
+        //ur_pp(x,N,alternative,type,lshort,NULL, &stat,&pval);
+        ur_pp2(x,N,type,model,lshort,NULL,cval,cprobs,auxstat,&laux,&stat);
+        pval = interpolate_linear(cval,cprobs,pN,stat);
+        printf("PP stat %g pval %g \n",stat,pval);
         diff = (pval > alpha) ? 1 : 0;
     } else {
         printf("Only three tests are allowed - kpss, df and pp \n");
