@@ -1052,6 +1052,116 @@ void ur_pptest2() {
 	mdisplay(&teststat,1,1);
 }
 
+void ur_dftest2() {
+	double x[144] = {112, 118, 132, 129, 121, 135, 148, 148, 136, 119, 104, 118,
+        115, 126, 141, 135, 125, 149, 170, 170, 158, 133, 114, 140,
+        145, 150, 178, 163, 172, 178, 199, 199, 184, 162, 146, 166,
+        171, 180, 193, 181, 183, 218, 230, 242, 209, 191, 172, 194,
+        196, 196, 236, 235, 229, 243, 264, 272, 237, 211, 180, 201,
+        204, 188, 235, 227, 234, 264, 302, 293, 259, 229, 203, 229,
+        242, 233, 267, 269, 270, 315, 364, 347, 312, 274, 237, 278,
+        284, 277, 317, 313, 318, 374, 413, 405, 355, 306, 271, 306,
+        315, 301, 356, 348, 355, 422, 465, 467, 404, 347, 305, 336,
+        340, 318, 362, 348, 363, 435, 491, 505, 404, 359, 310, 337,
+        360, 342, 406, 396, 420, 472, 548, 559, 463, 407, 362, 405,
+        417, 391, 419, 461, 472, 535, 622, 606, 508, 461, 390, 432
+	};
+
+	int N = 144;
+	const char *type = "trend";
+	const char *selectlags = "bic";
+	int lshort = 1;
+	double stat,pval,teststat;
+	double cval[3] = {0,0,0};
+	double cprobs[3] = {0,0,0};
+	double auxstat[2] = {0,0};
+	int laux;
+	int lags = 3;
+
+	//ur_pp2(x,N,type,model,lshort,NULL,cval,cprobs,auxstat,&laux,&teststat);
+	ur_df2(x,N,type,&lags,selectlags,cval,&teststat);
+
+	//mdisplay(cval,1,3);
+	//mdisplay(auxstat,1,laux);
+	//mdisplay(&teststat,1,1);
+}
+
+void regex1() {
+	int N, p;
+	double alpha;
+	double *res2;
+	reg_object fit;
+
+	double varcovar[9] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+	alpha = 0.05;
+
+	double tval3[3] = { 0.0, 0.0, 0.0 };
+	double pval3[3] = { 0.0, 0.0, 0.0 };
+	/*
+	TABLE C.4 PER CAPITA PERSONAL CONSUMPTION EXPENDITURE (PPCE) AND PER CAPITA
+	PERSONAL DISPOSABLE INCOME (PPDI) IN THE UNITED STATES, 1956�1970,
+	IN 1958 DOLLARS, Gujarati D, Basic Econometrics, 4th Ed. McGraw-Hill
+	*/
+
+	N = 144;
+	p = 0;
+	// p = 3 corresponds to number of coefficients (including the intercept) - b0, b1 , b2
+	// YY = b0 + b1 * X1 + b2 * X2 + u
+	// where u is residual vector of length N
+	// contained in XX vector. where XX = [X1,X2] .
+	// YY, X1 and X2 are each of length N = 15
+	// X1 = [1839,1844,1831,1881,1883,1910,1969,2016,2126,2239,2336,2404,
+	//	2487,2535,2595]
+	// X2 =[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+
+
+
+	res2 = (double*)malloc(sizeof(double)* N);
+
+	double XX[30] = { 1839, 1844, 1831, 1881, 1883, 1910, 1969, 2016, 2126, 2239, 2336, 2404,
+		2487, 2535, 2595, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+	double YY[144] = {112, 118, 132, 129, 121, 135, 148, 148, 136, 119, 104, 118,
+        115, 126, 141, 135, 125, 149, 170, 170, 158, 133, 114, 140,
+        145, 150, 178, 163, 172, 178, 199, 199, 184, 162, 146, 166,
+        171, 180, 193, 181, 183, 218, 230, 242, 209, 191, 172, 194,
+        196, 196, 236, 235, 229, 243, 264, 272, 237, 211, 180, 201,
+        204, 188, 235, 227, 234, 264, 302, 293, 259, 229, 203, 229,
+        242, 233, 267, 269, 270, 315, 364, 347, 312, 274, 237, 278,
+        284, 277, 317, 313, 318, 374, 413, 405, 355, 306, 271, 306,
+        315, 301, 356, 348, 355, 422, 465, 467, 404, 347, 305, 336,
+        340, 318, 362, 348, 363, 435, 491, 505, 404, 359, 310, 337,
+        360, 342, 406, 396, 420, 472, 548, 559, 463, 407, 362, 405,
+        417, 391, 419, 461, 472, 535, 622, 606, 508, 461, 390, 432
+	};
+
+	fit = reg_init(N, p);
+	setIntercept(fit,0);// Optional as default value for intercept is 1
+	setLLSMethod(fit,"qr");
+	regress(fit, XX, YY, res2, varcovar, alpha);// Perform Regression
+	// res2 - residuals vector. varcovar - variance-covariance matrix
+	// alpha - Used to determine (1-alpha) * 100 % confidence interval
+	// alpha = 0.05 for 95% confidence interval
+	mdisplay(res2,1,N);
+	summary(fit); // summary of regression
+	anova(fit); // ANOVA Table
+	confint(fit); //Confidence Intervals of Regression Parameters
+	zerohyp_val(fit, tval3, pval3); // Obtain Zerohypothesis t-test values
+
+	double inpx[2] = { 2610, 16 };
+	double varx[2] = { 0.0, 0.0 };
+	double oupx;
+
+	//oupx = pointpredict(fit, inpx, varcovar, varx); // Fit Values. Returns output
+	// for a given (p-1) input vector.
+	// varx[0] - Variance of Mean Prediction
+	// varx[1] - Variance Of Individual Prediction
+
+	printf("Variance(Mean Pred) %lf , Variance(Indiv. Pred) %lf \n", varx[0], varx[1]);
+
+	free_reg(fit);
+	free(res2);
+}
+
 int main() {
     //errortests();
 	//llstest();
@@ -1080,8 +1190,10 @@ int main() {
 	//modstltest2();
 	//mstltest();
 	//shtest();
-	ndiffstest();
+	//ndiffstest();
 	//nsdiffstest();
 	//ur_pptest2() ;
+	ur_dftest2();
+	//regex1();
     return 0;
 }

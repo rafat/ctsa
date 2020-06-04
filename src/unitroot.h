@@ -15,6 +15,8 @@ void ur_pp(double *y, int N,const char* alternative,const char* type,int lshort,
 
 void ur_pp2(double *x, int N,const char* type,const char* model,int lshort, int *klag,double *cval,double *cprobs, double *auxstat,int *laux,double *teststat);
 
+void ur_df2(double *y, int N,const char* type, int *lags,const char *selectlags,double *cval, double *teststat);
+
 #ifdef __cplusplus
 }
 #endif

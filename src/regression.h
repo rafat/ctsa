@@ -81,6 +81,8 @@ void summary(reg_object obj);
 
 void anova(reg_object obj);
 
+void anova_list(reg_object *list, int N);
+
 void confint(reg_object obj);
 
 void zerohyp_val(reg_object obj, double *tval, double *pval);

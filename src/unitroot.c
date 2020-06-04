@@ -126,6 +126,216 @@ void ur_df(double *y, int N,const char* alternative, int *klag, double *statisti
     free_reg(fit);
 }
 
+void ur_df2(double *y, int N,const char* type, int *lags,const char *selectlags,double *cval, double *teststat) {
+    int lags_, lag, N1, N2,i,j,iter,p,ltmp,p1,p2;
+    double *z, *x,*z_diff,*z_lag_1,*tt,*critRes,*z_diff_lag,*XX,*varcovar,*res,*XX2,*XX3;
+    reg_object fit, phi1_fit,phi2_fit,phi3_fit;
+    double alpha = 0.95;
+    double ctemp,tau,scale,sos,dfs,phi1;
+
+    lags_ = (lags == NULL) ? 1 : *lags;
+    lag = lags_;
+
+    if (lag < 0) {
+        printf("lags should be > 0. \n");
+        exit(-1);
+    }
+
+    lags_+=1;
+
+    N1 = N - 1;
+    N2 = N1 - lags_ + 1;
+
+    z = (double*)malloc(sizeof(double)*N1);
+    x = (double*)malloc(sizeof(double)*N2*lags_);
+    
+
+    diff(y,N,1,z);// z = y(t) - y(t-1)
+
+    //mdisplay(z,1,N1);
+    
+    for(i = 0; i < lags_;++i) {
+        for(j = 0;j < N2;++j) {
+            x[i*N2+j] = z[lags_+j-i-1];
+        }
+    } 
+
+    //mdisplay(x,lags_,N2);
+
+    z_diff = &x[0];//length N2
+    z_lag_1 = &y[lags_-1];//length N2
+
+    //mdisplay(z_diff,1,N2);
+    //mdisplay(z_lag_1,1,N2);
+
+    tt = (double*)malloc(sizeof(double)*N2);
+    res = (double*)malloc(sizeof(double)*N2);
+
+    for(i = lags_ - 1; i < N1;++i) {
+        tt[i - lags_ +1] = i+1;
+    }
+
+    //mdisplay(tt,1,N2);
+
+    if (lags_ > 1) {
+        if (strcmp(selectlags,"Fixed")) {
+            critRes = (double*) malloc(sizeof(double)*lags_);
+            XX = (double*)malloc(sizeof(double)*N2*(lags_+1));
+            for(i = 0; i < lags_;++i) {
+                critRes[i] = NAN;
+            }
+
+            for(i = 1; i < lags_;++i) {
+                iter = i * N2;
+
+                memcpy(XX,z_lag_1,sizeof(double)*N2);
+
+                if (!strcmp(type,"none")) {
+                    p = 1 + i;
+                    varcovar = (double*)malloc(sizeof(double)*p*p);
+                    fit = reg_init(N2,p);
+                    setIntercept(fit,0);
+                    memcpy(XX+N2,x+N2,sizeof(double)*iter);
+                    regress(fit,XX,z_diff,res,varcovar,alpha);
+                    //summary(fit);
+                    
+                } else if (!strcmp(type,"drift")) {
+                    p = 2 + i;
+                    varcovar = (double*)malloc(sizeof(double)*p*p);
+                    fit = reg_init(N2,p);
+                    setIntercept(fit,1);
+                    memcpy(XX+N2,x+N2,sizeof(double)*iter);
+                    regress(fit,XX,z_diff,res,varcovar,alpha);
+                    //summary(fit);
+                } else if (!strcmp(type,"trend")) {
+                    p = 3 + i;
+                    varcovar = (double*)malloc(sizeof(double)*p*p);
+                    fit = reg_init(N2,p);
+                    setIntercept(fit,1);
+                    memcpy(XX+N2,tt,sizeof(double)*N2);
+                    memcpy(XX+2*N2,x+N2,sizeof(double)*iter);
+                    regress(fit,XX,z_diff,res,varcovar,alpha);
+                    //summary(fit);
+                } else {
+                    printf("type only accepts one of three values - none, drift and trend \n");
+                    exit(-1);
+                }
+
+                if (!strcmp(selectlags,"aic")) {
+                    critRes[i] = fit->aic;
+                } else if (!strcmp(selectlags,"bic")) {
+                    critRes[i] = fit->bic;
+                }
+
+                free_reg(fit);
+            }
+
+            mdisplay(critRes,1,lags_);
+
+            ctemp = DBL_MAX;
+            ltmp = 0;
+
+            for(i = 1; i < lags_;++i) {
+                if (critRes[i] < ctemp) {
+                    ctemp = critRes[i];
+                    ltmp = i;
+                }
+            }
+
+            lags_ = ltmp+1;
+
+            printf("lags %d \n",lags_);
+
+            free(critRes);
+            free(XX);
+            //free(res);
+            free(varcovar);
+        }
+
+        XX = (double*)malloc(sizeof(double)*N2*(lags_+1));
+
+        memcpy(XX,z_lag_1,sizeof(double)*N2);
+        iter = (lags_-1) * N2;
+
+        if (!strcmp(type,"none")) {
+            p = lags_;
+            varcovar = (double*)malloc(sizeof(double)*p*p);
+            fit = reg_init(N2,p);
+            setIntercept(fit,0);
+            memcpy(XX+N2,x+N2,sizeof(double)*iter);
+            regress(fit,XX,z_diff,res,varcovar,alpha);
+            summary(fit);
+            tau = (fit->beta + 0)->value / (fit->beta + 0)->stdErr;
+            printf("tau %g \n",tau);
+            teststat[0] = tau;
+        } else if (!strcmp(type,"drift")) {
+            p = 1 + lags_;
+            varcovar = (double*)malloc(sizeof(double)*p*p);
+            fit = reg_init(N2,p);
+            setIntercept(fit,1);
+            memcpy(XX+N2,x+N2,sizeof(double)*iter);
+            regress(fit,XX,z_diff,res,varcovar,alpha);
+            summary(fit);
+            anova(fit);
+            tau = (fit->beta + 1)->value / (fit->beta + 1)->stdErr;
+            printf("tau %g \n",tau);
+            XX2 = (double*)malloc(sizeof(double)*N2*(lags_-1));
+
+            scale = fit->RSS/(double)fit->df_RSS;
+
+            memcpy(XX2,x+N2,sizeof(double)*N2*(lags_-1));
+            p1 = lags_ - 1;
+            phi1_fit = reg_init(N2,p1);
+            setIntercept(phi1_fit,0);
+            regress(phi1_fit,XX2,z_diff,res,varcovar,alpha);
+            summary(phi1_fit);
+            anova(phi1_fit);
+
+            sos = phi1_fit->RSS - fit->RSS;
+            dfs = (double) (phi1_fit->df_RSS - fit->df_RSS);
+
+            phi1 = sos/dfs/scale;
+
+            printf("phi1 %g \n",phi1);
+
+            teststat[0] = tau;
+            teststat[1] = phi1;
+
+            free(XX2);
+        } else if (!strcmp(type,"trend")) {
+            p = 2 + lags_;
+            varcovar = (double*)malloc(sizeof(double)*p*p);
+            fit = reg_init(N2,p);
+            setIntercept(fit,1);
+            memcpy(XX+N2,tt,sizeof(double)*N2);
+            memcpy(XX+2*N2,x+N2,sizeof(double)*iter);
+            regress(fit,XX,z_diff,res,varcovar,alpha);
+            summary(fit);
+            tau = (fit->beta + 1)->value / (fit->beta + 1)->stdErr;
+            printf("tau %g \n",tau);
+
+            scale = fit->RSS/(double)fit->df_RSS;
+
+            XX2 = (double*)malloc(sizeof(double)*N2*(lags_-1));
+
+
+
+            free(XX2);
+        }
+
+        free(XX);
+        free(varcovar);
+
+    } else {
+
+    }
+
+
+    free(x);
+    free(z);
+    free(tt);
+}
+
 void ur_kpss(double *y, int N,const char* type,int lshort, int *klag, double *statistic,double *pval) {
     /*
     y - Time Series data of length N
@@ -636,3 +846,4 @@ void ur_pp2(double *x, int N,const char* type,const char* model,int lshort, int 
         free_reg(fit);
     }
 }
+
