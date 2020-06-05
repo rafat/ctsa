@@ -1076,7 +1076,7 @@ void ur_dftest2() {
 	double cprobs[3] = {0,0,0};
 	double auxstat[2] = {0,0};
 	int laux;
-	int lags = 3;
+	int lags = 0;
 
 	//ur_pp2(x,N,type,model,lshort,NULL,cval,cprobs,auxstat,&laux,&teststat);
 	ur_df2(x,N,type,&lags,selectlags,cval,&teststat);
@@ -1137,7 +1137,7 @@ void regex1() {
 	fit = reg_init(N, p);
 	setIntercept(fit,0);// Optional as default value for intercept is 1
 	setLLSMethod(fit,"qr");
-	regress(fit, XX, YY, res2, varcovar, alpha);// Perform Regression
+	regress(fit, NULL, YY, res2, varcovar, alpha);// Perform Regression
 	// res2 - residuals vector. varcovar - variance-covariance matrix
 	// alpha - Used to determine (1-alpha) * 100 % confidence interval
 	// alpha = 0.05 for 95% confidence interval

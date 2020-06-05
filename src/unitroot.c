@@ -127,11 +127,11 @@ void ur_df(double *y, int N,const char* alternative, int *klag, double *statisti
 }
 
 void ur_df2(double *y, int N,const char* type, int *lags,const char *selectlags,double *cval, double *teststat) {
-    int lags_, lag, N1, N2,i,j,iter,p,ltmp,p1,p2;
+    int lags_, lag, N1, N2,i,j,iter,p,ltmp,p1,p2,p3,rowselec;
     double *z, *x,*z_diff,*z_lag_1,*tt,*critRes,*z_diff_lag,*XX,*varcovar,*res,*XX2,*XX3;
     reg_object fit, phi1_fit,phi2_fit,phi3_fit;
     double alpha = 0.95;
-    double ctemp,tau,scale,sos,dfs,phi1;
+    double ctemp,tau,scale,sos,dfs,phi1,phi2,phi3;
 
     lags_ = (lags == NULL) ? 1 : *lags;
     lag = lags_;
@@ -279,10 +279,10 @@ void ur_df2(double *y, int N,const char* type, int *lags,const char *selectlags,
             anova(fit);
             tau = (fit->beta + 1)->value / (fit->beta + 1)->stdErr;
             printf("tau %g \n",tau);
-            XX2 = (double*)malloc(sizeof(double)*N2*(lags_-1));
 
             scale = fit->RSS/(double)fit->df_RSS;
 
+            XX2 = (double*)malloc(sizeof(double)*N2*(lags_-1));
             memcpy(XX2,x+N2,sizeof(double)*N2*(lags_-1));
             p1 = lags_ - 1;
             phi1_fit = reg_init(N2,p1);
@@ -302,6 +302,7 @@ void ur_df2(double *y, int N,const char* type, int *lags,const char *selectlags,
             teststat[1] = phi1;
 
             free(XX2);
+            free(phi1_fit);
         } else if (!strcmp(type,"trend")) {
             p = 2 + lags_;
             varcovar = (double*)malloc(sizeof(double)*p*p);
@@ -317,17 +318,171 @@ void ur_df2(double *y, int N,const char* type, int *lags,const char *selectlags,
             scale = fit->RSS/(double)fit->df_RSS;
 
             XX2 = (double*)malloc(sizeof(double)*N2*(lags_-1));
+            memcpy(XX2,x+N2,sizeof(double)*N2*(lags_-1));
+            p2 = lags_ - 1;
+            phi2_fit = reg_init(N2,p2);
+            setIntercept(phi2_fit,0);
+            regress(phi2_fit,XX2,z_diff,res,varcovar,alpha);
+            summary(phi2_fit);
+            anova(phi2_fit);
 
+            sos = phi2_fit->RSS - fit->RSS;
+            dfs = (double) (phi2_fit->df_RSS - fit->df_RSS);
 
+            phi2 = sos/dfs/scale;
+
+            printf("phi2 %g \n",phi2);
 
             free(XX2);
+            free(phi2_fit);
+
+            XX3 = (double*)malloc(sizeof(double)*N2*(lags_-1));
+            memcpy(XX3,x+N2,sizeof(double)*N2*(lags_-1));
+            p3 = lags_;
+            phi3_fit = reg_init(N2,p3);
+            setIntercept(phi3_fit,1);
+            regress(phi3_fit,XX3,z_diff,res,varcovar,alpha);
+            summary(phi3_fit);
+            anova(phi3_fit);
+
+            sos = phi3_fit->RSS - fit->RSS;
+            dfs = (double) (phi3_fit->df_RSS - fit->df_RSS);
+
+            phi3 = sos/dfs/scale;
+
+            printf("phi3 %g \n",phi3);
+
+            teststat[0] = tau;
+            teststat[1] = phi2;
+            teststat[2] = phi3;
+
+            mdisplay(teststat,1,3);
+
+            free(XX3);
+            free(phi3_fit);
+        } else {
+            printf("type only accepts one of three values - none, drift and trend \n");
+            exit(-1);
         }
 
         free(XX);
         free(varcovar);
 
     } else {
+        XX = (double*)malloc(sizeof(double)*2*N2);
+        if (!strcmp(type,"none")) {
+            p = 1;
+            varcovar = (double*)malloc(sizeof(double)*p*p);
+            fit = reg_init(N2,p);
+            setIntercept(fit,0);
+            memcpy(XX,z_lag_1,sizeof(double)*N2);
+            regress(fit,XX,z_diff,res,varcovar,alpha);
+            summary(fit);
+            tau = (fit->beta + 0)->value / (fit->beta + 0)->stdErr;
+            printf("tau %g \n",tau);
+            teststat[0] = tau;
+        } else if (!strcmp(type,"drift")) {
+            p = 2;
+            varcovar = (double*)malloc(sizeof(double)*p*p);
+            fit = reg_init(N2,p);
+            setIntercept(fit,1);
+            memcpy(XX,z_lag_1,sizeof(double)*N2);
+            regress(fit,XX,z_diff,res,varcovar,alpha);
+            summary(fit);
+            tau = (fit->beta + 1)->value / (fit->beta + 1)->stdErr;
+            printf("tau %g \n",tau);
 
+            scale = fit->RSS/(double)fit->df_RSS;
+
+            p1 = 0;
+            phi1_fit = reg_init(N2,p1);
+            regress(phi1_fit,NULL,z_diff,res,varcovar,alpha);
+            summary(phi1_fit);
+            anova(phi1_fit);
+
+            sos = phi1_fit->RSS - fit->RSS;
+            dfs = (double) (phi1_fit->df_RSS - fit->df_RSS);
+
+            phi1 = sos/dfs/scale;
+
+            printf("phi1 %g \n",phi1);
+
+            teststat[0] = tau;
+            teststat[1] = phi1;
+
+            mdisplay(teststat,1,2);
+
+            free(phi1_fit);
+
+        } else if (!strcmp(type,"trend")) {
+            p = 3;
+            varcovar = (double*)malloc(sizeof(double)*p*p);
+            fit = reg_init(N2,p);
+            setIntercept(fit,1);
+            memcpy(XX,z_lag_1,sizeof(double)*N2);
+            memcpy(XX+N2,tt,sizeof(double)*N2);
+            regress(fit,XX,z_diff,res,varcovar,alpha);
+            summary(fit);
+            tau = (fit->beta + 1)->value / (fit->beta + 1)->stdErr;
+            printf("tau %g \n",tau);
+
+            scale = fit->RSS/(double)fit->df_RSS;
+
+            p2 = 0;
+            phi2_fit = reg_init(N2,p2);
+            regress(phi2_fit,NULL,z_diff,res,varcovar,alpha);
+            summary(phi2_fit);
+            anova(phi2_fit);
+
+            sos = phi2_fit->RSS - fit->RSS;
+            dfs = (double) (phi2_fit->df_RSS - fit->df_RSS);
+
+            phi2 = sos/dfs/scale;
+
+            printf("phi2 %g \n",phi2);
+
+            free(phi2_fit);
+
+            p3 = 1;
+            phi3_fit = reg_init(N2,p3);
+            setIntercept(phi3_fit,1);
+            regress(phi3_fit,NULL,z_diff,res,varcovar,alpha);
+            summary(phi3_fit);
+            anova(phi3_fit);
+
+            sos = phi3_fit->RSS - fit->RSS;
+            dfs = (double) (phi3_fit->df_RSS - fit->df_RSS);
+
+            phi3 = sos/dfs/scale;
+
+            printf("phi3 %g \n",phi3);
+
+            teststat[0] = tau;
+            teststat[1] = phi2;
+            teststat[2] = phi3;
+
+            mdisplay(teststat,1,3);
+
+
+            free(phi3_fit);
+        }
+
+        free(XX);
+        free(varcovar);
+    }
+    
+    if (N1 < 25){
+        rowselec = 1;
+    } else if (N1 < 50) {
+        rowselec = 2;
+    } else if (N1 < 100) {
+        rowselec = 3;
+    } else if (N1 < 250) {
+        rowselec = 4;
+    } else if (N1 < 500) {
+        rowselec = 5;
+    } else {
+        rowselec = 6;
     }
 
 
