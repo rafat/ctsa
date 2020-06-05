@@ -1,37 +1,68 @@
 #include "autoutils.h"
 
-static int runstattests(double *x, int N, const char * test,double alpha) {
+static int runstattests(double *x, int N, const char * test,const char *mtype,double alpha) {
     int diff,klag,lshort;
     const char *alternative;
     const char *type;
     const char *model;
+    const char *selectlags;
     double stat, pval;
-    double cval[3] = {0,0,0};
+    double cval[9] = {0,0,0,0,0,0,0,0,0};
 	double cprobs[3] = {0,0,0};
 	double auxstat[2] = {0,0};
-	int laux,pN;
+    double teststat[3] = {0,0,0};
+	int laux,pN,cvrows,cvcols,ltstat;
 
     if (!strcmp(test,"kpss")) {
-        type = "Level";
+        if (!strcmp(mtype,"level")) {
+            type = "level";
+        } else if (!strcmp(mtype,"trend")) {
+            type = "trend";
+        } else {
+            printf("ndiffs only accepts one of two types : level and trend. \n");
+            exit(-1);
+        }
+        
         klag = (int) 3.0 * sqrt((double)N) / 13.0;
         lshort = 1;
         ur_kpss(x,N,type,lshort,&klag,&stat,&pval);
         //printf("KPSS stat %g pval %g \n",stat,pval);
         diff = (pval < alpha) ? 1 : 0;
-    } else if (!strcmp(test,"df")) {
-        alternative = "stationary";
-        ur_df(x,N,alternative,NULL,&stat,&pval);
+    } else if (!strcmp(test,"df") || !strcmp(test,"adf")) {
+        if (!strcmp(mtype,"level")) {
+            type = "drift";
+        } else if (!strcmp(mtype,"trend")) {
+            type = "trend";
+        } else {
+            printf("ndiffs only accepts one of two types : level and trend. \n");
+            exit(-1);
+        }
+        selectlags = "fixed";
+        klag = 1;
+        pN = 3;
+        //alternative = "stationary";
+        //ur_df(x,N,alternative,NULL,&stat,&pval);
+        ur_df2(x,N,type,&klag,selectlags,cval,&cvrows,&cvcols, cprobs, teststat,&ltstat);
+        stat = teststat[0];
+        pval = interpolate_linear(cval,cprobs,pN,stat);
         //printf("ADF stat %g pval %g \n",stat,pval);
         diff = (pval > alpha) ? 1 : 0;
     } else if (!strcmp(test,"pp")) {
-        model = "constant";
+        if (!strcmp(mtype,"level")) {
+            model = "constant";
+        } else if (!strcmp(mtype,"trend")) {
+            model = "trend";
+        } else {
+            printf("ndiffs KPSS only accepts one of two types : level and trend. \n");
+            exit(-1);
+        }
         type = "Z-tau";
         lshort = 1;
         pN = 3;
         //ur_pp(x,N,alternative,type,lshort,NULL, &stat,&pval);
         ur_pp2(x,N,type,model,lshort,NULL,cval,cprobs,auxstat,&laux,&stat);
         pval = interpolate_linear(cval,cprobs,pN,stat);
-        printf("PP stat %g pval %g \n",stat,pval);
+        //printf("PP stat %g pval %g \n",stat,pval);
         diff = (pval > alpha) ? 1 : 0;
     } else {
         printf("Only three tests are allowed - kpss, df and pp \n");
@@ -60,7 +91,7 @@ static int runseasonalitytests(double *x, int N,int f, const char * test) {
     return diff;
 }
 
-int ndiffs(double *x, int N,double *alpha, const char *test, int *max_d) {
+int ndiffs(double *x, int N,double *alpha, const char *test,const char *type, int *max_d) {
     int d,max_d_,cc,NX,dodiff;
     double alpha_;
     double *y,*z;
@@ -92,7 +123,7 @@ int ndiffs(double *x, int N,double *alpha, const char *test, int *max_d) {
 
     NX = N;
 
-    dodiff = runstattests(x,N,test,*alpha);
+    dodiff = runstattests(x,N,test,type,*alpha);
 
     //printf("dodiff %d \n",dodiff);
 
@@ -116,7 +147,7 @@ int ndiffs(double *x, int N,double *alpha, const char *test, int *max_d) {
 
         if (cc == 1) break;
 
-        dodiff = runstattests(z,NX,test,*alpha);
+        dodiff = runstattests(z,NX,test,type,*alpha);
 
         //printf("dodiff %d \n",dodiff);
 

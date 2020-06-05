@@ -293,7 +293,7 @@ void urkpss_test() {
 	
 	N = 100;
 	k = 0;
-	const char* type = "Level";
+	const char* type = "level";
 	lshort = 1;
 
 	ur_kpss(x,N,type,lshort,NULL, &stat,&pval);
@@ -995,6 +995,7 @@ void nsdiffstest() {
 }
 
 void ndiffstest() {
+	/*
 	double x[144] = {112, 118, 132, 129, 121, 135, 148, 148, 136, 119, 104, 118,
         115, 126, 141, 135, 125, 149, 170, 170, 158, 133, 114, 140,
         145, 150, 178, 163, 172, 178, 199, 199, 184, 162, 146, 166,
@@ -1010,12 +1011,69 @@ void ndiffstest() {
 	};
 
 	int N = 144;
+	*/
+	double x[211] = {284., 213., 227., 308.,
+                     262., 228., 236., 320.,
+                     272., 233., 237., 313.,
+                     261., 227., 250., 314.,
+                     286., 227., 260., 311.,
+                     295., 233., 257., 339.,
+                     279., 250., 270., 346.,
+                     294., 255., 278., 363.,
+                     313., 273., 300., 370.,
+                     331., 288., 306., 386.,
+                     335., 288., 308., 402.,
+                     353., 316., 325., 405.,
+                     393., 319., 327., 442.,
+                     383., 332., 361., 446.,
+                     387., 357., 374., 466.,
+                     410., 370., 379., 487.,
+                     419., 378., 393., 506.,
+                     458., 387., 427., 565.,
+                     465., 445., 450., 556.,
+                     500., 452., 435., 554.,
+                     510., 433., 453., 548.,
+                     486., 453., 457., 566.,
+                     515., 464., 431., 588.,
+                     503., 443., 448., 555.,
+                     513., 427., 473., 526.,
+                     548., 440., 469., 575.,
+                     493., 433., 480., 576.,
+                     475., 405., 435., 535.,
+                     453., 430., 417., 552.,
+                     464., 417., 423., 554.,
+                     459., 428., 429., 534.,
+                     481., 416., 440., 538.,
+                     474., 440., 447., 598.,
+                     467., 439., 446., 567.,
+                     485., 441., 429., 599.,
+                     464., 424., 436., 574.,
+                     443., 410., 420., 532.,
+                     433., 421., 410., 512.,
+                     449., 381., 423., 531.,
+                     426., 408., 416., 520.,
+                     409., 398., 398., 507.,
+                     432., 398., 406., 526.,
+                     428., 397., 403., 517.,
+                     435., 383., 424., 521.,
+                     421., 402., 414., 500.,
+                     451., 380., 416., 492.,
+                     428., 408., 406., 506.,
+                     435., 380., 421., 490.,
+                     435., 390., 412., 454.,
+                     416., 403., 408., 482.,
+                     438., 386., 405., 491.,
+                     427., 383., 394., 473.,
+                     420., 390., 410.};
+
+	int N = 211;
 	double alpha = 0.05;
-	const char *test = "pp";
+	const char *test = "adf";
+	const char* type = "trend";
 	int max_d = 2;
 	int d;
 
-	d = ndiffs(x,N,&alpha,test,&max_d);
+	d = ndiffs(x,N,&alpha,test,type,&max_d);
 
 	printf("%d \n",d);
 }
@@ -1069,21 +1127,23 @@ void ur_dftest2() {
 
 	int N = 144;
 	const char *type = "trend";
-	const char *selectlags = "bic";
+	const char *selectlags = "aic";
 	int lshort = 1;
-	double stat,pval,teststat;
+	double stat,pval;
 	double cval[3] = {0,0,0};
 	double cprobs[3] = {0,0,0};
-	double auxstat[2] = {0,0};
+	double teststat[3] = {0,0,0};
 	int laux;
+	int ltstat;
 	int lags = 0;
+	int cvrows, cvcols;
 
 	//ur_pp2(x,N,type,model,lshort,NULL,cval,cprobs,auxstat,&laux,&teststat);
-	ur_df2(x,N,type,&lags,selectlags,cval,&teststat);
+	ur_df2(x,N,type,&lags,selectlags,cval,&cvrows,&cvcols,cprobs,teststat,&ltstat);
 
-	//mdisplay(cval,1,3);
+	mdisplay(cval,cvrows,cvcols);
 	//mdisplay(auxstat,1,laux);
-	//mdisplay(&teststat,1,1);
+	mdisplay(teststat,1,ltstat);
 }
 
 void regex1() {
@@ -1190,10 +1250,10 @@ int main() {
 	//modstltest2();
 	//mstltest();
 	//shtest();
-	//ndiffstest();
+	ndiffstest();
 	//nsdiffstest();
 	//ur_pptest2() ;
-	ur_dftest2();
+	//ur_dftest2();
 	//regex1();
     return 0;
 }

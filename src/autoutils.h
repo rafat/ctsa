@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-int ndiffs(double *x, int N,double *alpha, const char *test, int *max_d);
+int ndiffs(double *x, int N,double *alpha, const char *test,const char *type, int *max_d);
 
 int nsdiffs(double *x, int N,int f,double *alpha, const char *test, int *max_D);
 
