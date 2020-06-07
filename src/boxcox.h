@@ -16,7 +16,7 @@ double inv_boxcox_eval(double *x,int N, double lambda,double *bxcx);
 
 double boxcox_loglik(double lambda, void *params);
 
-void boxcox(double *x, int N,double *lambda,double *y);
+double boxcox(double *x, int N,double *lambda,double *y);
 
 #ifdef __cplusplus
 }

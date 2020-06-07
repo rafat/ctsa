@@ -145,6 +145,55 @@ ar_object ar_init(int method, int N) {
 	return obj;
 }
 
+arimax_object arimax_init(int p, int d, int q, int r,int N) {
+	arimax_object obj = NULL;
+	int i,M;
+
+	if (d > 0) {
+		M = 0;
+	}
+	else {
+		M = 1;
+	}
+	if (p < 0 || d < 0 || q < 0 || N <= 0) {
+		printf("\n Input Values cannot be Negative. Program Exiting. \n");
+		exit(-1);
+	}
+	//retval = 0 Input Error
+	// retval = 1 Probable Success
+	// retval = 4 Optimization Routine didn't converge
+	// Retval = 15 Optimization Routine Encountered Inf/Nan Values
+	
+	obj = (arimax_object)malloc(sizeof(struct arimax_set) + sizeof(double) * (p+q+r+N-d) + sizeof(double) * (p+q+M)*(p+q+M));
+
+	obj->p = p;
+	obj->d = d;
+	obj->q = q;
+	obj->N = N;
+	obj->Nused = N - d;
+	obj->M = M;
+	obj->retval = 0;
+	obj->r = r;
+
+	for (i = 0; i < p + q; ++i) {
+		obj->params[i] = 0.0;
+	}
+	obj->phi = &obj->params[0];
+	obj->theta = &obj->params[p];
+	obj->res = &obj->params[p + q];
+	obj->vcov = &obj->params[p + q + N - d];
+	obj->exog = &obj->params[p + q + N - d + (p + q + M)*(p + q + M)];
+
+	obj->method = 0;// 0 - MLE, 1 - CSS, 2 - Box-Jenkins
+	obj->optmethod = 7; // Default Method is 7
+	obj->mean = 0.0;
+	obj->var = 1.0;
+	obj->lvcov = (p + q + M)*(p + q + M);
+	obj->ncoeff = p + q + M + r;
+
+	return obj;
+}
+
 void arima_exec(arima_object obj, double *inp) {
 	int p,q,d,N,M;
 	double eps;

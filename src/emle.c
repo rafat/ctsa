@@ -1270,6 +1270,7 @@ int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, d
 	int *ipiv;
 	double maxstep;
 	alik_object obj;
+	reg_object fit;
 	//custom_function as154_min;
 
 	x = (double*)malloc(sizeof(double)* (N - d));
@@ -1290,6 +1291,10 @@ int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, d
 		for (i = 0; i < N; ++i) {
 			x[i] = inp[i];
 		}
+	}
+
+	if (p + q == 0 && d == 0) {
+		return 1;
 	}
 
 	obj->N = N;
@@ -1388,6 +1393,149 @@ int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, d
 	free_alik(obj);
 	return ret;
 }
+
+int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,int r, int M, double *phi, double *theta, double *exog, double *wmean,
+	 double *var,double *resid,double *loglik,double *hess) {
+	int i,pq,retval,length,ret,ncoeff,pr;
+	double *b,*tf,*x,*dx,*thess,*XX,*varcovar,*res;
+	int *ipiv;
+	double maxstep;
+	alik_object obj;
+	reg_object fit;
+	//custom_function as154_min;
+
+	x = (double*)malloc(sizeof(double)* (N - d));
+
+	length = N;// length of xreg as x is differenced earlier
+	
+	maxstep = 1.0;
+
+	ncoeff = p + q;
+
+	obj = alik_init(p, d, q, N);
+
+
+	css(inp, N, optmethod, p, d, q, phi, theta, wmean, var,resid,loglik,hess);
+
+	if (d > 0) {
+		N = diff(inp, N, d, x); // No need to demean x
+	}
+	else {
+		for (i = 0; i < N; ++i) {
+			x[i] = inp[i];
+		}
+	}
+
+	if (p + q == 0 && d == 0 && r > 0) {
+		pr = 1+r;
+		varcovar = (double*)malloc(sizeof(double)*pr*pr);
+		fit = reg_init(N,pr);
+		regress(fit,NULL,x,resid,varcovar,0.95);
+		free(varcovar);
+		free_reg(fit);
+		return 1;
+	}  else if (p + q == 0 && d == 0 && r == 0) {
+		return 1;
+	}
+
+	obj->N = N;
+	obj->mean = *wmean;
+	pq = obj->pq;
+	printf("pq %d \n",pq);
+	b = (double*)malloc(sizeof(double)* pq);
+	tf = (double*)malloc(sizeof(double)* pq);
+	thess = (double*)malloc(sizeof(double)* pq*pq);
+	dx = (double*)malloc(sizeof(double)* pq);
+	ipiv = (int*)malloc(sizeof(int)* pq);
+
+	for (i = 0; i < p; ++i) {
+		b[i] = phi[i];
+	}
+	for (i = 0; i < q; ++i) {
+		b[p + i] = -theta[i];
+	}
+
+	if (obj->M == 1) {
+		b[p + q] = obj->mean;
+	}
+
+
+	for (i = 0; i < N; ++i) {
+		obj->x[i] = obj->x[2 * N + i] = x[i];
+	}
+	for (i = N; i < 2 * N; ++i) {
+		obj->x[i] = 0.0;
+	}
+
+	custom_function as154_min = { fas154, obj };
+	retval = fminunc(&as154_min, NULL, pq, b,maxstep, optmethod, tf);
+
+	if (retval == 0) {
+		ret = 0;
+	}
+	else if (retval == 15) {
+		ret = 15;
+	}
+	else if (retval == 4) {
+		ret = 4;
+	}
+	else {
+		ret = 1;
+	}
+
+	for (i = 0; i < pq; ++i) {
+		dx[i] = 1.0;
+	}
+
+	hessian_fd(&as154_min, tf, pq, dx, obj->eps, hess);
+	
+	mtranspose(hess, pq, pq, thess);
+
+	for (i = 0; i < pq*pq; ++i) {
+		thess[i] = (N-d) * 0.5 * (hess[i] + thess[i]);
+	}
+	
+
+	ludecomp(thess, pq, ipiv);
+	minverse(thess, pq, ipiv, hess);
+
+
+	for (i = 0; i < p; ++i) {
+		phi[i] = tf[i];
+	}
+	for (i = 0; i < q; ++i) {
+		theta[i] = -tf[p + i];
+	}
+	if (obj->M == 1) {
+		*wmean = tf[p + q];
+	}
+	else {
+		*wmean = 0.0;
+	}
+	/*
+	wmean = 0.0;
+	for (i = 0; i < N; ++i) {
+		wmean += (obj->x[N + i] * obj->x[N + i]);
+	}*/
+
+	*var = (obj->ssq) / (double) N;
+	for (i = 0; i < N - d; ++i) {
+		resid[i] = obj->x[N + i];
+	}
+	*loglik = obj->loglik;
+	//printf("MEAN %g \n", mean(obj->x+N,N));
+	//mdisplay(obj->x + N, 1, N);
+
+	free(b);
+	free(tf);
+	free(x);
+	free(thess);
+	free(ipiv);
+	free(dx);
+	free_alik(obj);
+	return ret;
+}
+
 
 double fcss_seas(double *b, int pq, void *params) {
 	double value, ssq,temp;
@@ -1785,6 +1933,17 @@ int as154_seas(double *inp, int N, int optmethod, int p, int d, int q, int s, in
 		for (i = 0; i < N; ++i) {
 			inp2[i] = inp[i];
 		}
+	}
+
+	if (p + q + P + Q == 0 && d == 0 && D == 0) {
+		free(b);
+		free(tf);
+		free(inp2);
+		free(dx);
+		free(thess);
+		free(ipiv);
+		free_alik_seas(obj);
+		return 1;
 	}
 
 	x = (double*)malloc(sizeof(double)* (N - d));

@@ -94,7 +94,7 @@ double boxcox_loglik(double lambda, void *params) {
     return -loglik;
 }
 
-void boxcox(double *x, int N,double *lambda,double *y) {
+double boxcox(double *x, int N,double *lambda,double *y) {
     double *params;
     double lmbd,a,b;
     int cc,cn;
@@ -132,4 +132,5 @@ void boxcox(double *x, int N,double *lambda,double *y) {
     boxcox_eval(x,N,lmbd,y);
 
     free(params);
+    return lmbd;
 }

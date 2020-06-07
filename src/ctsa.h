@@ -99,6 +99,35 @@ struct ar_set{
 	double params[0];
 };
 
+typedef struct arimax_set* arimax_object;
+
+arimax_object arimax_init(int p, int d, int q, int r, int N);
+
+struct arimax_set{
+	int N;// length of time series
+	int Nused;//length of time series after differencing, Nused = N - d
+	int method;
+	int optmethod;
+	int p;// size of phi
+	int d;// Number of times the series is to be differenced
+	int q;//size of theta
+	int r;// Number of exogenous variables
+	int M; // M = 0 if mean is 0.0 else M = 1
+	int ncoeff;// Total Number of Coefficients to be estimated
+	double *phi;
+	double *theta;
+	double *exog;
+	double *vcov;// Variance-Covariance Matrix Of length lvcov
+	int lvcov; //length of VCOV
+	double *res;
+	double mean;
+	double var;
+	double loglik;
+	double aic;
+	int retval;
+	double params[0];
+};
+
 void arima_exec(arima_object obj, double *x);
 
 void sarima_exec(sarima_object obj, double *x);

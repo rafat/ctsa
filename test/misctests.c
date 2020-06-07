@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "../header/ctsa.h"
 #include "../src/errors.h"
 #include "../src/autoutils.h"
 
@@ -888,16 +889,22 @@ void boxcoxtest() {
 	};
 
 	int N = 144;
-	double *y;
+	double *y,*z;
 	double lambda;
 
 	y = (double*) malloc(sizeof(double)*N);
+	z = (double*) malloc(sizeof(double)*N);
 
-	boxcox(x,N,NULL,y);
+	lambda = boxcox(x,N,NULL,y);
 	
 	mdisplay(y,1,N);
 
+	inv_boxcox_eval(y,N,lambda,z);
+
+	mdisplay(z,1,N);
+
 	free(y);
+	free(z);
 }
 
 void supersmoothertest() {
@@ -1222,6 +1229,206 @@ void regex1() {
 	free(res2);
 }
 
+void seasdummytest() {
+	double x[144] = {112, 118, 132, 129, 121, 135, 148, 148, 136, 119, 104, 118,
+        115, 126, 141, 135, 125, 149, 170, 170, 158, 133, 114, 140,
+        145, 150, 178, 163, 172, 178, 199, 199, 184, 162, 146, 166,
+        171, 180, 193, 181, 183, 218, 230, 242, 209, 191, 172, 194,
+        196, 196, 236, 235, 229, 243, 264, 272, 237, 211, 180, 201,
+        204, 188, 235, 227, 234, 264, 302, 293, 259, 229, 203, 229,
+        242, 233, 267, 269, 270, 315, 364, 347, 312, 274, 237, 278,
+        284, 277, 317, 313, 318, 374, 413, 405, 355, 306, 271, 306,
+        315, 301, 356, 348, 355, 422, 465, 467, 404, 347, 305, 336,
+        340, 318, 362, 348, 363, 435, 491, 505, 404, 359, 310, 337,
+        360, 342, 406, 396, 420, 472, 548, 559, 463, 407, 362, 405,
+        417, 391, 419, 461, 472, 535, 622, 606, 508, 461, 390, 432};
+
+	int N = 144;
+
+	int rows, cols;
+	int f = 12;
+	double *oup;
+
+	oup = seasdummy(x,N,f,&rows,&cols);
+
+	mdisplay(oup,rows,cols);
+
+	free(oup);
+}
+
+void sdtests() {
+	double x[144] = {112, 118, 132, 129, 121, 135, 148, 148, 136, 119, 104, 118,
+        115, 126, 141, 135, 125, 149, 170, 170, 158, 133, 114, 140,
+        145, 150, 178, 163, 172, 178, 199, 199, 184, 162, 146, 166,
+        171, 180, 193, 181, 183, 218, 230, 242, 209, 191, 172, 194,
+        196, 196, 236, 235, 229, 243, 264, 272, 237, 211, 180, 201,
+        204, 188, 235, 227, 234, 264, 302, 293, 259, 229, 203, 229,
+        242, 233, 267, 269, 270, 315, 364, 347, 312, 274, 237, 278,
+        284, 277, 317, 313, 318, 374, 413, 405, 355, 306, 271, 306,
+        315, 301, 356, 348, 355, 422, 465, 467, 404, 347, 305, 336,
+        340, 318, 362, 348, 363, 435, 491, 505, 404, 359, 310, 337,
+        360, 342, 406, 396, 420, 472, 548, 559, 463, 407, 362, 405,
+        417, 391, 419, 461, 472, 535, 622, 606, 508, 461, 390, 432};
+
+	int N = 144;
+
+	int rows, cols;
+	int f = 12;
+
+	//SDtest(x,N,f);
+}
+
+void arimatest() {
+	int i, N, d, L;
+	double *inp;
+	int p, q;
+	double *phi, *theta;
+	double *xpred, *amse;
+	arima_object obj;
+	p = 0;
+	d = 0;
+	q = 0;
+
+
+	L = 5;
+
+	phi = (double*)malloc(sizeof(double)* p);
+	theta = (double*)malloc(sizeof(double)* q);
+
+	xpred = (double*)malloc(sizeof(double)* L);
+	amse = (double*)malloc(sizeof(double)* L);
+
+	FILE *ifp;
+	double temp[1200];
+	double temp2[1200];
+
+	ifp = fopen("../data/e6.dat", "r");
+	i = 0;
+	if (!ifp) {
+		printf("Cannot Open File");
+		exit(100);
+	}
+	while (!feof(ifp)) {
+		fscanf(ifp, "%lf %lf \n", &temp[i],&temp2[i]);
+		i++;
+	}
+	N = i;
+
+	inp = (double*)malloc(sizeof(double)* N);
+	//wmean = mean(temp, N);
+
+	for (i = 0; i < N; ++i) {
+		inp[i] = temp[i];
+		//printf("%g \n",inp[i]);
+	}
+
+
+	obj = arima_init(p, d, q, N);
+	arima_setMethod(obj, 0); // Method 0 ("MLE") is default so this step is unnecessary. The method also accepts values 1 ("CSS") and 2 ("Box-Jenkins")
+	arima_setOptMethod(obj, 7);// Method 7 ("BFGS with More Thuente Line search") is default so this step is unnecessary. The method also accepts values 0,1,2,3,4,5,6. Check the documentation for details.
+	arima_exec(obj, inp);
+	arima_summary(obj);
+	// Predict the next 5 values using the obtained ARIMA model
+	arima_predict(obj, inp, L, xpred, amse);
+	printf("\n");
+	printf("Predicted Values : ");
+	for (i = 0; i < L; ++i) {
+		printf("%g ", xpred[i]);
+	}
+	printf("\n");
+	printf("Standard Errors  : ");
+	for (i = 0; i < L; ++i) {
+		printf("%g ", sqrt(amse[i]));
+	}
+	printf("\n");
+	arima_free(obj);
+	free(inp);
+	free(phi);
+	free(theta);
+	free(xpred);
+	free(amse);
+}
+
+void sarimatest() {
+	int i, N, d, L;
+	double *inp;
+	int p, q;
+	int s, P, D, Q;
+	double *phi, *theta;
+	double *PHI, *THETA;
+	double *xpred, *amse;
+	sarima_object obj;
+	p = 0;
+	d = 1;
+	q = 1;
+	s = 12;
+	P = 0;
+	D = 1;
+	Q = 1;
+
+
+	L = 5;
+
+	phi = (double*)malloc(sizeof(double)* p);
+	theta = (double*)malloc(sizeof(double)* q);
+	PHI = (double*)malloc(sizeof(double)* P);
+	THETA = (double*)malloc(sizeof(double)* Q);
+
+	xpred = (double*)malloc(sizeof(double)* L);
+	amse = (double*)malloc(sizeof(double)* L);
+
+	FILE *ifp;
+	double temp[1200];
+
+	ifp = fopen("../data/seriesG.txt", "r");
+	i = 0;
+	if (!ifp) {
+		printf("Cannot Open File");
+		exit(100);
+	}
+	while (!feof(ifp)) {
+		fscanf(ifp, "%lf \n", &temp[i]);
+		i++;
+	}
+	N = i;
+
+	inp = (double*)malloc(sizeof(double)* N);
+	//wmean = mean(temp, N);
+
+	for (i = 0; i < N; ++i) {
+		inp[i] = log(temp[i]);
+		//printf("%g \n",inp[i]);
+	}
+
+
+	obj = sarima_init(p, d, q,s,P,D,Q, N);
+	sarima_setMethod(obj, 0); // Method 0 ("MLE") is default so this step is unnecessary. The method also accepts values 1 ("CSS") and 2 ("Box-Jenkins")
+	sarima_setOptMethod(obj, 7);// Method 7 ("BFGS with More Thuente Line Search") is default so this step is unnecessary. The method also accepts values 0,1,2,3,4,5,6. Check the documentation for details.
+	sarima_exec(obj, inp);
+	sarima_summary(obj);
+	// Predict the next 5 values using the obtained ARIMA model
+	sarima_predict(obj, inp, L, xpred, amse);
+	printf("\n");
+	printf("Predicted Values : ");
+	for (i = 0; i < L; ++i) {
+		printf("%g ", exp(xpred[i]));
+	}
+	printf("\n");
+	printf("Standard Errors  : ");
+	for (i = 0; i < L; ++i) {
+		printf("%g ", sqrt(amse[i]));
+	}
+	printf("\n");
+	sarima_free(obj);
+	free(inp);
+	free(phi);
+	free(theta);
+	free(PHI);
+	free(THETA);
+	free(xpred);
+	free(amse);
+}
+
 int main() {
     //errortests();
 	//llstest();
@@ -1250,10 +1457,14 @@ int main() {
 	//modstltest2();
 	//mstltest();
 	//shtest();
-	ndiffstest();
+	//ndiffstest();
 	//nsdiffstest();
 	//ur_pptest2() ;
 	//ur_dftest2();
 	//regex1();
+	//seasdummytest();
+	//sdtests();
+	//arimatest();
+	sarimatest();
     return 0;
 }

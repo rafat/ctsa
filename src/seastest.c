@@ -699,6 +699,9 @@ void OCSBtest(double *x, int N, int f, int mlags, const char *method,double *sta
 }
 
 void SHtest(double *x, int N, int *f, int Nseas, double *season) {
+    /*
+    Seasonal Heuristic Test
+    */
     int i,j;
     double **seasonal, *trend, *remainder, *vari;
     double vare,tmp1;
@@ -734,3 +737,106 @@ void SHtest(double *x, int N, int *f, int Nseas, double *season) {
     free(remainder);
     free(vari);
 }
+
+double* seasdummy(double *x, int N,int f,int *rows, int *cols) {
+    int i,j,iter;
+    double *tt;
+    double *fmatrix,*oup;
+    if ( f <= 1) {
+        printf("Non-Seasonal Data \n");
+        exit(-1);
+    }
+
+    tt = (double*) malloc(sizeof(double)*N);
+    fmatrix = (double*)malloc(sizeof(double)*N*2*f);
+    oup = (double*)malloc(sizeof(double)*N*(f-1));
+
+    for(i = 0; i < N;++i) {
+        tt[i] = (double) i + 1;
+    }
+
+    for(i = 0; i < N; ++i) {
+        iter = i * 2 * f;
+        for(j = 1; j <= f; ++j) {
+            fmatrix[iter + 2 * j - 1 ] = sin(2 * (double) PIVAL * j * tt[i] / (double) f);
+            fmatrix[iter + 2 * (j - 1) ] = cos(2 * (double) PIVAL * j * tt[i] /(double) f);
+            //printf("%d %d \n",iter + 2 * j,iter + 2 * j+1);
+        }
+    }
+
+    printf("PIVAL %g",PIVAL);
+
+    //mdisplay(fmatrix,N,2*f);
+
+    for(i = 0; i < N;++i) {
+        memcpy(oup + i * (f-1),fmatrix + i * 2 * f,sizeof(double)* (f-1));
+    }
+
+    itranspose(oup,N,f-1);
+
+    *rows = f-1;
+    *cols = N;
+
+    free(tt);
+    free(fmatrix);
+    return oup;
+}
+/* TO-DO Add Canova Hansen Test
+double SDtest(double *x, int N,int f) {
+    int i,j,lf,ltrunc,rows,cols,p;
+    double stl,alpha;
+    int *frec;
+    double *R1,*res,*varcovar,*Fhat,*Fhataux;
+    reg_object fit;
+
+    if ( f <= 1) {
+        printf("Non-Seasonal Data \n");
+        exit(-1);
+    }
+
+    if (N <= f) {
+        printf("Insufficient Data \n");
+        exit(-1);
+    }
+
+    lf = (f+1) / 2;
+
+    frec = (int*) malloc(sizeof(int)*lf);
+
+    for(i = 0; i < lf;++i) {
+        frec[i] = 1;
+    }
+
+    ltrunc = floor(f*pow((double)N/100.0,0.25));
+
+    //printf("%d \n",ltrunc);
+
+    R1 = seasdummy(x,N,f,&rows,&cols);
+
+    //mdisplay(R1,rows,cols);
+
+    // Regression
+
+    p = rows + 1;
+
+    varcovar = (double*)malloc(sizeof(double)*p*p);
+    res = (double*)malloc(sizeof(double)*N);
+    alpha = 0.95;
+
+    fit = reg_init(N,p);
+
+    regress(fit,R1,x,res,varcovar,alpha);
+
+    //summary(fit);
+    //anova(fit);
+
+    //mdisplay(res,1,N);
+
+    free(frec);
+    free(R1);
+    free_reg(fit);
+    free(res);
+    free(varcovar);
+    return stl;
+} 
+*/

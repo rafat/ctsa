@@ -24,6 +24,8 @@ void mstl(double *x, int N, int *f, int *Nseas, int *s_window,double *lambda,int
 
 void SHtest(double *x, int N, int *f, int Nseas, double *season);
 
+double* seasdummy(double *x, int N,int f,int *rows, int *cols);
+
 #ifdef __cplusplus
 }
 #endif
