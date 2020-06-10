@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "../header/ctsa.h"
+#include "../src/ctsa.h"
 #include "../src/errors.h"
 #include "../src/autoutils.h"
 
@@ -1429,6 +1429,78 @@ void sarimatest() {
 	free(amse);
 }
 
+void arimaxtest() {
+	int i, N, d, L;
+	double *inp;
+	int p, q, r;
+	double *phi, *theta;
+	double *xpred, *amse;
+	arimax_object obj;
+	p = 1;
+	d = 1;
+	q = 1;
+	r = 1;
+
+
+	L = 5;
+
+	phi = (double*)malloc(sizeof(double)* p);
+	theta = (double*)malloc(sizeof(double)* q);
+
+	xpred = (double*)malloc(sizeof(double)* L);
+	amse = (double*)malloc(sizeof(double)* L);
+
+	FILE *ifp;
+	double temp[1200];
+	double temp2[1200];
+
+	ifp = fopen("../data/e6.dat", "r");
+	i = 0;
+	if (!ifp) {
+		printf("Cannot Open File");
+		exit(100);
+	}
+	while (!feof(ifp)) {
+		fscanf(ifp, "%lf %lf \n", &temp[i],&temp2[i]);
+		i++;
+	}
+	N = i;
+
+	inp = (double*)malloc(sizeof(double)* N);
+	//wmean = mean(temp, N);
+
+	for (i = 0; i < N; ++i) {
+		inp[i] = temp[i];
+		//printf("%g \n",inp[i]);
+	}
+
+
+	obj = arimax_init(p, d, q, r , N);
+	//arima_setMethod(obj, 0); // Method 0 ("MLE") is default so this step is unnecessary. The method also accepts values 1 ("CSS") and 2 ("Box-Jenkins")
+	//arima_setOptMethod(obj, 7);// Method 7 ("BFGS with More Thuente Line search") is default so this step is unnecessary. The method also accepts values 0,1,2,3,4,5,6. Check the documentation for details.
+	arimax_exec(obj, inp,temp2);
+	arimax_summary(obj);
+	// Predict the next 5 values using the obtained ARIMA model
+	//arima_predict(obj, inp, L, xpred, amse);
+	//printf("\n");
+	//printf("Predicted Values : ");
+	//for (i = 0; i < L; ++i) {
+	//	printf("%g ", xpred[i]);
+	//}
+	//printf("\n");
+	//printf("Standard Errors  : ");
+	//for (i = 0; i < L; ++i) {
+	//	printf("%g ", sqrt(amse[i]));
+	//}
+	printf("\n");
+	arimax_free(obj);
+	free(inp);
+	free(phi);
+	free(theta);
+	free(xpred);
+	free(amse);
+}
+
 int main() {
     //errortests();
 	//llstest();
@@ -1465,6 +1537,7 @@ int main() {
 	//seasdummytest();
 	//sdtests();
 	//arimatest();
-	sarimatest();
+	//sarimatest();
+	arimaxtest();
     return 0;
 }

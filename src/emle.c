@@ -204,6 +204,58 @@ alik_seas_object alik_seas_init(int p, int d, int q, int s, int P, int D, int Q,
 	return obj;
 }
 
+xlik_object xlik_init(int p, int d, int q, int s, int P, int D, int Q, int M, int N) {
+	xlik_object obj = NULL;
+	int i,r, t;
+
+	r = p + s*P;
+
+	t = q + s*Q + 1;
+
+	if (r < t) {
+		r = t;
+	}
+	else {
+		t = r;
+	}
+
+	obj = (xlik_object)malloc(sizeof(struct xlik_set) + sizeof(double) * 2 * r + sizeof(double)* (3+M) * N);
+
+	obj->p = p;
+	obj->d = d;
+	obj->q = q;
+	obj->s = s;
+	obj->P = P;
+	obj->D = D;
+	obj->Q = Q;
+	obj->N = N;
+	obj->M = M; // This will include the mean term
+	obj->length = N;
+	obj->pq = p + q + P + Q + M;
+
+
+	obj->r = p + s * P;
+
+	t = 1 + q + s*Q;
+	if (obj->r < t) {
+		obj->r = t;
+	}
+	t = obj->r;
+	obj->offset = 2 * obj->r;
+
+	for (i = 0; i < t; ++i) {
+		obj->x[i] = 0.0;// phi
+	}
+
+	for (i = 0; i < t; ++i) {
+		obj->x[i+r] = 0.0;//theta
+	}
+	obj->eps = macheps();
+	obj->mean = 0.0;
+
+	return obj;
+}
+
 static int inclu2(int np, int nrbar, double weight, double *xnext, double *xrow, double ynext,
 	double *d, double *rbar, double *thetab,double *ssqerr,double *recres,int *irank) {
 	int ifault,i,ithisr,i1,k;
@@ -1270,7 +1322,6 @@ int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, d
 	int *ipiv;
 	double maxstep;
 	alik_object obj;
-	reg_object fit;
 	//custom_function as154_min;
 
 	x = (double*)malloc(sizeof(double)* (N - d));
@@ -1294,6 +1345,8 @@ int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, d
 	}
 
 	if (p + q == 0 && d == 0) {
+		free(x);
+		free_alik(obj);
 		return 1;
 	}
 
@@ -1394,80 +1447,193 @@ int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, d
 	return ret;
 }
 
-int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,int r, int M, double *phi, double *theta, double *exog, double *wmean,
-	 double *var,double *resid,double *loglik,double *hess) {
-	int i,pq,retval,length,ret,ncoeff,pr;
-	double *b,*tf,*x,*dx,*thess,*XX,*varcovar,*res;
+int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, int s, int P, int D, int Q, double *phi, double *theta, 
+ 	double *PHI, double *THETA, double *exog, int r, double *wmean, double *var,double *resid,double *loglik,double *hess) {
+	int i,pq,retval,length,ret,ncoeff,pr,ncxreg,nd,offset,N1,rnk,orig;
+	double *b,*tf,*x,*dx,*thess,*XX,*varcovar,*res,*x0,*inp2,*U,*V,*SIG,*coeff,*sigma;
 	int *ipiv;
 	double maxstep;
-	alik_object obj;
+	xlik_object obj;
 	reg_object fit;
 	//custom_function as154_min;
 
-	x = (double*)malloc(sizeof(double)* (N - d));
-
-	length = N;// length of xreg as x is differenced earlier
+	length = N;// length of xreg as x is differenced first
 	
 	maxstep = 1.0;
+	ncxreg = (xreg == NULL) ? 0 : r;
+	nd = d + D;
 
-	ncoeff = p + q;
+	inp2 = (double*)malloc(sizeof(double)* (N - s*D));
 
-	obj = alik_init(p, d, q, N);
+	ncoeff = p + q + P + Q;
 
-
-	css(inp, N, optmethod, p, d, q, phi, theta, wmean, var,resid,loglik,hess);
-
-	if (d > 0) {
-		N = diff(inp, N, d, x); // No need to demean x
+	if (D > 0) {
+		N = diffs(inp, N, D, s, inp2);
 	}
 	else {
 		for (i = 0; i < N; ++i) {
-			x[i] = inp[i];
+			inp2[i] = inp[i];
 		}
 	}
 
-	if (p + q == 0 && d == 0 && r > 0) {
-		pr = 1+r;
-		varcovar = (double*)malloc(sizeof(double)*pr*pr);
-		fit = reg_init(N,pr);
-		regress(fit,NULL,x,resid,varcovar,0.95);
-		free(varcovar);
-		free_reg(fit);
-		return 1;
-	}  else if (p + q == 0 && d == 0 && r == 0) {
-		return 1;
+	x = (double*)malloc(sizeof(double)* (N - d));
+
+	if (d > 0) {
+		N = diff(inp2, N, d, x); // No need to demean x
 	}
+	else {
+		for (i = 0; i < N; ++i) {
+			x[i] = inp2[i];
+		}
+	}
+
+	x0 = (double*) malloc(sizeof(double)*length*(r+1));
+
+	if (nd == 0) {
+		for(i = 0; i < length;++i) {
+			x0[i] = 1.0;
+		}
+		if (ncxreg > 0) {
+			memcpy(x0+length,xreg,sizeof(double)*ncxreg*length);
+		}
+		ncxreg++;
+	}
+
+	XX = (double*) malloc(sizeof(double)*N*(r+1));
+
+	if (ncxreg > 0) {
+		N1 = length;
+		
+		if (D > 0) {
+			N1 = length - s*D;
+			for(i = 0; i < ncxreg;++i) {
+				diffs(x0+length*i,length,D,s,XX+N1*i);
+				memcpy(x0+N1*i,XX+N1*i,sizeof(double)*N1);
+			}
+		} 
+		
+		if (d > 0) {
+			for(i = 0; i < ncxreg;++i) {
+				diff(x0+N1*i,N1,d,XX+N*i);
+			}
+		} 
+
+		if (nd == 0) {
+			memcpy(XX,x0,sizeof(double)*N*ncxreg);
+		}
+
+	}
+
+	rnk = rank(XX,N,ncxreg);
+
+	if (rnk < ncxreg) {
+		printf("Exogenous Variables are collinear. \n");
+		free(inp2);
+		free(x0);
+		free(XX);
+		free(x);
+		exit(-1);
+	}
+
+	orig = 0;
+
+	if (ncxreg > 0) {
+		if (ncxreg == 1) orig = 1;
+
+		if (orig == 0) {
+			/*
+			* U = MXN
+			* V - NXN
+			* Q - NX1
+			*/
+
+			U = (double*)malloc(sizeof(double)*N*ncxreg);
+			V = (double*)malloc(sizeof(double)*ncxreg*ncxreg);
+			SIG = (double*)malloc(sizeof(double)*ncxreg);
+
+			svd(XX,N,ncxreg,U,V,SIG);
+
+			memcpy(U,XX,sizeof(double)*N*ncxreg);
+
+			mmult(U,V,XX,N,ncxreg,ncxreg);
+
+			free(U);
+			free(V);
+			free(SIG);
+		}
+
+		fit = reg_init(N,ncxreg);
+
+		varcovar = (double*)malloc(sizeof(double)*ncxreg*ncxreg);
+		res = (double*)malloc(sizeof(double)*N);
+		coeff = (double*)malloc(sizeof(double)*ncxreg);
+		sigma = (double*)malloc(sizeof(double)*ncxreg);
+
+		setIntercept(fit,0);
+		regress(fit,XX,x,res,varcovar,0.95);
+
+		for(i = 0; i < ncxreg;++i) {
+			coeff[i] = (fit->beta+i)->value;
+			sigma[i] = 10.0 * (fit->beta+i)->stdErr;
+		}
+
+		free(varcovar);
+		free(res);
+		free_reg(fit);
+	}
+
+	obj = xlik_init(p,d,q,s,P,D,Q,ncxreg,N);
+
+	offset = obj->offset;
 
 	obj->N = N;
 	obj->mean = *wmean;
 	pq = obj->pq;
-	printf("pq %d \n",pq);
 	b = (double*)malloc(sizeof(double)* pq);
 	tf = (double*)malloc(sizeof(double)* pq);
 	thess = (double*)malloc(sizeof(double)* pq*pq);
 	dx = (double*)malloc(sizeof(double)* pq);
 	ipiv = (int*)malloc(sizeof(int)* pq);
 
+
+	// Initialize Parameters
+
 	for (i = 0; i < p; ++i) {
-		b[i] = phi[i];
+		b[i] = 0.0;// phi
 	}
 	for (i = 0; i < q; ++i) {
-		b[p + i] = -theta[i];
+		b[p + i] = 0.0; // theta
 	}
 
-	if (obj->M == 1) {
-		b[p + q] = obj->mean;
+	for(i = 0; i < P;++i) {
+		b[p + q + i] = 0.0; // PHI
 	}
 
+	for(i = 0; i < Q; ++i) {
+		b[p + q + P + i] = 0.0; // THETA
+	}
+
+	for(i = 0; i < ncxreg;++i) {
+		b[p + q + P + Q + i] = coeff[i]; // exog
+	}
+
+	obj->mean = *wmean;
+
+	// Set data vector
 
 	for (i = 0; i < N; ++i) {
-		obj->x[i] = obj->x[2 * N + i] = x[i];
-	}
-	for (i = N; i < 2 * N; ++i) {
-		obj->x[i] = 0.0;
+		obj->x[offset + i] = obj->x[offset + 2 * N + i] = x[i];
 	}
 
-	custom_function as154_min = { fas154, obj };
+	for (i = N; i < 2 * N; ++i) {
+		obj->x[offset + i] = 0.0;
+	}
+
+	for(i = 3 * N; i < (3 + r) *N; ++i) {
+		obj->x[offset + 3 * N + i] = xreg[i];
+	}
+
+	custom_function as154_min = { fas154x_seas, obj };
 	retval = fminunc(&as154_min, NULL, pq, b,maxstep, optmethod, tf);
 
 	if (retval == 0) {
@@ -1483,8 +1649,12 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 		ret = 1;
 	}
 
-	for (i = 0; i < pq; ++i) {
+	for (i = 0; i < pq - ncxreg; ++i) {
 		dx[i] = 1.0;
+	}
+
+	for(i = 0; i < ncxreg; ++i) {
+		dx[pq - ncxreg + i] = sigma[i];
 	}
 
 	hessian_fd(&as154_min, tf, pq, dx, obj->eps, hess);
@@ -1492,7 +1662,7 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 	mtranspose(hess, pq, pq, thess);
 
 	for (i = 0; i < pq*pq; ++i) {
-		thess[i] = (N-d) * 0.5 * (hess[i] + thess[i]);
+		thess[i] = (length - d - s*D) * 0.5 * (hess[i] + thess[i]);
 	}
 	
 
@@ -1506,21 +1676,32 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 	for (i = 0; i < q; ++i) {
 		theta[i] = -tf[p + i];
 	}
-	if (obj->M == 1) {
-		*wmean = tf[p + q];
+	for (i = 0; i < P; ++i) {
+		PHI[i] = tf[p + q + i];
 	}
-	else {
-		*wmean = 0.0;
+	for (i = 0; i < Q; ++i) {
+		THETA[i] = -tf[p + q + P + i];
 	}
-	/*
-	wmean = 0.0;
-	for (i = 0; i < N; ++i) {
-		wmean += (obj->x[N + i] * obj->x[N + i]);
-	}*/
 
-	*var = (obj->ssq) / (double) N;
-	for (i = 0; i < N - d; ++i) {
-		resid[i] = obj->x[N + i];
+	if (nd == 0) {
+		*wmean = tf[p + q + Q + P];
+		if (ncxreg > 1) {
+			for(i = 1; i < ncxreg;++i) {
+				exog[i-1] = tf[p + q + Q + P + i];
+			}
+		}
+	} else {
+		*wmean = 0.0;
+		for(i = 0; i < ncxreg; ++i) {
+			exog[i] = tf[p + q + Q + P + i];
+		}
+	}
+
+
+	*var = (obj->ssq) / (double) length;
+
+	for (i = 0; i < N; ++i) {
+		resid[i] = obj->x[offset + N + i];
 	}
 	*loglik = obj->loglik;
 	//printf("MEAN %g \n", mean(obj->x+N,N));
@@ -1532,7 +1713,12 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 	free(thess);
 	free(ipiv);
 	free(dx);
-	free_alik(obj);
+	free(inp2);
+	free(x0);
+	free(XX);
+	free(coeff);
+	free(sigma);
+	free_xlik(obj);
 	return ret;
 }
 
@@ -1864,6 +2050,18 @@ double fas154_seas(double *b, int pq, void *params) {
 			obj->x[offset + i] = obj->x[offset + 2 * N + i] - b[p + q + ps + qs];
 		}
 	}
+	/*
+	if(G->m > 0) {
+	for(i = 0; i < G->n; i++) {
+	    tmp = G->wkeep[i];
+	    for(j = 0; j < G->m; j++)
+		tmp -= G->reg[i + G->n*j] * G->params[streg + j];
+	    G->w[i] = tmp;
+	}
+    }
+
+
+	*/
 	//mdisplay(phi, 1, ir);
 	//mdisplay(theta, 1, ir);
 	iupd = 0;
@@ -2055,6 +2253,124 @@ int as154_seas(double *inp, int N, int optmethod, int p, int d, int q, int s, in
 	free_alik_seas(obj);
 	return ret;
 }
+
+double fas154x_seas(double *b, int pq, void *params) {
+	double value, ssq, sumlog, delta,temp;
+	int p, q, ps, qs,s,offset,naram,M;
+	int ip, iq, ir, i,j, np, ifault, N, iupd, nit, iter;
+	double *phi, *theta, *A, *P, *V,*reg;
+
+	value = ssq = sumlog = 0.0;
+	xlik_object obj = (xlik_object)params;
+
+	ip = obj->p + (obj->s * obj->P);
+	iq = obj->q + (obj->s * obj->Q);
+	ir = obj->r;
+	N = obj->N;
+	p = obj->p;
+	ps = obj->P;
+	q = obj->q;
+	qs = obj->Q;
+	M = obj->M;
+	s = obj->s;
+	offset = obj->offset;
+	np = (ir * (ir + 1)) / 2;
+	naram = p + q + ps + qs;
+	reg = &obj->x[offset+3*N];
+
+	phi = (double*)malloc(sizeof(double)* ir);
+	theta = (double*)malloc(sizeof(double)* ir);
+	A = (double*)malloc(sizeof(double)* ir);
+	P = (double*)malloc(sizeof(double)* np);
+	V = (double*)malloc(sizeof(double)* np);
+
+	for (i = 0; i < ir; ++i) {
+		phi[i] = 0.0;
+		theta[i] = 0.0;
+	}
+
+	for (i = 0; i < p; ++i) {
+		phi[i] = b[i];
+	}
+
+	for (i = 0; i < q; ++i) {
+		theta[i] = b[i + p];
+	}
+	/*
+	for (i = p; i < ip; ++i) {
+		phi[i] = 0.0;
+	}
+
+	for (i = q; i < iq; ++i) {
+		theta[i] = 0.0;
+	}
+	*/
+
+	for (j = 0; j < ps; ++j) {
+		phi[(j + 1)*s - 1] += b[p + q + j];
+		for (i = 0; i < p; ++i) {
+			phi[(j + 1)*s + i] -= b[i] * b[p + q + j];
+		}
+	}
+
+	for (j = 0; j < qs; ++j) {
+		theta[(j + 1)*s - 1] += b[p + q + ps + j];
+		for (i = 0; i < q; ++i) {
+			theta[(j + 1)*s + i] += b[i + p] * b[p + q + ps + j];
+		}
+	}
+	
+	/*
+	if (obj->M == 1) {
+		for (i = 0; i < N; ++i) {
+			obj->x[offset + i] = obj->x[offset + 2 * N + i] - b[p + q + ps + qs];
+		}
+	}
+	*/
+
+	if (obj->M > 0) {
+		for (i = 0; i < N; ++i) {
+			temp = obj->x[offset + 2 * N + i];
+			for(j = 0; j < M;++j) {
+				temp -= reg[i*N+j]*b[naram+j];
+			}
+			obj->x[offset + i] = temp;
+		}
+	}
+	//mdisplay(phi, 1, ir);
+	//mdisplay(theta, 1, ir);
+	iupd = 0;
+	//mdisplay(b, 1, pq);
+
+	if (ip == 1 && iq == 0) {
+		*V = 1.0;
+		*A = 0.0;
+		*P = 1.0 / (1.0 - phi[0] * phi[0]);
+	}
+	else {
+		iupd = 1;
+		ifault = starma(ip, iq, phi, theta, A, P, V);
+	}
+
+	nit = 0;
+	delta = 0.001;
+	//mdisplay(P, 1, np);
+	karma(ip, iq, phi, theta, A, P, V, N, obj->x + offset, obj->x + offset + N, &sumlog, &ssq, iupd, delta, &iter, &nit);
+	obj->ssq = ssq;
+	//mdisplay(V, 1, np);
+
+	value = 0.5 * (sumlog / (double)iter + log(ssq / (double)iter));
+	obj->loglik = value;
+	//printf("sumlog ssq %g %g %d \n", sumlog,value,iter);
+
+	free(phi);
+	free(theta);
+	free(A);
+	free(P);
+	free(V);
+	return value;
+}
+
 
 int flikam(double *P, int MP, double *Q, int MQ,double *W, double *E, int N,double *ssq,double *fact,double *VW,double *VL,int MRP1,double *VK,int MR,double TOLER) {
 	int ifault,MXPQ,MXPQP1,MQP1,MPP1,FLAG;
@@ -2364,6 +2680,10 @@ void free_alik_css(alik_css_object object) {
 }
 
 void free_alik(alik_object object) {
+	free(object);
+}
+
+void free_xlik(xlik_object object) {
 	free(object);
 }
 

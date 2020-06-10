@@ -99,11 +99,11 @@ struct ar_set{
 	double params[0];
 };
 
-typedef struct arimax_set* arimax_object;
+typedef struct sarimax_set* sarimax_object;
 
-arimax_object arimax_init(int p, int d, int q, int r, int N);
+sarimax_object sarimax_init(int p, int d, int q, int r, int N);
 
-struct arimax_set{
+struct sarimax_set{
 	int N;// length of time series
 	int Nused;//length of time series after differencing, Nused = N - d
 	int method;
@@ -111,11 +111,17 @@ struct arimax_set{
 	int p;// size of phi
 	int d;// Number of times the series is to be differenced
 	int q;//size of theta
+	int s;// Seasonality/Period
+	int P;//Size of seasonal phi
+	int D;// The number of times the seasonal series is to be differenced
+	int Q;//size of Seasonal Theta
 	int r;// Number of exogenous variables
 	int M; // M = 0 if mean is 0.0 else M = 1
 	int ncoeff;// Total Number of Coefficients to be estimated
 	double *phi;
 	double *theta;
+	double *PHI;
+	double *THETA;
 	double *exog;
 	double *vcov;// Variance-Covariance Matrix Of length lvcov
 	int lvcov; //length of VCOV
@@ -129,6 +135,8 @@ struct arimax_set{
 };
 
 void arima_exec(arima_object obj, double *x);
+
+void sarimax_exec(sarimax_object obj, double *inp,double *xreg) ;
 
 void sarima_exec(sarima_object obj, double *x);
 
@@ -156,6 +164,8 @@ void sarima_vcov(sarima_object obj, double *vcov);
 
 void arima_summary(arima_object obj);
 
+void sarimax_summary(sarimax_object obj);
+
 void sarima_summary(sarima_object obj);
 
 int ar_estimate(double *x, int N, int method);
@@ -175,6 +185,8 @@ void acvf_opt(double* vec, int N, int method, double* par, int M);
 void acvf2acf(double *acf, int M);
 
 void arima_free(arima_object object);
+
+void sarimax_free(sarimax_object object);
 
 void sarima_free(sarima_object object);
 

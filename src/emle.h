@@ -116,6 +116,31 @@ struct alik_seas_set{
 	double x[1];
 };
 
+typedef struct xlik_set* xlik_object;
+
+xlik_object xlik_init(int p, int d, int q, int s, int P, int D, int Q,int M, int N);
+
+struct xlik_set{
+	int p;// size of phi
+	int d;// Number of times the series is to be differenced
+	int q;//size of theta
+	int s; // Frequency of Seasonal Components
+	int P;// size of phi seasonal
+	int D;// Number of times the seasonal series is to be differenced
+	int Q;//size of theta seasonal
+	int r;// max(p+s*P,q+s*Q+1)
+	int pq;// p+q+s*P+s*Q
+	int length;// length of the original time series
+	int N;// length of time series after differencing 
+	int M;// M = 1 if mean needs to be calculated else 0
+	double eps;
+	double mean;
+	double ssq;// Contains the sum of squares value 
+	double loglik;
+	int offset;
+	double x[1];
+};
+
 int starma(int ip, int iq, double *phi, double *theta, double *A, double *P, double *V);
 
 void karma(int ip, int iq, double *phi, double *theta, double *A, double *P, double*V, int N,
@@ -136,6 +161,11 @@ double fas154(double *x, int N, void *params);
 
 int as154(double *x, int N, int optmethod, int p, int d, int q, double *phi, double *theta, double *wmean, double *var, double *resid, double *loglik, double *hess);
 
+double fas154x_seas(double *b, int pq, void *params);
+
+int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, int s, int P, int D, int Q, double *phi, double *theta, 
+ double *PHI, double *THETA, double *exog, int r, double *wmean, double *var,double *resid,double *loglik,double *hess);
+
 double fas154_seas(double *b, int pq, void *params);
 
 int as154_seas(double *inp, int N, int optmethod, int p, int d, int q, int s, int P, int D, int Q,
@@ -150,6 +180,8 @@ void as197(double *inp, int N, int optmethod, int p, int d, int q, double *phi, 
 void free_alik_css(alik_css_object object);
 
 void free_alik(alik_object object);
+
+void free_xlik(xlik_object object);
 
 void free_alik_seas(alik_seas_object object);
 

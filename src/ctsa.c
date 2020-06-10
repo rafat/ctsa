@@ -145,8 +145,8 @@ ar_object ar_init(int method, int N) {
 	return obj;
 }
 
-arimax_object arimax_init(int p, int d, int q, int r,int N) {
-	arimax_object obj = NULL;
+sarimax_object sarimax_init(int p, int d, int q, int r,int N) {
+	sarimax_object obj = NULL;
 	int i,M;
 
 	if (d > 0) {
@@ -164,7 +164,7 @@ arimax_object arimax_init(int p, int d, int q, int r,int N) {
 	// retval = 4 Optimization Routine didn't converge
 	// Retval = 15 Optimization Routine Encountered Inf/Nan Values
 	
-	obj = (arimax_object)malloc(sizeof(struct arimax_set) + sizeof(double) * (p+q+r+N-d) + sizeof(double) * (p+q+M)*(p+q+M));
+	obj = (sarimax_object)malloc(sizeof(struct sarimax_set) + sizeof(double) * (p+q+r+N-d) + sizeof(double) * (p+q+M)*(p+q+M));
 
 	obj->p = p;
 	obj->d = d;
@@ -227,6 +227,32 @@ void arima_exec(arima_object obj, double *inp) {
 	}
 
 
+}
+
+void sarimax_exec(sarimax_object obj, double *inp,double *xreg)  {
+	int p,q,d,N,M;
+	double eps;
+
+	p = obj->p;
+	q = obj->q;
+	d = obj->d;
+	N = obj->N;
+
+	if (obj->d > 0) {
+		M = 0;
+	}
+	else {
+		M = 1;
+	}
+
+	if (obj->method == 0) {
+		//obj->retval = as154(inp, obj->N, obj->optmethod, obj->p, obj->d, obj->q, obj->params, obj->params + p, &obj->mean, &obj->var, obj->params + p + q,&obj->loglik,
+		//	obj->params + p + q + N - d);
+		obj->retval = as154x(inp, obj->N,xreg,obj->optmethod,obj->p,obj->d,obj->q,obj->r,obj->params, obj->params + p, obj->params + p + q + N - d + (p + q + M)*(p + q + M),
+		  &obj->mean, &obj->var, obj->params + p + q,&obj->loglik,obj->params + p + q + N - d);
+		obj->loglik = -0.5 * (obj->Nused * (2 * obj->loglik + 1.0 + log(2 * 3.14159)));
+		obj->aic = -2.0 * obj->loglik + 2.0 * (obj->p + obj->q + obj->M) + 2.0;
+	}
 }
 
 void sarima_exec(sarima_object obj, double *inp) {
@@ -963,6 +989,137 @@ void arima_summary(arima_object obj) {
 	}
 }
 
+void sarimax_summary(sarimax_object obj) {
+	int i, pq,t;
+	pq = obj->p + obj->q + obj->M;
+	if (obj->method == 0 || obj->method == 1) {
+		printf("\n\n Exit Status \n");
+		printf("Return Code : %d \n", obj->retval);
+		printf("Exit Message : ");
+
+		if (obj->retval == 0) {
+			printf("Input Error");
+		}
+		else if (obj->retval == 1) {
+			printf("Probable Success");
+		}
+		else if (obj->retval == 4) {
+			printf("Optimization Routine didn't converge");
+		}
+		else if (obj->retval == 15) {
+			printf("Optimization Routine Encountered Inf/Nan Values");
+		}
+	}
+	printf("\n\n");
+	printf(" ARIMA Order : ( %d, %d, %d) \n", obj->p, obj->d, obj->q);
+	printf("\n");
+	printf("%-20s%-20s%-20s \n\n", "Coefficients", "Value", "Standard Error");
+	for (i = 0; i < obj->p; ++i) {
+		printf("AR%-15d%-20g%-20g \n", i + 1, obj->phi[i],sqrt(obj->vcov[i+pq*i]));
+	}
+	for (i = 0; i < obj->q; ++i) {
+		t = obj->p + i;
+		printf("MA%-15d%-20g%-20g \n", i + 1, obj->theta[i], sqrt(obj->vcov[t + pq * t]));
+	}
+	for (i = 0; i < obj->r; ++i) {
+		t = obj->r + i;
+		printf("EXOG%-15d%-20g%-20g \n", i + 1, obj->exog[i], 0.0);
+	}
+	printf("\n");
+	t = obj->p + obj->q;
+	if (obj->M == 1) {
+		printf("%-17s%-20g%-20g \n", "MEAN", obj->mean, sqrt(obj->vcov[t + pq * t]));
+	}
+	else {
+		printf("%-17s%-20g \n", "MEAN", obj->mean);
+	}
+	printf("\n");
+	printf("%-17s%-20g \n", "SIGMA^2", obj->var);
+	printf("\n");
+	printf("ESTIMATION METHOD : ");
+	if (obj->method == 0) {
+		printf("MLE");
+	}
+	else if (obj->method == 1) {
+		printf("CSS");
+	}
+	else if (obj->method == 2) {
+		printf("BOX-JENKINS");
+	}
+	printf("\n\n");
+	printf("OPTIMIZATION METHOD : ");
+	if (obj->method == 2) {
+		printf("Newton-Raphson");
+	}
+	else {
+		if (obj->optmethod == 0) {
+			printf("Nelder-Mead");
+		}
+		else if (obj->optmethod == 1) {
+			printf("Newton Line Search");
+		}
+		else if (obj->optmethod == 2) {
+			printf("Newton Trust Region - Hook Step");
+		}
+		else if (obj->optmethod == 3) {
+			printf("Newton Trust Region - Double Dog-Leg");
+		}
+		else if (obj->optmethod == 4) {
+			printf("Conjugate Gradient");
+		}
+		else if (obj->optmethod == 5) {
+			printf("BFGS");
+		}
+		else if (obj->optmethod == 6) {
+			printf("L-BFGS");
+		}
+		else if (obj->optmethod == 7) {
+			printf("BFGS More-Thuente Line Search");
+		}
+	}
+	printf("\n\n");
+	printf("EQUATION FORM : x[t] ");
+	for (i = 0; i < obj->p; ++i) {
+		if (obj->phi[i] > 0) {
+			printf("- %g*x[t - %d%s", fabs(obj->phi[i]), i + 1, "]");
+		}
+		else if (obj->phi[i] < 0) {
+			printf("+ %g*x[t - %d%s", fabs(obj->phi[i]), i + 1, "] ");
+		}
+	}
+
+	printf("=");
+	if (obj->mean != 0.0) {
+		printf(" %g +", obj->mean);
+	}
+	printf(" a[t] ");
+	for (i = 0; i < obj->q; ++i) {
+		if (obj->theta[i] > 0) {
+			printf("- %g*a[t - %d%s", fabs(obj->theta[i]), i + 1, "]");
+		}
+		else if (obj->phi[i] < 0) {
+			printf("+ %g*a[t - %d%s", fabs(obj->theta[i]), i + 1, "] ");
+		}
+	}
+	printf("\n\n");
+	if (obj->method == 0 || obj->method == 1) {
+		printf("Log Likelihood : %g ", obj->loglik);
+		printf("\n\n");
+	}
+	else {
+		printf("Log Likelihood : Unavailable ");
+		printf("\n\n");
+	}
+	if (obj->method == 0) {
+		printf("AIC criterion : %g ", obj->aic);
+		printf("\n\n");
+	}
+	else {
+		printf("AIC Criterion : Unavailable ");
+		printf("\n\n");
+	}
+}
+
 int ar_estimate(double *x, int N, int method) {
 	int p, ordermax, logn, i;
 	double wmean, aic, loglik, var, lvar, aic0;
@@ -1236,6 +1393,10 @@ void acvf2acf(double *acorr, int M) {
 }
 
 void arima_free(arima_object object) {
+	free(object);
+}
+
+void sarimax_free(sarimax_object object) {
 	free(object);
 }
 
