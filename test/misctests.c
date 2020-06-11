@@ -1429,17 +1429,21 @@ void sarimatest() {
 	free(amse);
 }
 
-void arimaxtest() {
-	int i, N, d, L;
+void sarimaxtest() {
+	int i, N, d, D, L;
 	double *inp;
-	int p, q, r;
+	int p, q, P, Q, s, r;
 	double *phi, *theta;
 	double *xpred, *amse;
-	arimax_object obj;
+	sarimax_object obj;
 	p = 1;
-	d = 1;
+	d = 0;
 	q = 1;
-	r = 1;
+	r = 0;
+	P = 0;
+	D = 0;
+	Q = 0;
+	s = 1;
 
 
 	L = 5;
@@ -1475,11 +1479,11 @@ void arimaxtest() {
 	}
 
 
-	obj = arimax_init(p, d, q, r , N);
+	obj = sarimax_init(p, d, q, P, D, Q, s, r , N);
 	//arima_setMethod(obj, 0); // Method 0 ("MLE") is default so this step is unnecessary. The method also accepts values 1 ("CSS") and 2 ("Box-Jenkins")
 	//arima_setOptMethod(obj, 7);// Method 7 ("BFGS with More Thuente Line search") is default so this step is unnecessary. The method also accepts values 0,1,2,3,4,5,6. Check the documentation for details.
-	arimax_exec(obj, inp,temp2);
-	arimax_summary(obj);
+	sarimax_exec(obj, inp,NULL);
+	sarimax_summary(obj);
 	// Predict the next 5 values using the obtained ARIMA model
 	//arima_predict(obj, inp, L, xpred, amse);
 	//printf("\n");
@@ -1493,7 +1497,7 @@ void arimaxtest() {
 	//	printf("%g ", sqrt(amse[i]));
 	//}
 	printf("\n");
-	arimax_free(obj);
+	sarimax_free(obj);
 	free(inp);
 	free(phi);
 	free(theta);
@@ -1538,6 +1542,6 @@ int main() {
 	//sdtests();
 	//arimatest();
 	//sarimatest();
-	arimaxtest();
+	sarimaxtest();
     return 0;
 }

@@ -233,6 +233,11 @@ xlik_object xlik_init(int p, int d, int q, int s, int P, int D, int Q, int M, in
 	obj->length = N;
 	obj->pq = p + q + P + Q + M;
 
+	if (d == 0 && D == 0) {
+		obj->pq = obj->pq + 1;
+		obj->M += 1;
+	}
+
 
 	obj->r = p + s * P;
 
@@ -1497,13 +1502,17 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 			memcpy(x0+length,xreg,sizeof(double)*ncxreg*length);
 		}
 		ncxreg++;
+	} else {
+		if (ncxreg > 0) {
+			memcpy(x0,xreg,sizeof(double)*ncxreg*length);
+		}
 	}
 
 	XX = (double*) malloc(sizeof(double)*N*(r+1));
 
 	if (ncxreg > 0) {
 		N1 = length;
-		
+		// x0 differenced and stored back in x0. Also stored in XX
 		if (D > 0) {
 			N1 = length - s*D;
 			for(i = 0; i < ncxreg;++i) {
@@ -1511,13 +1520,13 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 				memcpy(x0+N1*i,XX+N1*i,sizeof(double)*N1);
 			}
 		} 
-		
+		// x0 differenced to XX
 		if (d > 0) {
 			for(i = 0; i < ncxreg;++i) {
 				diff(x0+N1*i,N1,d,XX+N*i);
 			}
 		} 
-
+		// Copy x0 to XX
 		if (nd == 0) {
 			memcpy(XX,x0,sizeof(double)*N*ncxreg);
 		}
@@ -1551,11 +1560,15 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 			V = (double*)malloc(sizeof(double)*ncxreg*ncxreg);
 			SIG = (double*)malloc(sizeof(double)*ncxreg);
 
+			itranspose(XX,ncxreg,N);
+
 			svd(XX,N,ncxreg,U,V,SIG);
 
 			memcpy(U,XX,sizeof(double)*N*ncxreg);
 
 			mmult(U,V,XX,N,ncxreg,ncxreg);
+
+			itranspose(XX,N,ncxreg);
 
 			free(U);
 			free(V);
@@ -1582,11 +1595,13 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 		free_reg(fit);
 	}
 
-	obj = xlik_init(p,d,q,s,P,D,Q,ncxreg,N);
+	obj = xlik_init(p,d,q,s,P,D,Q,ncxreg,length);
+
 
 	offset = obj->offset;
 
 	obj->N = N;
+	obj->M = ncxreg;
 	obj->mean = *wmean;
 	pq = obj->pq;
 	b = (double*)malloc(sizeof(double)* pq);
@@ -1629,8 +1644,8 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 		obj->x[offset + i] = 0.0;
 	}
 
-	for(i = 3 * N; i < (3 + r) *N; ++i) {
-		obj->x[offset + 3 * N + i] = xreg[i];
+	for(i = 3 * N; i < (3 + ncxreg)*N; ++i) {
+		obj->x[offset + 3 * N + i] = XX[i];
 	}
 
 	custom_function as154_min = { fas154x_seas, obj };

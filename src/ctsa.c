@@ -145,17 +145,19 @@ ar_object ar_init(int method, int N) {
 	return obj;
 }
 
-sarimax_object sarimax_init(int p, int d, int q, int r,int N) {
+sarimax_object sarimax_init(int p, int d, int q,int P, int D, int Q,int s, int r, int N) {
 	sarimax_object obj = NULL;
-	int i,M;
+	int i,M,ncxreg;
 
-	if (d > 0) {
+	if (d + D > 0) {
 		M = 0;
+		ncxreg = r;
 	}
 	else {
 		M = 1;
+		ncxreg = 1 + r;
 	}
-	if (p < 0 || d < 0 || q < 0 || N <= 0) {
+	if (p < 0 || d < 0 || q < 0 || N <= 0 || P < 0 || D < 0 || Q < 0) {
 		printf("\n Input Values cannot be Negative. Program Exiting. \n");
 		exit(-1);
 	}
@@ -164,32 +166,39 @@ sarimax_object sarimax_init(int p, int d, int q, int r,int N) {
 	// retval = 4 Optimization Routine didn't converge
 	// Retval = 15 Optimization Routine Encountered Inf/Nan Values
 	
-	obj = (sarimax_object)malloc(sizeof(struct sarimax_set) + sizeof(double) * (p+q+r+N-d) + sizeof(double) * (p+q+M)*(p+q+M));
+	obj = (sarimax_object)malloc(sizeof(struct sarimax_set) +
+	 sizeof(double)* (p + q + P + Q + ncxreg + N - d - s*D) + sizeof(double)* (p + q + P + Q + ncxreg )*(p + q + P + Q + ncxreg ));
 
 	obj->p = p;
 	obj->d = d;
 	obj->q = q;
 	obj->N = N;
-	obj->Nused = N - d;
+	obj->s = s;
+	obj->P = P;
+	obj->D = D;
+	obj->Q = Q;
+	obj->Nused = N - d - s*D;
 	obj->M = M;
-	obj->retval = 0;
 	obj->r = r;
+	obj->retval = 0;
 
-	for (i = 0; i < p + q; ++i) {
+	for (i = 0; i < p + q + P + Q + ncxreg; ++i) {
 		obj->params[i] = 0.0;
 	}
 	obj->phi = &obj->params[0];
 	obj->theta = &obj->params[p];
-	obj->res = &obj->params[p + q];
-	obj->vcov = &obj->params[p + q + N - d];
-	obj->exog = &obj->params[p + q + N - d + (p + q + M)*(p + q + M)];
+	obj->PHI = &obj->params[p + q];
+	obj->THETA = &obj->params[p + q + P];
+	obj->exog = &obj->params[p + q + P + Q];
+	obj->res = &obj->params[p + q + P + Q + ncxreg];
+	obj->vcov = &obj->params[p + q + P + Q + ncxreg + N - d - s*D];
 
 	obj->method = 0;// 0 - MLE, 1 - CSS, 2 - Box-Jenkins
 	obj->optmethod = 7; // Default Method is 7
 	obj->mean = 0.0;
 	obj->var = 1.0;
-	obj->lvcov = (p + q + M)*(p + q + M);
-	obj->ncoeff = p + q + M + r;
+	obj->lvcov = (p + q + P + Q + ncxreg )*(p + q + P + Q + ncxreg );
+	obj->ncoeff = p + q + P + Q + ncxreg ;
 
 	return obj;
 }
@@ -230,28 +239,26 @@ void arima_exec(arima_object obj, double *inp) {
 }
 
 void sarimax_exec(sarimax_object obj, double *inp,double *xreg)  {
-	int p,q,d,N,M;
+	int p,q,d,N,M,P,D,Q,s;
 	double eps;
 
 	p = obj->p;
 	q = obj->q;
 	d = obj->d;
 	N = obj->N;
+	P = obj->P;
+	D = obj->D;
+	Q = obj->Q;
+	s = obj->s;
 
-	if (obj->d > 0) {
-		M = 0;
-	}
-	else {
-		M = 1;
-	}
+	M = obj->M;
 
 	if (obj->method == 0) {
-		//obj->retval = as154(inp, obj->N, obj->optmethod, obj->p, obj->d, obj->q, obj->params, obj->params + p, &obj->mean, &obj->var, obj->params + p + q,&obj->loglik,
-		//	obj->params + p + q + N - d);
-		obj->retval = as154x(inp, obj->N,xreg,obj->optmethod,obj->p,obj->d,obj->q,obj->r,obj->params, obj->params + p, obj->params + p + q + N - d + (p + q + M)*(p + q + M),
-		  &obj->mean, &obj->var, obj->params + p + q,&obj->loglik,obj->params + p + q + N - d);
+		//
+		obj->retval = as154_seas(inp, obj->N, obj->optmethod, obj->p, obj->d, obj->q, obj->s, obj->P, obj->D, obj->Q, obj->params, obj->params + p, obj->params + p + q, 
+			obj->params + p + q + P, &obj->mean, &obj->var, &obj->loglik, obj->params + p + q + P + Q + N - d - s*D);
 		obj->loglik = -0.5 * (obj->Nused * (2 * obj->loglik + 1.0 + log(2 * 3.14159)));
-		obj->aic = -2.0 * obj->loglik + 2.0 * (obj->p + obj->q + obj->M) + 2.0;
+		obj->aic = -2.0 * obj->loglik + 2.0 * (obj->p + obj->q + obj->P + obj->Q + obj->M) + 2.0;
 	}
 }
 
@@ -990,8 +997,12 @@ void arima_summary(arima_object obj) {
 }
 
 void sarimax_summary(sarimax_object obj) {
-	int i, pq,t;
-	pq = obj->p + obj->q + obj->M;
+	int i, pq,t,nd,ncxreg;
+	nd = obj->D + obj->d;
+	pq = obj->p + obj->q + obj->P + obj->Q;
+	pq = (nd == 0) ? pq + obj->r + 1 : pq + obj->r;
+	ncxreg = (nd == 0) ? obj->r + 1 : obj->r;
+	
 	if (obj->method == 0 || obj->method == 1) {
 		printf("\n\n Exit Status \n");
 		printf("Return Code : %d \n", obj->retval);
@@ -1011,27 +1022,39 @@ void sarimax_summary(sarimax_object obj) {
 		}
 	}
 	printf("\n\n");
-	printf(" ARIMA Order : ( %d, %d, %d) \n", obj->p, obj->d, obj->q);
+	printf("  ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->p,obj->d,obj->q, obj->P,obj->D,obj->Q );
 	printf("\n");
 	printf("%-20s%-20s%-20s \n\n", "Coefficients", "Value", "Standard Error");
 	for (i = 0; i < obj->p; ++i) {
-		printf("AR%-15d%-20g%-20g \n", i + 1, obj->phi[i],sqrt(obj->vcov[i+pq*i]));
+		printf("AR%-15d%-20g%-20g \n", i + 1, obj->phi[i], sqrt(obj->vcov[i + pq*i]));
 	}
 	for (i = 0; i < obj->q; ++i) {
 		t = obj->p + i;
 		printf("MA%-15d%-20g%-20g \n", i + 1, obj->theta[i], sqrt(obj->vcov[t + pq * t]));
 	}
-	for (i = 0; i < obj->r; ++i) {
-		t = obj->r + i;
-		printf("EXOG%-15d%-20g%-20g \n", i + 1, obj->exog[i], 0.0);
+	for (i = 0; i < obj->P; ++i) {
+		t = obj->p + obj->q + i;
+		printf("SAR%-14d%-20g%-20g \n", i + 1, obj->PHI[i], sqrt(obj->vcov[t + pq * t]));
+	}
+	for (i = 0; i < obj->Q; ++i) {
+		t = obj->p + obj->q + obj->P + i;
+		printf("SMA%-14d%-20g%-20g \n", i + 1, obj->THETA[i], sqrt(obj->vcov[t + pq * t]));
 	}
 	printf("\n");
-	t = obj->p + obj->q;
+	t = obj->p + obj->q + obj->P + obj->Q;
 	if (obj->M == 1) {
 		printf("%-17s%-20g%-20g \n", "MEAN", obj->mean, sqrt(obj->vcov[t + pq * t]));
+		for(i = 1; i <= obj->r; ++i) {
+			t = obj->p + obj->q + obj->P + obj->Q + i;
+			printf("%-17s%-20g%-20g \n", "EXOG", obj->exog[i-1], sqrt(obj->vcov[t + pq * t]));
+		}
 	}
 	else {
 		printf("%-17s%-20g \n", "MEAN", obj->mean);
+		for(i = 0; i < obj->r; ++i) {
+			t = obj->p + obj->q + obj->P + obj->Q + i;
+			printf("%-17s%-20g%-20g \n", "EXOG", obj->exog[i-1], sqrt(obj->vcov[t + pq * t]));
+		}
 	}
 	printf("\n");
 	printf("%-17s%-20g \n", "SIGMA^2", obj->var);

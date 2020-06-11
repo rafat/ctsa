@@ -129,10 +129,10 @@ struct xlik_set{
 	int D;// Number of times the seasonal series is to be differenced
 	int Q;//size of theta seasonal
 	int r;// max(p+s*P,q+s*Q+1)
-	int pq;// p+q+s*P+s*Q
+	int pq;// p+q+s*P+s*Q+M
 	int length;// length of the original time series
 	int N;// length of time series after differencing 
-	int M;// M = 1 if mean needs to be calculated else 0
+	int M;// M = Total Number of Exogenous variables + 1 (if mean is to be calculated)
 	double eps;
 	double mean;
 	double ssq;// Contains the sum of squares value 
