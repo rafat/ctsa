@@ -1285,9 +1285,9 @@ void arimatest() {
 	double *phi, *theta;
 	double *xpred, *amse;
 	arima_object obj;
-	p = 0;
+	p = 1;
 	d = 0;
-	q = 0;
+	q = 1;
 
 
 	L = 5;
@@ -1358,11 +1358,11 @@ void sarimatest() {
 	double *PHI, *THETA;
 	double *xpred, *amse;
 	sarima_object obj;
-	p = 0;
+	p = 1;
 	d = 1;
 	q = 1;
 	s = 12;
-	P = 0;
+	P = 1;
 	D = 1;
 	Q = 1;
 
@@ -1379,6 +1379,7 @@ void sarimatest() {
 
 	FILE *ifp;
 	double temp[1200];
+	double temp2[1200];
 
 	ifp = fopen("../data/seriesG.txt", "r");
 	i = 0;
@@ -1396,14 +1397,14 @@ void sarimatest() {
 	//wmean = mean(temp, N);
 
 	for (i = 0; i < N; ++i) {
-		inp[i] = log(temp[i]);
+		inp[i] = temp[i];
 		//printf("%g \n",inp[i]);
 	}
 
 
 	obj = sarima_init(p, d, q,s,P,D,Q, N);
 	sarima_setMethod(obj, 0); // Method 0 ("MLE") is default so this step is unnecessary. The method also accepts values 1 ("CSS") and 2 ("Box-Jenkins")
-	sarima_setOptMethod(obj, 7);// Method 7 ("BFGS with More Thuente Line Search") is default so this step is unnecessary. The method also accepts values 0,1,2,3,4,5,6. Check the documentation for details.
+	//sarima_setOptMethod(obj, 7);// Method 7 ("BFGS with More Thuente Line Search") is default so this step is unnecessary. The method also accepts values 0,1,2,3,4,5,6. Check the documentation for details.
 	sarima_exec(obj, inp);
 	sarima_summary(obj);
 	// Predict the next 5 values using the obtained ARIMA model
@@ -1411,7 +1412,7 @@ void sarimatest() {
 	printf("\n");
 	printf("Predicted Values : ");
 	for (i = 0; i < L; ++i) {
-		printf("%g ", exp(xpred[i]));
+		printf("%g ", xpred[i]);
 	}
 	printf("\n");
 	printf("Standard Errors  : ");
@@ -1437,13 +1438,13 @@ void sarimaxtest() {
 	double *xpred, *amse;
 	sarimax_object obj;
 	p = 1;
-	d = 0;
+	d = 1;
 	q = 1;
+	s = 12;
+	P = 1;
+	D = 1;
+	Q = 1;
 	r = 0;
-	P = 0;
-	D = 0;
-	Q = 0;
-	s = 1;
 
 
 	L = 5;
@@ -1458,14 +1459,14 @@ void sarimaxtest() {
 	double temp[1200];
 	double temp2[1200];
 
-	ifp = fopen("../data/e6.dat", "r");
+	ifp = fopen("../data/seriesG.txt", "r");
 	i = 0;
 	if (!ifp) {
 		printf("Cannot Open File");
 		exit(100);
 	}
 	while (!feof(ifp)) {
-		fscanf(ifp, "%lf %lf \n", &temp[i],&temp2[i]);
+		fscanf(ifp, "%lf \n", &temp[i]);
 		i++;
 	}
 	N = i;
@@ -1505,6 +1506,21 @@ void sarimaxtest() {
 	free(amse);
 }
 
+void mainverttest() {
+	int ret;
+	double ma[3] = {1.0, -0.06331,0.1990};
+	double ar[3] = {-1.23,0.4};
+
+	mdisplay(ma,1,3);
+
+	invertroot(3,ma);
+
+	mdisplay(ma,1,3);
+
+	ret = archeck(2,ar);
+	printf("ARCHECK %d \n",ret);
+}
+
 int main() {
     //errortests();
 	//llstest();
@@ -1541,7 +1557,9 @@ int main() {
 	//seasdummytest();
 	//sdtests();
 	//arimatest();
-	//sarimatest();
+	sarimatest();
 	sarimaxtest();
+	//arimatest();
+	//mainverttest();
     return 0;
 }
