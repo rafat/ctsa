@@ -2179,7 +2179,6 @@ int as154_seas(double *inp, int N, int optmethod, int p, int d, int q, int s, in
 		for (i = 0; i < q; ++i) theta[i] = 0.0;
 		for (i = 0; i < P; ++i) PHI[i] = 0.0;
 		for (i = 0; i < Q; ++i) THETA[i] = 0.0;
-		printf("init \n");
 	}
 
 
@@ -2228,15 +2227,10 @@ int as154_seas(double *inp, int N, int optmethod, int p, int d, int q, int s, in
 		coeff = (fit->beta + 0)->value;
 		sigma = 10.0 * (fit->beta + 0)->stdErr;
 
-		printf("mean %g var %g \n", coeff, sigma);
-
-		summary(fit); // summary of regression
-		anova(fit); // ANOVA Table
-		confint(fit); //Confidence Intervals of Regression Parameters
 
 		free(varcovar);
 		free(res);
-		free_reg(free);
+		free_reg(fit);
 	}
 
 	obj = alik_seas_init(p, d, q, s, P, D, Q, N);

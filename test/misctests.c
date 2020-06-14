@@ -1359,11 +1359,11 @@ void sarimatest() {
 	double *xpred, *amse;
 	sarima_object obj;
 	p = 1;
-	d = 1;
+	d = 0;
 	q = 1;
 	s = 12;
 	P = 1;
-	D = 1;
+	D = 0;
 	Q = 1;
 
 
@@ -1438,11 +1438,11 @@ void sarimaxtest() {
 	double *xpred, *amse;
 	sarimax_object obj;
 	p = 1;
-	d = 1;
+	d = 0;
 	q = 1;
 	s = 12;
 	P = 1;
-	D = 1;
+	D = 0;
 	Q = 1;
 	r = 0;
 
