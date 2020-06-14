@@ -38,7 +38,7 @@ arima_object arima_init(int p, int d, int q, int N) {
 	obj->vcov = &obj->params[p + q + N - d];
 
 	obj->method = 0;// 0 - MLE, 1 - CSS, 2 - Box-Jenkins
-	obj->optmethod = 7; // Default Method is 7
+	obj->optmethod = 5; // Default Method is 5
 	obj->mean = 0.0;
 	obj->var = 1.0;
 	obj->lvcov = (p + q + M)*(p + q + M);
@@ -93,7 +93,7 @@ sarima_object sarima_init(int p, int d, int q,int s, int P,int D,int Q, int N) {
 	obj->vcov = &obj->params[p + q + P + Q+ N - d - s*D];
 
 	obj->method = 0;// 0 - MLE, 1 - CSS, 2 - Box-Jenkins
-	obj->optmethod = 7; // Default Method is 7
+	obj->optmethod = 5; // Default Method is 5
 	obj->mean = 0.0;
 	obj->var = 1.0;
 	obj->lvcov = (p + q + P + Q + M)*(p + q + P + Q + M);
@@ -138,7 +138,7 @@ ar_object ar_init(int method, int N) {
 	obj->phi = &obj->params[0];
 	obj->res = &obj->params[p];
 
-	obj->optmethod = 7;// Default Method is 7
+	obj->optmethod = 5;// Default Method is 5
 	obj->mean = 0.0;
 	obj->var = 1.0;
 
@@ -192,7 +192,7 @@ sarimax_object sarimax_init(int p, int d, int q,int P, int D, int Q,int s, int r
 	obj->vcov = &obj->params[p + q + P + Q + ncxreg + N - d - s*D];
 
 	obj->method = 0;// 0 - MLE, 1 - CSS, 2 - Box-Jenkins
-	obj->optmethod = 7; // Default Method is 7
+	obj->optmethod = 5; // Default Method is 5
 	obj->mean = 0.0;
 	obj->var = 1.0;
 	obj->lvcov = (p + q + P + Q + ncxreg )*(p + q + P + Q + ncxreg );

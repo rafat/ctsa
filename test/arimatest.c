@@ -12,7 +12,7 @@ int main(void) {
 	arima_object obj;
 	p = 2;
 	d = 2;
-	q = 2;
+	q = 1;
 
 
 	L = 8;

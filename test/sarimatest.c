@@ -57,7 +57,7 @@ int main(void) {
 
 	obj = sarima_init(p, d, q,s,P,D,Q, N);
 	sarima_setMethod(obj, 0); // Method 0 ("MLE") is default so this step is unnecessary. The method also accepts values 1 ("CSS") and 2 ("Box-Jenkins")
-	sarima_setOptMethod(obj, 7);// Method 7 ("BFGS with More Thuente Line Search") is default so this step is unnecessary. The method also accepts values 0,1,2,3,4,5,6. Check the documentation for details.
+	//sarima_setOptMethod(obj, 7);// Method 7 ("BFGS with More Thuente Line Search") is default so this step is unnecessary. The method also accepts values 0,1,2,3,4,5,6. Check the documentation for details.
 	sarima_exec(obj, inp);
 	sarima_summary(obj);
 	// Predict the next 5 values using the obtained ARIMA model
