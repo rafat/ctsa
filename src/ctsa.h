@@ -64,6 +64,7 @@ struct sarima_set{
 	int Q;//size of Seasonal Theta
 	int M; // M = 0 if mean is 0.0 else M = 1
 	int ncoeff;// Total Number of Coefficients to be estimated
+	int cssml;// Uses CSS before MLE if 1 else uses MLE only if cssml is 0
 	double *phi;
 	double *theta;
 	double *PHI;
@@ -153,6 +154,8 @@ void ar(double *inp, int N, int p, int method, double *phi,double *var);
 void arima_setMethod(arima_object obj, int value);
 
 void sarima_setMethod(sarima_object obj, int value);
+
+void sarima_setCSSML(sarima_object obj, int cssml);
 
 void arima_setOptMethod(arima_object obj, int value);
 

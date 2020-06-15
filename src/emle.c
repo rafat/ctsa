@@ -1330,8 +1330,6 @@ int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, d
 	
 	maxstep = 1.0;
 
-	obj = alik_init(p, d, q, N);
-
 
 	css(inp, N, optmethod, p, d, q, phi, theta, wmean, var,resid,loglik,hess);
 
@@ -1346,9 +1344,11 @@ int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, d
 
 	if (p + q == 0 && d == 0) {
 		free(x);
-		free_alik(obj);
+		//free_alik(obj);
 		return 1;
 	}
+
+	obj = alik_init(p, d, q, N);
 
 	obj->N = N;
 	obj->mean = *wmean;
@@ -2150,9 +2150,9 @@ void checkroots(double *phi, int *p, double *theta, int *q, double *PHI, int *P,
 }
 
 int as154_seas(double *inp, int N, int optmethod, int p, int d, int q, int s, int P, int D, int Q,double *phi, double *theta, 
-	double *PHI, double *THETA, double *wmean,double *var,double *loglik,double *hess,int cssml,int trparams) {
+	double *PHI, double *THETA, double *wmean,double *var,double *loglik,double *hess,int cssml) {
 	int i, pq, retval, length, offset,ret,nd,rp;
-	double *b, *tf, *x,*inp2,*dx,*thess,*A,*AT,*temp,*res,*varcovar;
+	double *b, *tf, *x,*inp2,*dx,*thess,*res,*varcovar;
 	int *ipiv;
 	double maxstep,coeff,sigma;
 	alik_seas_object obj;
@@ -2302,28 +2302,8 @@ int as154_seas(double *inp, int N, int optmethod, int p, int d, int q, int s, in
 		thess[i] = (length - d - s*D) * 0.5 * (hess[i] + thess[i]);
 	}
 
-	if (trparams == 1) {
-		A = (double*)calloc(pq*pq, sizeof(double));
-		AT = (double*)calloc(pq*pq, sizeof(double));
-		temp = (double*)calloc(pq*pq, sizeof(double));
-
-		gradtrans(tf, p, q, P, Q, obj->M, A);
-		mtranspose(A, pq, pq, AT);
-
-		ludecomp(thess, pq, ipiv);
-		minverse(thess, pq, ipiv, hess);
-
-		mmult(hess, A, temp, pq, pq, pq);
-		mmult(AT, temp, hess, pq, pq, pq);
-
-		free(A);
-		free(AT);
-		free(temp);
-	}
-	else {
-		ludecomp(thess, pq, ipiv);
-		minverse(thess, pq, ipiv, hess);
-	}
+	ludecomp(thess, pq, ipiv);
+	minverse(thess, pq, ipiv, hess);
 
 
 	for (i = 0; i < p; ++i) {

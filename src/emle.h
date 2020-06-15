@@ -171,7 +171,7 @@ double fas154_seas(double *b, int pq, void *params);
 void checkroots(double *phi, int *p, double *theta, int *q, double *PHI, int *P, double *THETA, int *Q);
 
 int as154_seas(double *inp, int N, int optmethod, int p, int d, int q, int s, int P, int D, int Q,double *phi, double *theta, 
-	double *PHI, double *THETA, double *wmean, double *var, double *loglik, double *hess, int cssml, int trparams);
+	double *PHI, double *THETA, double *wmean, double *var, double *loglik, double *hess, int cssml);
 
 int flikam(double *P, int MP, double *Q, int MQ, double *W, double *E, int N, double *ssq, double *fact, double *VW, double *VL, int MRP1, double *VK, int MR, double TOLER);
 

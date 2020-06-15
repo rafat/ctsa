@@ -81,6 +81,7 @@ sarima_object sarima_init(int p, int d, int q,int s, int P,int D,int Q, int N) {
 	obj->Nused = N - d - s*D;
 	obj->M = M;
 	obj->retval = 0;
+	obj->cssml = 1;
 
 	for (i = 0; i < p + q+P+Q; ++i) {
 		obj->params[i] = 0.0;
@@ -279,11 +280,10 @@ void sarima_exec(sarima_object obj, double *inp) {
 
 	M = obj->M;
 	cssml = 0;
-	trparams = 1;
 
 	if (obj->method == 0) {
 		obj->retval = as154_seas(inp, obj->N, obj->optmethod, obj->p, obj->d, obj->q, obj->s, obj->P, obj->D, obj->Q, obj->params, obj->params + p, obj->params + p + q, 
-			obj->params + p + q + P, &obj->mean, &obj->var, &obj->loglik, obj->params + p + q + P + Q + N - d - s*D,cssml,trparams);
+			obj->params + p + q + P, &obj->mean, &obj->var, &obj->loglik, obj->params + p + q + P + Q + N - d - s*D,cssml);
 		obj->loglik = -0.5 * (obj->Nused * (2 * obj->loglik + 1.0 + log(2 * 3.14159)));
 		obj->aic = -2.0 * obj->loglik + 2.0 * (obj->p + obj->q + obj->P + obj->Q + obj->M) + 2.0;
 	}
@@ -519,6 +519,24 @@ void sarima_setMethod(sarima_object obj, int value) {
 	else {
 		printf("\n Acceptable Numerical Values 0 - MLE, 1 - CSS, 2 - Box-Jenkins \n");
 	}
+}
+
+void sarima_setCSSML(sarima_object obj, int cssml) {
+	/*
+	Uses CSS before MLE if cssml = 1.
+	Only uses MLE if cssml = 0
+	Only applicable with method 0
+	*/
+
+	if (cssml == 1) {
+		obj->cssml = 1;
+	} else if (cssml == 0) {
+		obj->cssml = 0;
+	} else {
+		printf("cssml only accepts two values 1 and 0 \n");
+		exit(-1);
+	}
+
 }
 
 void arima_setOptMethod(arima_object obj, int value) {
