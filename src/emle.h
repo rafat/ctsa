@@ -159,7 +159,7 @@ int css_seas(double *inp, int N, int optmethod, int p, int d, int q, int s, int 
 
 double fas154(double *x, int N, void *params);
 
-int as154(double *x, int N, int optmethod, int p, int d, int q, double *phi, double *theta, double *wmean, double *var, double *resid, double *loglik, double *hess);
+int as154(double *x, int N, int optmethod, int p, int d, int q, double *phi, double *theta, double *wmean, double *var, double *resid, double *loglik, double *hess,int cssml);
 
 double fas154x_seas(double *b, int pq, void *params);
 

@@ -1358,9 +1358,9 @@ void sarimatest() {
 	double *PHI, *THETA;
 	double *xpred, *amse;
 	sarima_object obj;
-	p = 2;
-	d = 2;
-	q = 2;
+	p = 1;
+	d = 0;
+	q = 1;
 	s = 0;
 	P = 0;
 	D = 0;
@@ -1382,7 +1382,7 @@ void sarimatest() {
 	double temp2[1200];
 
 	//ifp = fopen("../data/seriesG.txt", "r");
-	ifp = fopen("../data/itdaily.txt", "r");
+	ifp = fopen("../data/seriesA.txt", "r");
 	i = 0;
 	if (!ifp) {
 		printf("Cannot Open File");

@@ -1316,12 +1316,14 @@ double fas154(double *b,int pq,void *params) {
 	return value;
 }
 
-int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, double *theta, double *wmean, double *var,double *resid,double *loglik,double *hess) {
-	int i,pq,retval,length,ret;
-	double *b,*tf,*x,*dx,*thess;
+int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, double *theta, double *wmean, double *var,
+	double *resid,double *loglik,double *hess, int cssml) {
+	int i,pq,retval,length,ret,rp,P,Q;
+	double *b,*tf,*x,*dx,*thess,*varcovar,*res;
 	int *ipiv;
-	double maxstep;
+	double maxstep,sigma,coeff;
 	alik_object obj;
+	reg_object fit;
 	//custom_function as154_min;
 
 	x = (double*)malloc(sizeof(double)* (N - d));
@@ -1330,8 +1332,22 @@ int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, d
 	
 	maxstep = 1.0;
 
+	coeff = 0.0;
+	sigma = 1.0;
 
-	css(inp, N, optmethod, p, d, q, phi, theta, wmean, var,resid,loglik,hess);
+	if (cssml == 1) {
+		css(inp, N, optmethod, p, d, q, phi, theta, wmean, var,resid,loglik,hess);
+		P = 0;
+		Q = 0;
+
+		checkroots(phi, &p, theta, &q, NULL, &P, NULL, &Q);
+		coeff = *wmean;
+	}
+	else {
+		for (i = 0; i < p; ++i) phi[i] = 0.0;
+		for (i = 0; i < q; ++i) theta[i] = 0.0;
+	}
+
 
 	if (d > 0) {
 		N = diff(inp, N, d, x); // No need to demean x
@@ -1342,16 +1358,36 @@ int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, d
 		}
 	}
 
-	if (p + q == 0 && d == 0) {
+	if (p + q == 0 && d == 0 && cssml == 1) {
 		free(x);
 		//free_alik(obj);
 		return 1;
 	}
 
+	if (d == 0) {
+		rp = 1;
+		varcovar = (double*)malloc(sizeof(double) * rp * rp);
+		res = (double*)malloc(sizeof(double) * N);
+
+		fit = reg_init(N, rp);
+
+		setIntercept(fit, 1);
+		regress(fit, NULL, x, res, varcovar, 0.95);
+
+		
+		coeff = (fit->beta + 0)->value;
+		sigma = 10.0 * (fit->beta + 0)->stdErr;
+
+
+		free(varcovar);
+		free(res);
+		free_reg(fit);
+	}
+
 	obj = alik_init(p, d, q, N);
 
 	obj->N = N;
-	obj->mean = *wmean;
+	
 	pq = obj->pq;
 	b = (double*)malloc(sizeof(double)* pq);
 	tf = (double*)malloc(sizeof(double)* pq);
@@ -1367,8 +1403,10 @@ int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, d
 	}
 
 	if (obj->M == 1) {
-		b[p + q] = obj->mean;
+		b[p + q] = coeff;
 	}
+
+	obj->mean = coeff;
 
 
 	for (i = 0; i < N; ++i) {
@@ -1403,7 +1441,7 @@ int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, d
 	mtranspose(hess, pq, pq, thess);
 
 	for (i = 0; i < pq*pq; ++i) {
-		thess[i] = (N-d) * 0.5 * (hess[i] + thess[i]);
+		thess[i] = (length-d) * 0.5 * (hess[i] + thess[i]);
 	}
 	
 
@@ -1430,7 +1468,7 @@ int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, d
 	}*/
 
 	*var = (obj->ssq) / (double) N;
-	for (i = 0; i < N - d; ++i) {
+	for (i = 0; i < length - d; ++i) {
 		resid[i] = obj->x[N + i];
 	}
 	*loglik = obj->loglik;
@@ -2131,20 +2169,24 @@ void checkroots(double *phi, int *p, double *theta, int *q, double *PHI, int *P,
 		}
 	}
 
-	if (*P > 0) {
-		ret = archeck(*P,PHI);
-		if (!ret) {
-			printf("\nnon-stationary seasonal AR part\n");
-			exit(-1);
-		}
-	}
-
 	if (*q > 0) {
 		invertroot(*q,theta);
 	}
 
-	if (*Q > 0) {
-		invertroot(*Q,THETA);
+	if (*P == *P) {
+		if (*P > 0) {
+			ret = archeck(*P,PHI);
+			if (!ret) {
+				printf("\nnon-stationary seasonal AR part\n");
+				exit(-1);
+			}
+		}
+	}
+
+	if (*Q == *Q) {
+		if (*Q > 0) {
+			invertroot(*Q,THETA);
+		}
 	}
 
 }

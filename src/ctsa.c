@@ -28,6 +28,7 @@ arima_object arima_init(int p, int d, int q, int N) {
 	obj->Nused = N - d;
 	obj->M = M;
 	obj->retval = 0;
+	obj->cssml = 1;
 
 	for (i = 0; i < p + q; ++i) {
 		obj->params[i] = 0.0;
@@ -220,7 +221,7 @@ void arima_exec(arima_object obj, double *inp) {
 
 	if (obj->method == 0) {
 		obj->retval = as154(inp, obj->N, obj->optmethod, obj->p, obj->d, obj->q, obj->params, obj->params + p, &obj->mean, &obj->var, obj->params + p + q,&obj->loglik,
-			obj->params + p + q + N - d);
+			obj->params + p + q + N - d,obj->cssml);
 		obj->loglik = -0.5 * (obj->Nused * (2 * obj->loglik + 1.0 + log(2 * 3.14159)));
 		obj->aic = -2.0 * obj->loglik + 2.0 * (obj->p + obj->q + obj->M) + 2.0;
 	}
@@ -279,11 +280,10 @@ void sarima_exec(sarima_object obj, double *inp) {
 	s = obj->s;
 
 	M = obj->M;
-	cssml = 0;
 
 	if (obj->method == 0) {
 		obj->retval = as154_seas(inp, obj->N, obj->optmethod, obj->p, obj->d, obj->q, obj->s, obj->P, obj->D, obj->Q, obj->params, obj->params + p, obj->params + p + q, 
-			obj->params + p + q + P, &obj->mean, &obj->var, &obj->loglik, obj->params + p + q + P + Q + N - d - s*D,cssml);
+			obj->params + p + q + P, &obj->mean, &obj->var, &obj->loglik, obj->params + p + q + P + Q + N - d - s*D,obj->cssml);
 		obj->loglik = -0.5 * (obj->Nused * (2 * obj->loglik + 1.0 + log(2 * 3.14159)));
 		obj->aic = -2.0 * obj->loglik + 2.0 * (obj->p + obj->q + obj->P + obj->Q + obj->M) + 2.0;
 	}
@@ -311,11 +311,12 @@ void ar_exec(ar_object obj, double *inp) {
 	obj->p = ar_estimate(inp, N, obj->method);
 	//printf("\n p %d \n", obj->p);
 	p = obj->p;
+	int cssml = 0;
 
 	if (obj->method == 2) {
 		hess = (double*)malloc(sizeof(double)* (p + 1) * (p + 1));
 		obj->retval = as154(inp, obj->N, obj->optmethod, obj->p, 0, 0 , obj->params, NULL, &obj->mean, &obj->var, obj->params + p, &loglik,
-			hess);
+			hess,cssml);
 		loglik = -0.5 * (N * (2 * loglik + 1.0 + log(2 * 3.14159)));
 		obj->aic = -2.0 * loglik + 2.0 * (obj->p + 1) + 2.0;
 		free(hess);
@@ -471,6 +472,7 @@ void ar(double *inp, int N, int p,int method,double *phi,double *var) {
 
 	double wmean,loglik;
 	double *resid,*hess;
+	int cssml = 0;
 
 	if (method == 0) {
 		ywalg2(inp, N, p, phi,var);
@@ -481,7 +483,7 @@ void ar(double *inp, int N, int p,int method,double *phi,double *var) {
 	else if (method == 2) {
 		resid = (double*)malloc(sizeof(double)* N);
 		hess = (double*)malloc(sizeof(double)* (p+1) * (p+1));
-		as154(inp,N,7,p,0,0,phi,NULL, &wmean, var, resid, &loglik,hess);
+		as154(inp,N,7,p,0,0,phi,NULL, &wmean, var, resid, &loglik,hess,cssml);
 		free(resid);
 		free(hess);
 	}
@@ -519,6 +521,24 @@ void sarima_setMethod(sarima_object obj, int value) {
 	else {
 		printf("\n Acceptable Numerical Values 0 - MLE, 1 - CSS, 2 - Box-Jenkins \n");
 	}
+}
+
+void arima_setCSSML(arima_object obj, int cssml) {
+	/*
+	Uses CSS before MLE if cssml = 1.
+	Only uses MLE if cssml = 0
+	Only applicable with method 0
+	*/
+
+	if (cssml == 1) {
+		obj->cssml = 1;
+	} else if (cssml == 0) {
+		obj->cssml = 0;
+	} else {
+		printf("cssml only accepts two values 1 and 0 \n");
+		exit(-1);
+	}
+
 }
 
 void sarima_setCSSML(sarima_object obj, int cssml) {
@@ -1167,7 +1187,7 @@ void sarimax_summary(sarimax_object obj) {
 
 int ar_estimate(double *x, int N, int method) {
 	int p, ordermax, logn, i;
-	double wmean, aic, loglik, var, lvar, aic0;
+	double wmean, aic, loglik, var, lvar, aic0,cssml;
 	double *inp, *resid, *hess, *phi;
 
 	inp = (double*)malloc(sizeof(double)* N);
@@ -1181,6 +1201,7 @@ int ar_estimate(double *x, int N, int method) {
 	}
 	wmean = mean(x, N);
 	aic0 = 0.0;
+	cssml = 0;
 
 	hess = (double*)malloc(sizeof(double)* (ordermax + 1) * (ordermax + 1));
 	phi = (double*)malloc(sizeof(double)* ordermax);
@@ -1197,7 +1218,7 @@ int ar_estimate(double *x, int N, int method) {
 			burgalg(inp, N-1, i + 1, phi, &var);
 		}
 		else if (method == 2) {
-			as154(inp, N, 7, i + 1, 0, 0, phi, NULL, &wmean, &var, resid, &loglik, hess);
+			as154(inp, N, 7, i + 1, 0, 0, phi, NULL, &wmean, &var, resid, &loglik, hess,cssml);
 		}
 		else {
 			printf("\n The code only accepts numerical values 0,1 and 2 \n");
