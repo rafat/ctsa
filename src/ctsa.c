@@ -150,6 +150,9 @@ ar_object ar_init(int method, int N) {
 sarimax_object sarimax_init(int p, int d, int q,int P, int D, int Q,int s, int r, int N) {
 	sarimax_object obj = NULL;
 	int i,ncxreg;
+	if (P + D + Q == 0) {
+		s = 0;
+	}
 
 	if (d + D > 0) {
 		ncxreg = r;
@@ -167,7 +170,7 @@ sarimax_object sarimax_init(int p, int d, int q,int P, int D, int Q,int s, int r
 	// Retval = 15 Optimization Routine Encountered Inf/Nan Values
 	
 	obj = (sarimax_object)malloc(sizeof(struct sarimax_set) +
-	 sizeof(double)* (p + q + P + Q + ncxreg + N - d - s*D)*2 + sizeof(double)* 2 * (p + q + P + Q + ncxreg )*(p + q + P + Q + ncxreg ));
+	 sizeof(double)* (p + q + P + Q + ncxreg + N - d - s*D) + sizeof(double)* (p + q + P + Q + ncxreg )*(p + q + P + Q + ncxreg ));
 
 	obj->p = p;
 	obj->d = d;
@@ -254,13 +257,11 @@ void sarimax_exec(sarimax_object obj, double *inp,double *xreg)  {
 
 	M = obj->M;
 
-	nd = d + D;
-	ncxreg = (nd == 0) ? r : r+1;
-
 	if (obj->method == 0) {
 		obj->retval = as154x(inp, obj->N, xreg, obj->optmethod, obj->p, obj->d, obj->q, obj->s, obj->P, obj->D, obj->Q, obj->params, obj->params + p, obj->params + p + q, 
-			obj->params + p + q + P,obj->params + p + q + P + Q, obj->r, &obj->mean, &obj->var,obj->params +p + q + P + Q + ncxreg,
-			 &obj->loglik, obj->params + p + q + P + Q + ncxreg + N - d - s*D);
+			obj->params + p + q + P,obj->params + p + q + P + Q, obj->r, &obj->mean, &obj->var,obj->params + p + q + P + Q + M,
+			 &obj->loglik, obj->params + p + q + P + Q + M + N - d - s*D);
+		//mdisplay(obj->vcov,p+q+P+Q+M,p+q+P+Q+M);
 		obj->loglik = -0.5 * (obj->Nused * (2 * obj->loglik + 1.0 + log(2 * 3.14159)));
 		obj->aic = -2.0 * obj->loglik + 2.0 * (obj->p + obj->q + obj->P + obj->Q + obj->M) + 2.0;
 	}
@@ -798,6 +799,7 @@ void sarima_summary(sarima_object obj) {
 	printf("\n\n");
 	printf("  ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->p,obj->d,obj->q, obj->P,obj->D,obj->Q );
 	printf("\n");
+	//mdisplay(obj->vcov,pq,pq);
 	printf("%-20s%-20s%-20s \n\n", "Coefficients", "Value", "Standard Error");
 	for (i = 0; i < obj->p; ++i) {
 		printf("AR%-15d%-20g%-20g \n", i + 1, obj->phi[i], sqrt(obj->vcov[i + pq*i]));
@@ -1039,11 +1041,9 @@ void arima_summary(arima_object obj) {
 }
 
 void sarimax_summary(sarimax_object obj) {
-	int i, pq,t,nd,ncxreg;
-	nd = obj->D + obj->d;
-	pq = obj->p + obj->q + obj->P + obj->Q;
-	pq = (nd == 0) ? pq + obj->r + 1 : pq + obj->r;
-	ncxreg = (nd == 0) ? obj->r + 1 : obj->r;
+	int i, pq,t,nd,ncxreg,mean;
+	pq = obj->p + obj->q + obj->P + obj->Q + obj->M;
+	mean = obj->M - obj->r;
 	
 	if (obj->method == 0 || obj->method == 1) {
 		printf("\n\n Exit Status \n");
@@ -1066,6 +1066,7 @@ void sarimax_summary(sarimax_object obj) {
 	printf("\n\n");
 	printf("  ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->p,obj->d,obj->q, obj->P,obj->D,obj->Q );
 	printf("\n");
+	//mdisplay(obj->vcov,pq,pq);
 	printf("%-20s%-20s%-20s \n\n", "Coefficients", "Value", "Standard Error");
 	for (i = 0; i < obj->p; ++i) {
 		printf("AR%-15d%-20g%-20g \n", i + 1, obj->phi[i], sqrt(obj->vcov[i + pq*i]));
@@ -1084,7 +1085,7 @@ void sarimax_summary(sarimax_object obj) {
 	}
 	printf("\n");
 	t = obj->p + obj->q + obj->P + obj->Q;
-	if (obj->M == 1) {
+	if (mean > 0) {
 		printf("%-17s%-20g%-20g \n", "MEAN", obj->mean, sqrt(obj->vcov[t + pq * t]));
 		for(i = 1; i <= obj->r; ++i) {
 			t = obj->p + obj->q + obj->P + obj->Q + i;

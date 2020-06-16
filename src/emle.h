@@ -109,10 +109,6 @@ struct alik_seas_set{
 	double ssq;// Contains the sum of squares value 
 	double loglik;
 	int offset;
-	//double phi[100];
-	//double theta[100];
-	//double PHI[100];
-	//double THETA[100];
 	double x[1];
 };
 

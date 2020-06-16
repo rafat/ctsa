@@ -1118,13 +1118,6 @@ int css(double *inp, int N, int optmethod, int p, int d, int q, double *phi, dou
 
 	maxstep = 1.0;
 
-	obj = alik_css_init(p, d, q, N);
-	pq = obj->pq;
-	b = (double*)malloc(sizeof(double)* pq);
-	tf = (double*)malloc(sizeof(double)* pq);
-	thess = (double*)malloc(sizeof(double)* pq*pq);
-	dx = (double*)malloc(sizeof(double)* pq);
-	ipiv = (int*)malloc(sizeof(int)* pq);
 	/*
 
 	*/
@@ -1141,6 +1134,14 @@ int css(double *inp, int N, int optmethod, int p, int d, int q, double *phi, dou
 		}
 		M = 1;
 	}
+
+	obj = alik_css_init(p, d, q, N);
+	pq = obj->pq;
+	b = (double*)malloc(sizeof(double)* pq);
+	tf = (double*)malloc(sizeof(double)* pq);
+	thess = (double*)malloc(sizeof(double)* pq*pq);
+	dx = (double*)malloc(sizeof(double)* pq);
+	ipiv = (int*)malloc(sizeof(int)* pq);
 
 	obj->N = N;
 	obj->mean = *wmean;
@@ -1436,6 +1437,12 @@ int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, d
 		dx[i] = 1.0;
 	}
 
+	//Check for invertibility
+
+	if (q > 0) {
+		invertroot(q,tf+p);
+	}
+
 	hessian_fd(&as154_min, tf, pq, dx, obj->eps, hess);
 	
 	mtranspose(hess, pq, pq, thess);
@@ -1564,8 +1571,6 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 			memcpy(XX,x0,sizeof(double)*N*ncxreg);
 		}
 
-		mdisplay(XX,ncxreg,N);
-
 		rnk = rank(XX,N,ncxreg);
 
 		if (rnk < ncxreg) {
@@ -1586,7 +1591,7 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 	if (ncxreg > 0) {
 		if (ncxreg == 1) orig = 1;
 
-		if (orig == 0) {
+		/* if (orig == 0) {
 			
 
 			U = (double*)malloc(sizeof(double)*N*ncxreg);
@@ -1608,7 +1613,7 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 			free(U);
 			free(V);
 			free(SIG);
-		}
+		} */
 
 		fit = reg_init(N,ncxreg);
 
@@ -1617,12 +1622,17 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 		coeff = (double*)malloc(sizeof(double)*ncxreg);
 		sigma = (double*)malloc(sizeof(double)*ncxreg);
 
+		mdisplay(XX,ncxreg,N);
+
 		setIntercept(fit,0);
 		regress(fit,XX,x,res,varcovar,0.95);
+
+		summary(fit);
 
 		for(i = 0; i < ncxreg;++i) {
 			coeff[i] = (fit->beta+i)->value;
 			sigma[i] = 10.0 * (fit->beta+i)->stdErr;
+			printf("coeff %g sigma %g ",coeff[i],sigma[i]);
 		}
 
 		free(varcovar);
@@ -1665,9 +1675,13 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 		b[p + q + P + i] = 0.0; // THETA
 	}
 
-	for(i = 0; i < ncxreg;++i) {
-		b[p + q + P + Q + i] = coeff[i]; // exog
+	if (ncxreg > 0) {
+		for(i = 0; i < ncxreg;++i) {
+			b[p + q + P + Q + i] = coeff[i]; // exog
+		}
 	}
+
+	
 
 
 	obj->mean = 0.0;
@@ -1682,17 +1696,17 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 		obj->x[offset + i] = 0.0;
 	}
 
-
-	for(i = 3 * N; i < (3 + ncxreg)*N; ++i) {
-		obj->x[offset + i] = XX[i - 3*N];
-		//printf("XX %g",XX[i - 3*N]);
+	if (ncxreg > 0) {
+		for(i = 3 * N; i < (3 + ncxreg)*N; ++i) {
+			obj->x[offset + i] = XX[i - 3*N];
+		}
 	}
 
 	//mdisplay(obj->x,3+ncxreg,N);
 	//mdisplay(XX,ncxreg,N);
 	
-	mdisplay(b,1,p + q + P + Q +ncxreg);
-	printf("pq %d \n",pq);
+	//mdisplay(b,1,p + q + P + Q +ncxreg);
+	//printf("pq %d \n",pq);
 
 	custom_function as154_min = { fas154x_seas, obj };
 	retval = fminunc(&as154_min, NULL, pq, b,maxstep, optmethod, tf);
@@ -1710,7 +1724,18 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 		ret = 1;
 	}
 
-	printf("ret %d ncxreg %d \n",retval,ncxreg);
+	//printf("ret %d ncxreg %d \n",retval,ncxreg);
+
+	//Check for invertibility
+
+	if (q > 0) {
+		invertroot(q,tf+p);
+	}
+
+	if (Q > 0) {
+		invertroot(Q,tf+p+q+P);
+	}
+
 
 
 	for (i = 0; i < pq - ncxreg; ++i) {
@@ -1721,22 +1746,30 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 		dx[pq - ncxreg + i] = sigma[i];
 	}
 
-	mdisplay(dx,1,pq);
+	//mdisplay(dx,1,pq);
 
 	hessian_fd(&as154_min, tf, pq, dx, obj->eps, hess);
 	
 	mtranspose(hess, pq, pq, thess);
 
+	//mdisplay(tf,1,pq);
+
+	
+
 	for (i = 0; i < pq*pq; ++i) {
 		thess[i] = (length - d - s*D) * 0.5 * (hess[i] + thess[i]);
 	}
+
+	//mdisplay(thess,pq,pq);
 	
 
 	ludecomp(thess, pq, ipiv);
 	minverse(thess, pq, ipiv, hess);
 
-	mdisplay(tf,1,pq);
-	printf("p %d q %d P %d Q %d \n",p,q,P,Q);
+	//mdisplay(hess,pq,pq);
+
+	//mdisplay(tf,1,pq);
+	//printf("p %d q %d P %d Q %d \n",p,q,P,Q);
 
 
 	for (i = 0; i < p; ++i) {
@@ -1768,7 +1801,7 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 	}
 
 
-	*var = (obj->ssq) / (double) length;
+	*var = (obj->ssq) / (double) N;
 
 	for (i = 0; i < N; ++i) {
 		resid[i] = obj->x[offset + N + i];
@@ -2334,6 +2367,16 @@ int as154_seas(double *inp, int N, int optmethod, int p, int d, int q, int s, in
 		dx[i] = 1.0;
 	}
 
+	//Check for invertibility
+
+	if (q > 0) {
+		invertroot(q,tf+p);
+	}
+
+	if (Q > 0) {
+		invertroot(Q,tf+p+q+P);
+	}
+
 	//if (obj->M == 1) dx[pq - 1] = sigma;
 
 	hessian_fd(&as154_min, tf, pq, dx, obj->eps, hess);
@@ -2344,8 +2387,12 @@ int as154_seas(double *inp, int N, int optmethod, int p, int d, int q, int s, in
 		thess[i] = (length - d - s*D) * 0.5 * (hess[i] + thess[i]);
 	}
 
+	//mdisplay(thess,pq,pq);
+
 	ludecomp(thess, pq, ipiv);
 	minverse(thess, pq, ipiv, hess);
+
+	//mdisplay(hess,pq,pq);
 
 
 	for (i = 0; i < p; ++i) {

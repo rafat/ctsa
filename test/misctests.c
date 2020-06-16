@@ -1358,9 +1358,9 @@ void sarimatest() {
 	double *PHI, *THETA;
 	double *xpred, *amse;
 	sarima_object obj;
-	p = 1;
-	d = 0;
-	q = 1;
+	p = 2;
+	d = 2;
+	q = 2;
 	s = 0;
 	P = 0;
 	D = 0;
@@ -1381,8 +1381,8 @@ void sarimatest() {
 	double temp[1200];
 	double temp2[1200];
 
-	//ifp = fopen("../data/seriesG.txt", "r");
-	ifp = fopen("../data/seriesA.txt", "r");
+	ifp = fopen("../data/itdaily.txt", "r");
+	//ifp = fopen("../data/itdaily.txt", "r");
 	i = 0;
 	if (!ifp) {
 		printf("Cannot Open File");
@@ -1437,16 +1437,17 @@ void sarimaxtest() {
 	double *inp;
 	int p, q, P, Q, s, r;
 	double *phi, *theta;
+	double *xreg;
 	double *xpred, *amse;
 	sarimax_object obj;
 	p = 1;
 	d = 0;
 	q = 1;
-	s = 12;
-	P = 1;
+	s = 0;
+	P = 0;
 	D = 0;
-	Q = 1;
-	r = 0;
+	Q = 0;
+	r = 2;
 
 
 	L = 5;
@@ -1460,24 +1461,28 @@ void sarimaxtest() {
 	FILE *ifp;
 	double temp[1200];
 	double temp2[1200];
+	double temp3[1200];
 
-	ifp = fopen("../data/seriesG.txt", "r");
+	ifp = fopen("../data/e1m.dat", "r");
 	i = 0;
 	if (!ifp) {
 		printf("Cannot Open File");
 		exit(100);
 	}
 	while (!feof(ifp)) {
-		fscanf(ifp, "%lf \n", &temp[i]);
+		fscanf(ifp, "%lf %lf %lf \n", &temp[i],&temp2[i],&temp3[i]);
 		i++;
 	}
 	N = i;
 
 	inp = (double*)malloc(sizeof(double)* N);
 	//wmean = mean(temp, N);
+	xreg = (double*)malloc(sizeof(double)* N * 2);
 
 	for (i = 0; i < N; ++i) {
 		inp[i] = temp[i];
+		xreg[i] = temp2[i];
+		xreg[N+i] = temp3[i];
 		//printf("%g \n",inp[i]);
 	}
 
@@ -1485,7 +1490,7 @@ void sarimaxtest() {
 	obj = sarimax_init(p, d, q, P, D, Q, s, r , N);
 	//arima_setMethod(obj, 0); // Method 0 ("MLE") is default so this step is unnecessary. The method also accepts values 1 ("CSS") and 2 ("Box-Jenkins")
 	//arima_setOptMethod(obj, 7);// Method 7 ("BFGS with More Thuente Line search") is default so this step is unnecessary. The method also accepts values 0,1,2,3,4,5,6. Check the documentation for details.
-	sarimax_exec(obj, inp,NULL);
+	sarimax_exec(obj, inp,xreg);
 	sarimax_summary(obj);
 	// Predict the next 5 values using the obtained ARIMA model
 	//arima_predict(obj, inp, L, xpred, amse);
@@ -1506,6 +1511,7 @@ void sarimaxtest() {
 	free(theta);
 	free(xpred);
 	free(amse);
+	free(xreg);
 }
 
 void mainverttest() {
@@ -1560,7 +1566,7 @@ int main() {
 	//sdtests();
 	//arimatest();
 	sarimatest();
-	//sarimaxtest();
+	sarimaxtest();
 	//arimatest();
 	//mainverttest();
     return 0;
