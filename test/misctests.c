@@ -1440,14 +1440,14 @@ void sarimaxtest() {
 	double *xreg;
 	double *xpred, *amse;
 	sarimax_object obj;
-	p = 1;
+	p = 0;
 	d = 0;
 	q = 1;
 	s = 0;
 	P = 0;
 	D = 0;
 	Q = 0;
-	r = 2;
+	r = 1;
 
 
 	L = 5;
@@ -1463,14 +1463,14 @@ void sarimaxtest() {
 	double temp2[1200];
 	double temp3[1200];
 
-	ifp = fopen("../data/e1m.dat", "r");
+	ifp = fopen("../data/e6m.dat", "r");
 	i = 0;
 	if (!ifp) {
 		printf("Cannot Open File");
 		exit(100);
 	}
 	while (!feof(ifp)) {
-		fscanf(ifp, "%lf %lf %lf \n", &temp[i],&temp2[i],&temp3[i]);
+		fscanf(ifp, "%lf %lf \n", &temp[i],&temp2[i]);
 		i++;
 	}
 	N = i;
@@ -1482,7 +1482,7 @@ void sarimaxtest() {
 	for (i = 0; i < N; ++i) {
 		inp[i] = temp[i];
 		xreg[i] = temp2[i];
-		xreg[N+i] = temp3[i];
+		//xreg[N+i] = temp3[i];
 		//printf("%g \n",inp[i]);
 	}
 

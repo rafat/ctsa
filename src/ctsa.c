@@ -1093,11 +1093,11 @@ void sarimax_summary(sarimax_object obj) {
 		}
 	}
 	else {
-		printf("%-17s%-20g \n", "MEAN", obj->mean);
 		for(i = 0; i < obj->r; ++i) {
 			t = obj->p + obj->q + obj->P + obj->Q + i;
-			printf("%-17s%-20g%-20g \n", "EXOG", obj->exog[i-1], sqrt(obj->vcov[t + pq * t]));
+			printf("%-17s%-20g%-20g \n", "EXOG", obj->exog[i], sqrt(obj->vcov[t + pq * t]));
 		}
+		printf("%-17s%-20g \n", "MEAN", obj->mean);
 	}
 	printf("\n");
 	printf("%-17s%-20g \n", "SIGMA^2", obj->var);
