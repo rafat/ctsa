@@ -242,7 +242,7 @@ void arima_exec(arima_object obj, double *inp) {
 }
 
 void sarimax_exec(sarimax_object obj, double *inp,double *xreg)  {
-	int p,q,d,N,M,P,D,Q,s,r,nd,ncxreg;
+	int p,q,d,N,M,P,D,Q,s,r,nd,ncxreg,cssml;
 	double eps;
 
 	p = obj->p;
@@ -258,12 +258,29 @@ void sarimax_exec(sarimax_object obj, double *inp,double *xreg)  {
 	M = obj->M;
 
 	if (obj->method == 0) {
+		cssml = 1;
 		obj->retval = as154x(inp, obj->N, xreg, obj->optmethod, obj->p, obj->d, obj->q, obj->s, obj->P, obj->D, obj->Q, obj->params, obj->params + p, obj->params + p + q, 
 			obj->params + p + q + P,obj->params + p + q + P + Q, obj->r, &obj->mean, &obj->var,obj->params + p + q + P + Q + M,
-			 &obj->loglik, obj->params + p + q + P + Q + M + N - d - s*D);
+			 &obj->loglik, obj->params + p + q + P + Q + M + N - d - s*D,cssml);
 		//mdisplay(obj->vcov,p+q+P+Q+M,p+q+P+Q+M);
 		obj->loglik = -0.5 * (obj->Nused * (2 * obj->loglik + 1.0 + log(2 * 3.14159)));
 		obj->aic = -2.0 * obj->loglik + 2.0 * (obj->p + obj->q + obj->P + obj->Q + obj->M) + 2.0;
+	} else if (obj->method == 1) {
+		cssml = 0;
+		obj->retval = as154x(inp, obj->N, xreg, obj->optmethod, obj->p, obj->d, obj->q, obj->s, obj->P, obj->D, obj->Q, obj->params, obj->params + p, obj->params + p + q, 
+			obj->params + p + q + P,obj->params + p + q + P + Q, obj->r, &obj->mean, &obj->var,obj->params + p + q + P + Q + M,
+			 &obj->loglik, obj->params + p + q + P + Q + M + N - d - s*D,cssml);
+		//mdisplay(obj->vcov,p+q+P+Q+M,p+q+P+Q+M);
+		obj->loglik = -0.5 * (obj->Nused * (2 * obj->loglik + 1.0 + log(2 * 3.14159)));
+		obj->aic = -2.0 * obj->loglik + 2.0 * (obj->p + obj->q + obj->P + obj->Q + obj->M) + 2.0;
+	} else if (obj->method == 2) {
+		obj->retval = cssx(inp, obj->N, xreg, obj->optmethod, obj->p, obj->d, obj->q, obj->s, obj->P, obj->D, obj->Q, obj->params, obj->params + p, obj->params + p + q, 
+			obj->params + p + q + P,obj->params + p + q + P + Q, obj->r, &obj->mean, &obj->var,&obj->loglik, obj->params + p + q + P + Q + M + N - d - s*D);
+		//mdisplay(obj->vcov,p+q+P+Q+M,p+q+P+Q+M);
+		obj->loglik = -0.5 * (obj->Nused * (2 * obj->loglik + 1.0 + log(2 * 3.14159)));
+	} else {
+		printf("Only three methods are supported : 0 , 1 and 2 , where 0 is CSS-MLE ,1 is MLE and 2 is CSS \n");
+		exit(-1);
 	}
 }
 
@@ -521,6 +538,21 @@ void sarima_setMethod(sarima_object obj, int value) {
 	}
 	else {
 		printf("\n Acceptable Numerical Values 0 - MLE, 1 - CSS, 2 - Box-Jenkins \n");
+	}
+}
+
+void sarimax_setMethod(sarimax_object obj, int value) {
+	if (value == 0) {
+		obj->method = 0;
+	}
+	else if (value == 1) {
+		obj->method = 1;
+	}
+	else if (value == 2) {
+		obj->method = 2;
+	}
+	else {
+		printf("\n Acceptable Numerical Values 0 - CSS-MLE, 1 - MLE, 2 - CSS \n");
 	}
 }
 
@@ -1104,45 +1136,42 @@ void sarimax_summary(sarimax_object obj) {
 	printf("\n");
 	printf("ESTIMATION METHOD : ");
 	if (obj->method == 0) {
-		printf("MLE");
+		printf("CSS-MLE");
 	}
 	else if (obj->method == 1) {
-		printf("CSS");
+		printf("MLE");
 	}
 	else if (obj->method == 2) {
-		printf("BOX-JENKINS");
+		printf("CSS");
 	}
 	printf("\n\n");
 	printf("OPTIMIZATION METHOD : ");
-	if (obj->method == 2) {
-		printf("Newton-Raphson");
+	
+	if (obj->optmethod == 0) {
+		printf("Nelder-Mead");
 	}
-	else {
-		if (obj->optmethod == 0) {
-			printf("Nelder-Mead");
-		}
-		else if (obj->optmethod == 1) {
-			printf("Newton Line Search");
-		}
-		else if (obj->optmethod == 2) {
-			printf("Newton Trust Region - Hook Step");
-		}
-		else if (obj->optmethod == 3) {
-			printf("Newton Trust Region - Double Dog-Leg");
-		}
-		else if (obj->optmethod == 4) {
-			printf("Conjugate Gradient");
-		}
-		else if (obj->optmethod == 5) {
-			printf("BFGS");
-		}
-		else if (obj->optmethod == 6) {
-			printf("L-BFGS");
-		}
-		else if (obj->optmethod == 7) {
-			printf("BFGS More-Thuente Line Search");
-		}
+	else if (obj->optmethod == 1) {
+		printf("Newton Line Search");
 	}
+	else if (obj->optmethod == 2) {
+		printf("Newton Trust Region - Hook Step");
+	}
+	else if (obj->optmethod == 3) {
+		printf("Newton Trust Region - Double Dog-Leg");
+	}
+	else if (obj->optmethod == 4) {
+		printf("Conjugate Gradient");
+	}
+	else if (obj->optmethod == 5) {
+		printf("BFGS");
+	}
+	else if (obj->optmethod == 6) {
+		printf("L-BFGS");
+	}
+	else if (obj->optmethod == 7) {
+		printf("BFGS More-Thuente Line Search");
+	}
+	
 	printf("\n\n");
 	printf("EQUATION FORM : x[t] ");
 	for (i = 0; i < obj->p; ++i) {
@@ -1168,15 +1197,11 @@ void sarimax_summary(sarimax_object obj) {
 		}
 	}
 	printf("\n\n");
-	if (obj->method == 0 || obj->method == 1) {
+	if (obj->method == 0 || obj->method == 1 || obj->method == 2) {
 		printf("Log Likelihood : %g ", obj->loglik);
 		printf("\n\n");
 	}
-	else {
-		printf("Log Likelihood : Unavailable ");
-		printf("\n\n");
-	}
-	if (obj->method == 0) {
+	if (obj->method == 0 || obj->method == 1) {
 		printf("AIC criterion : %g ", obj->aic);
 		printf("\n\n");
 	}

@@ -204,6 +204,58 @@ alik_seas_object alik_seas_init(int p, int d, int q, int s, int P, int D, int Q,
 	return obj;
 }
 
+xlik_css_object xlik_css_init(int p, int d, int q, int s, int P, int D, int Q,int M, int N) {
+	xlik_css_object obj = NULL;
+	int i, r, t;
+
+	r = p + s*P;
+
+	t = q + s*Q + 1;
+
+	if (r < t) {
+		r = t;
+	}
+	else {
+		t = r;
+	}
+
+	obj = (xlik_css_object)malloc(sizeof(struct xlik_css_set) + sizeof(double)* 2 * r + sizeof(double)* (3+M) * N);
+
+	obj->p = p;
+	obj->d = d;
+	obj->q = q;
+	obj->s = s;
+	obj->P = P;
+	obj->D = D;
+	obj->Q = Q;
+	obj->M = M; // This will include the mean term and the exogenous terms
+	obj->N = N;
+	obj->length = N;
+	obj->pq = p + q + P + Q + M;
+
+	obj->r = p + s * P;
+
+	t = 1 + q + s*Q;
+	if (obj->r < t) {
+		obj->r = t;
+	}
+	t = obj->r;
+	obj->offset = 2 * obj->r;
+
+	for (i = 0; i < t; ++i) {
+		obj->x[i] = 0.0;// phi
+	}
+
+	for (i = 0; i < t; ++i) {
+		obj->x[i + r] = 0.0;//theta
+	}
+	obj->eps = macheps();
+	obj->mean = 0.0;
+
+	return obj;
+}
+
+
 xlik_object xlik_init(int p, int d, int q, int s, int P, int D, int Q, int M, int N) {
 	xlik_object obj = NULL;
 	int i,r, t;
@@ -1493,7 +1545,7 @@ int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, d
 }
 
 int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, int s, int P, int D, int Q, double *phi, double *theta, 
- 	double *PHI, double *THETA, double *exog, int r, double *wmean, double *var,double *resid,double *loglik,double *hess) {
+ 	double *PHI, double *THETA, double *exog, int r, double *wmean, double *var,double *resid,double *loglik,double *hess,int cssml) {
 	int i,pq,retval,length,ret,ncxreg,nd,offset,N1,rnk,orig;
 	double *b,*tf,*x,*dx,*thess,*XX,*varcovar,*res,*x0,*inp2,*U,*V,*SIG,*coeff,*sigma;
 	int *ipiv;
@@ -1507,6 +1559,22 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 	maxstep = 1.0;
 	ncxreg = (xreg == NULL) ? 0 : r;
 	nd = d + D;
+
+	if (cssml == 1) {
+		cssx(inp, N, xreg, optmethod, p, d, q, s, P, D, Q, phi, theta, PHI, THETA,exog,r, wmean, var, loglik, hess);
+
+		checkroots(phi, &p, theta, &q, PHI, &P, THETA, &Q);
+	}
+	else {
+		for (i = 0; i < p; ++i) phi[i] = 0.0;
+		for (i = 0; i < q; ++i) theta[i] = 0.0;
+		for (i = 0; i < P; ++i) PHI[i] = 0.0;
+		for (i = 0; i < Q; ++i) THETA[i] = 0.0;
+	}
+
+	if (p + q + P + Q == 0 && d == 0 && D == 0 && cssml == 1) {
+		return 1;
+	}
 
 	inp2 = (double*)malloc(sizeof(double)* (N - s*D));
 
@@ -1547,7 +1615,6 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 			memcpy(x0,xreg,sizeof(double)*ncxreg*length);
 		}
 	}
-
 	XX = (double*) malloc(sizeof(double)*N*(r+1));
 
 	if (ncxreg > 0) {
@@ -2086,6 +2153,410 @@ int css_seas(double *inp, int N, int optmethod, int p, int d, int q, int s, int 
 	free(dx);
 	free(ipiv);
 	free_alik_css_seas(obj);
+	return ret;
+}
+
+double fcssx(double *b, int pq, void *params) {
+	double value, ssq,temp;
+	int p, q, ps, qs, s, offset,jm;
+	int ip, iq, i, j, N,iter,ncond,M,naram;
+	double *phi, *theta,*reg;
+
+	value = ssq =  0.0;
+	
+	xlik_css_object obj = (xlik_css_object)params;
+
+	ip = obj->p + (obj->s * obj->P);
+	iq = obj->q + (obj->s * obj->Q);
+
+	N = obj->N;
+	p = obj->p;
+	ps = obj->P;
+	q = obj->q;
+	qs = obj->Q;
+	s = obj->s;
+	M = obj->M;
+	offset = obj->offset;
+	ncond = p + s* ps;
+	naram = p + q + ps + qs;
+
+	reg = &obj->x[offset+3*N];
+
+	//printf("\n %d %d %d \n", s,ps, qs);
+
+	phi = (double*)malloc(sizeof(double)* ip);
+	theta = (double*)malloc(sizeof(double)* iq);
+
+
+
+	for (i = 0; i < p; ++i) {
+		phi[i] = b[i];
+	}
+
+	for (i = p; i < ip; ++i) {
+		phi[i] = 0.0;
+	}
+
+	for (i = 0; i < q; ++i) {
+		theta[i] = b[i + p];
+	}
+
+	for (i = q; i < iq; ++i) {
+		theta[i] = 0.0;
+	}
+
+	for (j = 0; j < ps; ++j) {
+		phi[(j + 1)*s - 1] += b[p + q + j];
+		for (i = 0; i < p; ++i) {
+			phi[(j + 1)*s + i] -= b[i] * b[p + q + j];
+		}
+	}
+
+	for (j = 0; j < qs; ++j) {
+		theta[(j + 1)*s - 1] += b[p + q + ps + j];
+		for (i = 0; i < q; ++i) {
+			theta[(j + 1)*s + i] += b[i + p] * b[p + q + ps + j];
+		}
+	}
+	//mdisplay(theta, 1, q + s*qs);
+	//mdisplay(b, 1, p + q + ps + qs);
+	for (i = 0; i < ncond; ++i) {
+		obj->x[offset+N + i] = 0.0;
+	}
+
+	if (obj->M > 0) {
+		for (i = 0; i < N; ++i) {
+			temp = obj->x[offset + 2 * N + i];
+			for(j = 0; j < M;++j) {
+				temp -= reg[j*N+i]*b[naram+j];
+			}
+			obj->x[offset + i] = temp;
+		}
+	}
+	iter = 0;
+	for (i = ncond; i < N; ++i) {
+		iter++;
+		temp = obj->x[offset+i];
+
+		for (j = 0; j < ip; ++j) {
+			temp = temp - phi[j] * obj->x[offset + i - j - 1];
+		}
+
+		if (i - ncond < iq) {
+			jm = i - ncond;
+		}
+		else {
+			jm = iq;
+		}
+
+		for (j = 0; j < jm; ++j) {
+			temp = temp - theta[j] * obj->x[offset+N + i - j - 1];
+		}
+
+		obj->x[offset+N + i] = temp;
+		ssq += temp * temp;
+	}
+	obj->ssq = ssq;
+	value = 0.5 * log(ssq / (double)iter);
+	obj->loglik = value;
+
+	free(phi);
+	free(theta);
+	return value;
+}
+
+int cssx(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, int s, int P, int D, int Q,
+	double *phi, double *theta, double *PHI, double *THETA,  double *exog, int r, double *wmean, double *var,double *loglik,double *hess) {
+	int i, pq, retval, length, offset,ret,nd,ncxreg,N1,rnk,orig;
+	double *b, *tf, *x, *inp2,*dx,*thess,*x0,*XX,*U,*V,*SIG,*coeff,*sigma,*varcovar,*res;
+	int *ipiv;
+	double maxstep;
+	xlik_css_object obj;
+	reg_object fit;
+
+	inp2 = (double*)malloc(sizeof(double)* (N - s*D));
+
+	length = N;
+
+	nd = d + D;
+	ncxreg = (xreg == NULL) ? 0 : r;
+
+	maxstep = 1.0;
+
+	/*
+
+	*/
+
+	if (D > 0) {
+		N = diffs(inp, N, D, s, inp2);
+	}
+	else {
+		for (i = 0; i < N; ++i) {
+			inp2[i] = inp[i];
+		}
+	}
+
+	x = (double*)malloc(sizeof(double)* (N - d));
+
+	if (d > 0) {
+		N = diff(inp2, N, d, x); // No need to demean x
+	}
+	else {
+		for (i = 0; i < N; ++i) {
+			x[i] = inp2[i];
+		}
+	}
+
+	x0 = (double*) malloc(sizeof(double)*length*(r+1));
+
+	if (nd == 0) {
+		for(i = 0; i < length;++i) {
+			x0[i] = 1.0;
+		}
+		if (r > 0) {
+			memcpy(x0+length,xreg,sizeof(double)*r*length);
+		}
+		ncxreg++;
+	} else {
+		if (ncxreg > 0) {
+			memcpy(x0,xreg,sizeof(double)*ncxreg*length);
+		}
+	}
+	XX = (double*) malloc(sizeof(double)*N*(r+1));
+
+	if (ncxreg > 0) {
+		N1 = length;
+		// x0 differenced and stored back in x0. Also stored in XX
+		if (D > 0) {
+			N1 = length - s*D;
+			for(i = 0; i < ncxreg;++i) {
+				diffs(x0+length*i,length,D,s,XX+N1*i);
+				memcpy(x0+N1*i,XX+N1*i,sizeof(double)*N1);
+			}
+		} 
+		// x0 differenced to XX
+		if (d > 0) {
+			for(i = 0; i < ncxreg;++i) {
+				diff(x0+N1*i,N1,d,XX+N*i);
+			}
+		} 
+		// Copy x0 to XX
+		if (nd == 0) {
+			memcpy(XX,x0,sizeof(double)*N*ncxreg);
+		}
+
+		rnk = rank(XX,N,ncxreg);
+
+		if (rnk < ncxreg) {
+			printf("Exogenous Variables are collinear. \n");
+			free(inp2);
+			free(x0);
+			free(XX);
+			free(x);
+			exit(-1);
+		}
+
+	}
+
+
+	orig = 0;
+	printf("ncxreg %d \n",ncxreg);
+
+	if (ncxreg > 0) {
+		if (ncxreg == 1) orig = 1;
+
+		/* if (orig == 0) {
+			
+
+			U = (double*)malloc(sizeof(double)*N*ncxreg);
+			V = (double*)malloc(sizeof(double)*ncxreg*ncxreg);
+			SIG = (double*)malloc(sizeof(double)*ncxreg);
+
+			itranspose(XX,ncxreg,N);
+
+			svd(XX,N,ncxreg,U,V,SIG);
+
+			mdisplay(V,ncxreg,ncxreg);
+
+			memcpy(U,XX,sizeof(double)*N*ncxreg);
+
+			mmult(U,V,XX,N,ncxreg,ncxreg);
+
+			itranspose(XX,N,ncxreg);
+
+			free(U);
+			free(V);
+			free(SIG);
+		} */
+
+		fit = reg_init(N,ncxreg);
+
+		varcovar = (double*)malloc(sizeof(double)*ncxreg*ncxreg);
+		res = (double*)malloc(sizeof(double)*N);
+		coeff = (double*)malloc(sizeof(double)*ncxreg);
+		sigma = (double*)malloc(sizeof(double)*ncxreg);
+
+		mdisplay(XX,ncxreg,N);
+
+		setIntercept(fit,0);
+		regress(fit,XX,x,res,varcovar,0.95);
+
+		summary(fit);
+
+		for(i = 0; i < ncxreg;++i) {
+			coeff[i] = (fit->beta+i)->value;
+			sigma[i] = 10.0 * (fit->beta+i)->stdErr;
+			printf("coeff %g sigma %g ",coeff[i],sigma[i]);
+		}
+
+		printf("\n OK \n");
+
+		free(varcovar);
+		free(res);
+		free_reg(fit);
+	}
+
+
+	obj = xlik_css_init(p, d, q, s, P, D, Q, ncxreg, N);
+
+	pq = obj->pq;
+	b = (double*)malloc(sizeof(double)* pq);
+	tf = (double*)malloc(sizeof(double)* pq);
+	thess = (double*)malloc(sizeof(double)* pq*pq);
+	dx = (double*)malloc(sizeof(double)* pq);
+	ipiv = (int*)malloc(sizeof(int)* pq);
+
+	obj->N = N;
+
+	offset = obj->offset;
+	// Test
+
+	for (i = 0; i < p; ++i) {
+		b[i] = 0.0;
+	}
+	for (i = 0; i < q; ++i) {
+		b[p + i] = 0.0;
+	}
+	for (i = 0; i < P; ++i) {
+		b[p + q + i] = 0.0;
+	}
+	for (i = 0; i < Q; ++i) {
+		b[p + q + P + i] = 0.0;
+	}
+
+	if (ncxreg > 0) {
+		for(i = 0; i < ncxreg;++i) {
+			b[p + q + P + Q + i] = coeff[i]; // exog
+		}
+	} else {
+		obj->mean = 0.0;
+	}
+
+	
+
+	//mdisplay(b, 1, p + q + P + Q);
+
+	for (i = 0; i < N; ++i) {
+		obj->x[offset + i] = obj->x[offset + 2 * N + i] = x[i];
+	}
+	for (i = N; i < 2 * N; ++i) {
+		obj->x[offset + i] = 0.0;
+	}
+
+	if (ncxreg > 0) {
+		for(i = 3 * N; i < (3 + ncxreg)*N; ++i) {
+			obj->x[offset + i] = XX[i - 3*N];
+		}
+	}
+
+	custom_function css_min = { fcssx, obj };
+	retval = fminunc(&css_min, NULL, pq, b, maxstep, optmethod, tf);
+	if (retval == 0) {
+		ret = 0;
+	}
+	else if (retval == 15) {
+		ret = 15;
+	}
+	else if (retval == 4) {
+		ret = 4;
+	}
+	else {
+		ret = 1;
+	}
+
+	for (i = 0; i < pq - ncxreg; ++i) {
+		dx[i] = 1.0;
+	}
+	
+	for(i = 0; i < ncxreg; ++i) {
+		dx[pq - ncxreg + i] = sigma[i];
+	}
+	
+
+	hessian_fd(&css_min, tf, pq, dx, obj->eps, hess);
+
+	mtranspose(hess, pq, pq, thess);
+
+	for (i = 0; i < pq*pq; ++i) {
+		thess[i] = (N - d - s*D) * 0.5 * (hess[i] + thess[i]);
+	}
+
+
+	ludecomp(thess, pq, ipiv);
+	minverse(thess, pq, ipiv, hess);
+
+	for (i = 0; i < p; ++i) {
+		phi[i] = tf[i];
+	}
+	for (i = 0; i < q; ++i) {
+		theta[i] = -tf[p + i];
+	}
+	for (i = 0; i < P; ++i) {
+		PHI[i] = tf[p + q + i];
+	}
+	for (i = 0; i < Q; ++i) {
+		THETA[i] = -tf[p + q + P + i];
+	}
+
+	if (nd == 0) {
+		*wmean = tf[p + q + Q + P];
+		if (ncxreg > 1) {
+			for(i = 1; i < ncxreg;++i) {
+				exog[i-1] = tf[p + q + Q + P + i];
+			}
+		}
+	} else {
+		*wmean = 0.0;
+		for(i = 0; i < ncxreg; ++i) {
+			exog[i] = tf[p + q + Q + P + i];
+		}
+	}
+	
+	/*
+	wmean = 0.0;
+	for (i = 0; i < N; ++i) {
+	wmean += (obj->x[N + i] * obj->x[N + i]);
+	}*/
+
+	*var = (obj->ssq) / (double)N;
+	*loglik = obj->loglik;
+	//printf("MEAN %g \n", mean(obj->x+N,N));
+	//mdisplay(obj->x + N, 1, N);
+
+	free(b);
+	free(tf);
+	free(inp2);
+	free(x0);
+	free(XX); 
+	free(x);
+	free(thess);
+	free(dx);
+	free(ipiv);
+	if (ncxreg > 0) {
+		free(coeff);
+		free(sigma);
+	}
+	free_xlik_css(obj);
 	return ret;
 }
 
@@ -2861,6 +3332,10 @@ void free_alik(alik_object object) {
 }
 
 void free_xlik(xlik_object object) {
+	free(object);
+}
+
+void free_xlik_css(xlik_css_object object) {
 	free(object);
 }
 

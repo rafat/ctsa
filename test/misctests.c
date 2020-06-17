@@ -1358,13 +1358,13 @@ void sarimatest() {
 	double *PHI, *THETA;
 	double *xpred, *amse;
 	sarima_object obj;
-	p = 2;
-	d = 2;
-	q = 2;
-	s = 0;
+	p = 0;
+	d = 1;
+	q = 1;
+	s = 12;
 	P = 0;
-	D = 0;
-	Q = 0;
+	D = 1;
+	Q = 1;
 
 
 	L = 5;
@@ -1381,7 +1381,7 @@ void sarimatest() {
 	double temp[1200];
 	double temp2[1200];
 
-	ifp = fopen("../data/itdaily.txt", "r");
+	ifp = fopen("../data/seriesG.txt", "r");
 	//ifp = fopen("../data/itdaily.txt", "r");
 	i = 0;
 	if (!ifp) {
@@ -1404,7 +1404,7 @@ void sarimatest() {
 
 
 	obj = sarima_init(p, d, q,s,P,D,Q, N);
-	sarima_setMethod(obj, 0); // Method 0 ("MLE") is default so this step is unnecessary. The method also accepts values 1 ("CSS") and 2 ("Box-Jenkins")
+	sarima_setMethod(obj, 1); // Method 0 ("MLE") is default so this step is unnecessary. The method also accepts values 1 ("CSS") and 2 ("Box-Jenkins")
 	sarima_setCSSML(obj,0); // 0 - Only MLE , 1 - CSS + MLE
 	//sarima_setOptMethod(obj, 7);// Method 5 ("BFGS") is default . The method also accepts values 0,1,2,3,4,5,6. Check the documentation for details.
 	sarima_exec(obj, inp);
@@ -1440,14 +1440,14 @@ void sarimaxtest() {
 	double *xreg;
 	double *xpred, *amse;
 	sarimax_object obj;
-	p = 0;
-	d = 0;
+	p = 1;
+	d = 1;
 	q = 1;
 	s = 0;
 	P = 0;
 	D = 0;
 	Q = 0;
-	r = 1;
+	r = 2;
 
 
 	L = 5;
@@ -1463,14 +1463,14 @@ void sarimaxtest() {
 	double temp2[1200];
 	double temp3[1200];
 
-	ifp = fopen("../data/e6m.dat", "r");
+	ifp = fopen("../data/e1m.dat", "r");
 	i = 0;
 	if (!ifp) {
 		printf("Cannot Open File");
 		exit(100);
 	}
 	while (!feof(ifp)) {
-		fscanf(ifp, "%lf %lf \n", &temp[i],&temp2[i]);
+		fscanf(ifp, "%lf %lf %lf \n", &temp[i],&temp2[i],&temp3[i]);
 		i++;
 	}
 	N = i;
@@ -1482,13 +1482,13 @@ void sarimaxtest() {
 	for (i = 0; i < N; ++i) {
 		inp[i] = temp[i];
 		xreg[i] = temp2[i];
-		//xreg[N+i] = temp3[i];
+		xreg[N+i] = temp3[i];
 		//printf("%g \n",inp[i]);
 	}
 
 
 	obj = sarimax_init(p, d, q, P, D, Q, s, r , N);
-	//arima_setMethod(obj, 0); // Method 0 ("MLE") is default so this step is unnecessary. The method also accepts values 1 ("CSS") and 2 ("Box-Jenkins")
+	sarimax_setMethod(obj, 1); // Method 0 ("MLE") is default so this step is unnecessary. The method also accepts values 1 ("CSS") and 2 ("Box-Jenkins")
 	//arima_setOptMethod(obj, 7);// Method 7 ("BFGS with More Thuente Line search") is default so this step is unnecessary. The method also accepts values 0,1,2,3,4,5,6. Check the documentation for details.
 	sarimax_exec(obj, inp,xreg);
 	sarimax_summary(obj);
@@ -1565,7 +1565,7 @@ int main() {
 	//seasdummytest();
 	//sdtests();
 	//arimatest();
-	sarimatest();
+	//sarimatest();
 	sarimaxtest();
 	//arimatest();
 	//mainverttest();

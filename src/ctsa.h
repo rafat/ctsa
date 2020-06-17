@@ -156,6 +156,8 @@ void arima_setMethod(arima_object obj, int value);
 
 void sarima_setMethod(sarima_object obj, int value);
 
+void sarimax_setMethod(sarimax_object obj, int value);
+
 void arima_setCSSML(arima_object obj, int cssml);
 
 void sarima_setCSSML(sarima_object obj, int cssml);

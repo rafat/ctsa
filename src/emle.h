@@ -80,10 +80,31 @@ struct alik_css_seas_set{
 	double ssq;// Contains the sum of squares value 
 	double loglik;
 	int offset;
-	//double phi[100];
-	//double theta[100];
-	//double PHI[100];
-	//double THETA[100];
+	double x[1];
+};
+
+typedef struct xlik_css_set* xlik_css_object;
+
+xlik_css_object xlik_css_init(int p, int d, int q, int s, int P, int D, int Q,int M, int N);
+
+struct xlik_css_set{
+	int p;// size of phi
+	int d;// Number of times the series is to be differenced
+	int q;//size of theta
+	int s; // Frequency of Seasonal Components
+	int P;// size of phi seasonal
+	int D;// Number of times the seasonal series is to be differenced
+	int Q;//size of theta seasonal
+	int r;// max(p+s*P,q+s*Q+1)
+	int pq;// p+q+s*P+s*Q
+	int length;// length of the original time series
+	int N;// length of time series after differencing 
+	int M;// M = Total Number of Exogenous variables + 1 (if mean is to be calculated)
+	double eps;
+	double mean;
+	double ssq;// Contains the sum of squares value 
+	double loglik;
+	int offset;
 	double x[1];
 };
 
@@ -153,6 +174,11 @@ double fcss_seas(double *b, int pq, void *params);
 int css_seas(double *inp, int N, int optmethod, int p, int d, int q, int s, int P, int D, int Q,
 	double *phi, double *theta, double *PHI, double *THETA, double *wmean, double *var,double *loglik,double *hess);
 
+double fcssx(double *b, int pq, void *params);
+
+int cssx(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, int s, int P, int D, int Q,
+	double *phi, double *theta, double *PHI, double *THETA,  double *exog, int r, double *wmean, double *var,double *loglik,double *hess) ;
+
 double fas154(double *x, int N, void *params);
 
 int as154(double *x, int N, int optmethod, int p, int d, int q, double *phi, double *theta, double *wmean, double *var, double *resid, double *loglik, double *hess,int cssml);
@@ -160,7 +186,7 @@ int as154(double *x, int N, int optmethod, int p, int d, int q, double *phi, dou
 double fas154x_seas(double *b, int pq, void *params);
 
 int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, int s, int P, int D, int Q, double *phi, double *theta, 
- double *PHI, double *THETA, double *exog, int r, double *wmean, double *var,double *resid,double *loglik,double *hess);
+ double *PHI, double *THETA, double *exog, int r, double *wmean, double *var,double *resid,double *loglik,double *hess, int cssml);
 
 double fas154_seas(double *b, int pq, void *params);
 
@@ -180,6 +206,8 @@ void free_alik_css(alik_css_object object);
 void free_alik(alik_object object);
 
 void free_xlik(xlik_object object);
+
+void free_xlik_css(xlik_css_object object);
 
 void free_alik_seas(alik_seas_object object);
 
