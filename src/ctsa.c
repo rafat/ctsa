@@ -196,6 +196,7 @@ sarimax_object sarimax_init(int p, int d, int q,int P, int D, int Q,int s, int r
 	obj->res = &obj->params[p + q + P + Q + ncxreg];
 	obj->vcov = &obj->params[p + q + P + Q + ncxreg + N - d - s*D];
 
+
 	obj->method = 0;// 0 - MLE, 1 - CSS, 2 - Box-Jenkins
 	obj->optmethod = 5; // Default Method is 5
 	obj->mean = 0.0;
@@ -704,6 +705,14 @@ void sarima_vcov(sarima_object obj, double *vcov) {
 	}
 }
 
+void sarimax_vcov(sarimax_object obj, double *vcov) {
+	int i;
+
+	for (i = 0; i < obj->lvcov; ++i) {
+		vcov[i] = obj->vcov[i];
+	}
+}
+
 void sarima_predict(sarima_object obj, double *inp, int L, double *xpred, double *amse) {
 	int d, i, N, ip, iq, ir,D,P,Q,s,p,q,t,ps,qs,j;
 	double *coef1,*coef2,*delta, *W, *resid, *phi, *theta;
@@ -796,6 +805,117 @@ void sarima_predict(sarima_object obj, double *inp, int L, double *xpred, double
 
 	for (i = 0; i < L; ++i) {
 		xpred[i] += wmean;
+	}
+
+	free(coef1);
+	free(coef2);
+	free(delta);
+	free(W);
+	free(resid);
+	free(phi);
+	free(theta);
+}
+
+void sarimax_predict(sarimax_object obj, double *inp, double *xreg, int L,double *newxreg, double *xpred, double *amse) {
+	int d, i, N, ip, iq, ir,D,P,Q,s,p,q,t,ps,qs,j;
+	double *coef1,*coef2,*delta, *W, *resid, *phi, *theta;
+	double wmean;
+
+	d = obj->d;
+	N = obj->N;
+	p = obj->p;
+	q = obj->q;
+	D = obj->D;
+	P = obj->P;
+	Q = obj->Q;
+	s = obj->s;
+
+	ip = p + s * P;
+	iq = q + s * Q;
+	ir = p + s * P;
+
+	t = 1 + q + s*Q;
+	if (ir < t) {
+		ir = t;
+	}
+	ps = P;
+	qs = Q;
+	coef1 = (double*)malloc(sizeof(double)* (d + 1));
+	coef2 = (double*)malloc(sizeof(double)* (D*s + 1));
+	delta = (double*)malloc(sizeof(double)* (d + D*s + 1));
+	W = (double*)malloc(sizeof(double)* N);
+	resid = (double*)malloc(sizeof(double)* N);
+
+
+	phi = (double*)malloc(sizeof(double)* ir);
+	theta = (double*)malloc(sizeof(double)* ir);
+	wmean = 0.0;
+	coef1[0] = coef2[0] = 1.0;
+
+	if (d == 0 && D == 0) {
+		*delta = 1.0;
+		wmean = obj->mean;
+	}
+
+	if (d > 0) {
+		deld(d, coef1);
+	}
+
+	if (D > 0) {
+		delds(D, s, coef2);
+	}
+
+	conv(coef1, d + 1, coef2, D*s + 1, delta);
+	//mdisplay(delta, 1, d + D*s + 1);
+	
+	for (i = 1; i <= d+D*s; ++i) {
+		delta[i] = -1.0 * delta[i];
+	}
+	for (i = 0; i < N; ++i) {
+		W[i] = inp[i];
+		if (d == 0 && D == 0) {
+			W[i] -= wmean;
+		}
+		if (obj->r > 0) {
+			for(j = 0; j < obj->r;++j) {
+				W[i] -= obj->exog[j] * xreg[j*N+i];
+			}
+		}
+		resid[i] = obj->res[i];
+	}
+	for (i = 0; i < ir; ++i) {
+		phi[i] = theta[i] = 0.0;
+	}
+
+	for (i = 0; i < p; ++i) {
+		phi[i] = obj->phi[i];
+	}
+
+	for (i = 0; i < q; ++i) {
+		theta[i] = -1.0 *  obj->theta[i];
+	}
+
+	for (j = 0; j < ps; ++j) {
+		phi[(j + 1)*s - 1] += obj->PHI[j];
+		for (i = 0; i < p; ++i) {
+			phi[(j + 1)*s + i] -= obj->phi[i] * obj->PHI[j];
+		}
+	}
+
+	for (j = 0; j < qs; ++j) {
+		theta[(j + 1)*s - 1] -= obj->THETA[j];
+		for (i = 0; i < q; ++i) {
+			theta[(j + 1)*s + i] += obj->theta[i] * obj->THETA[j];
+		}
+	}
+
+	forkal(ip, iq, d+D*s, phi, theta, delta + 1, N, W, resid, L, xpred, amse);
+
+	for (i = 0; i < L; ++i) {
+		xpred[i] += wmean;
+		for(j = 0; j < obj->r;++j) {
+			xpred[i] += obj->exog[j] * xreg[j*L+i];
+		}
 	}
 
 	free(coef1);

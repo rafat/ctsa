@@ -1552,7 +1552,6 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 	double maxstep;
 	xlik_object obj;
 	reg_object fit;
-	//custom_function as154_min;
 
 	length = N;// length of xreg as x is differenced first
 	
@@ -1597,8 +1596,6 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 			x[i] = inp2[i];
 		}
 	}
-
-	mdisplay(x,1,N);
 
 	x0 = (double*) malloc(sizeof(double)*length*(r+1));
 
@@ -1653,34 +1650,9 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 
 
 	orig = 0;
-	printf("ncxreg %d \n",ncxreg);
 
 	if (ncxreg > 0) {
 		if (ncxreg == 1) orig = 1;
-
-		/* if (orig == 0) {
-			
-
-			U = (double*)malloc(sizeof(double)*N*ncxreg);
-			V = (double*)malloc(sizeof(double)*ncxreg*ncxreg);
-			SIG = (double*)malloc(sizeof(double)*ncxreg);
-
-			itranspose(XX,ncxreg,N);
-
-			svd(XX,N,ncxreg,U,V,SIG);
-
-			mdisplay(V,ncxreg,ncxreg);
-
-			memcpy(U,XX,sizeof(double)*N*ncxreg);
-
-			mmult(U,V,XX,N,ncxreg,ncxreg);
-
-			itranspose(XX,N,ncxreg);
-
-			free(U);
-			free(V);
-			free(SIG);
-		} */
 
 		fit = reg_init(N,ncxreg);
 
@@ -1689,12 +1661,8 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 		coeff = (double*)malloc(sizeof(double)*ncxreg);
 		sigma = (double*)malloc(sizeof(double)*ncxreg);
 
-		mdisplay(XX,ncxreg,N);
-
 		setIntercept(fit,0);
 		regress(fit,XX,x,res,varcovar,0.95);
-
-		summary(fit);
 
 		for(i = 0; i < ncxreg;++i) {
 			coeff[i] = (fit->beta+i)->value;
@@ -1769,11 +1737,6 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 		}
 	}
 
-	//mdisplay(obj->x,3+ncxreg,N);
-	//mdisplay(XX,ncxreg,N);
-	
-	//mdisplay(b,1,p + q + P + Q +ncxreg);
-	//printf("pq %d \n",pq);
 
 	custom_function as154_min = { fas154x_seas, obj };
 	retval = fminunc(&as154_min, NULL, pq, b,maxstep, optmethod, tf);
@@ -1790,10 +1753,6 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 	else {
 		ret = 1;
 	}
-
-	//printf("ret %d ncxreg %d \n",retval,ncxreg);
-
-	//Check for invertibility
 
 	if (q > 0) {
 		invertroot(q,tf+p);
@@ -1813,30 +1772,19 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 		dx[pq - ncxreg + i] = sigma[i];
 	}
 
-	//mdisplay(dx,1,pq);
-
 	hessian_fd(&as154_min, tf, pq, dx, obj->eps, hess);
 	
 	mtranspose(hess, pq, pq, thess);
-
-	//mdisplay(tf,1,pq);
 
 	
 
 	for (i = 0; i < pq*pq; ++i) {
 		thess[i] = (length - d - s*D) * 0.5 * (hess[i] + thess[i]);
 	}
-
-	//mdisplay(thess,pq,pq);
 	
 
 	ludecomp(thess, pq, ipiv);
 	minverse(thess, pq, ipiv, hess);
-
-	//mdisplay(hess,pq,pq);
-
-	//mdisplay(tf,1,pq);
-	//printf("p %d q %d P %d Q %d \n",p,q,P,Q);
 
 
 	for (i = 0; i < p; ++i) {
@@ -1874,8 +1822,6 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 		resid[i] = obj->x[offset + N + i];
 	}
 	*loglik = obj->loglik;
-	//printf("MEAN %g \n", mean(obj->x+N,N));
-	//mdisplay(obj->x + N, 1, N);
 
 	free(b);
 	free(tf);
@@ -2360,34 +2306,9 @@ int cssx(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, i
 
 
 	orig = 0;
-	printf("ncxreg %d \n",ncxreg);
 
 	if (ncxreg > 0) {
 		if (ncxreg == 1) orig = 1;
-
-		/* if (orig == 0) {
-			
-
-			U = (double*)malloc(sizeof(double)*N*ncxreg);
-			V = (double*)malloc(sizeof(double)*ncxreg*ncxreg);
-			SIG = (double*)malloc(sizeof(double)*ncxreg);
-
-			itranspose(XX,ncxreg,N);
-
-			svd(XX,N,ncxreg,U,V,SIG);
-
-			mdisplay(V,ncxreg,ncxreg);
-
-			memcpy(U,XX,sizeof(double)*N*ncxreg);
-
-			mmult(U,V,XX,N,ncxreg,ncxreg);
-
-			itranspose(XX,N,ncxreg);
-
-			free(U);
-			free(V);
-			free(SIG);
-		} */
 
 		fit = reg_init(N,ncxreg);
 
@@ -2396,20 +2317,15 @@ int cssx(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, i
 		coeff = (double*)malloc(sizeof(double)*ncxreg);
 		sigma = (double*)malloc(sizeof(double)*ncxreg);
 
-		mdisplay(XX,ncxreg,N);
 
 		setIntercept(fit,0);
 		regress(fit,XX,x,res,varcovar,0.95);
 
-		summary(fit);
-
 		for(i = 0; i < ncxreg;++i) {
 			coeff[i] = (fit->beta+i)->value;
 			sigma[i] = 10.0 * (fit->beta+i)->stdErr;
-			printf("coeff %g sigma %g ",coeff[i],sigma[i]);
 		}
 
-		printf("\n OK \n");
 
 		free(varcovar);
 		free(res);
@@ -2540,9 +2456,7 @@ int cssx(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, i
 
 	*var = (obj->ssq) / (double)N;
 	*loglik = obj->loglik;
-	//printf("MEAN %g \n", mean(obj->x+N,N));
-	//mdisplay(obj->x + N, 1, N);
-
+	
 	free(b);
 	free(tf);
 	free(inp2);

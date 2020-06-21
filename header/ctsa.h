@@ -11,11 +11,41 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	/*
-	ARIMA vs SARIMA
-	Typically you should use SARIMA if you are calculating seasonal models and ARIMA for non-seasonal models. However, ARIMA wil not work if the number of parameters p and q exceed 100.
-	For these extreme-case non-seasonal models, use SARIMA and set seasonal paramters to zero. SARIMA and ARIMA work identically for non-seasonal models otherwise.
-	*/
+
+typedef struct sarimax_set* sarimax_object;
+
+sarimax_object sarimax_init(int p, int d, int q,int P, int D, int Q,int s, int r, int N);
+
+struct sarimax_set{
+	int N;// length of time series
+	int Nused;//length of time series after differencing, Nused = N - d
+	int method;
+	int optmethod;
+	int p;// size of phi
+	int d;// Number of times the series is to be differenced
+	int q;//size of theta
+	int s;// Seasonality/Period
+	int P;//Size of seasonal phi
+	int D;// The number of times the seasonal series is to be differenced
+	int Q;//size of Seasonal Theta
+	int r;// Number of exogenous variables
+	int M; // M = 0 if mean is 0.0 else M = 1
+	int ncoeff;// Total Number of Coefficients to be estimated
+	double *phi;
+	double *theta;
+	double *PHI;
+	double *THETA;
+	double *exog;
+	double *vcov;// Variance-Covariance Matrix Of length lvcov
+	int lvcov; //length of VCOV
+	double *res;
+	double mean;
+	double var;
+	double loglik;
+	double aic;
+	int retval;
+	double params[0];
+};
 
 typedef struct arima_set* arima_object;
 
@@ -97,6 +127,8 @@ struct ar_set{
 	double params[0];
 };
 
+void sarimax_exec(sarimax_object obj, double *inp,double *xreg) ;
+
 void arima_exec(arima_object obj, double *x);
 
 void sarima_exec(sarima_object obj, double *x);
@@ -107,6 +139,8 @@ void arima_predict(arima_object obj, double *inp, int L, double *xpred, double *
 
 void sarima_predict(sarima_object obj, double *inp, int L, double *xpred, double *amse);
 
+void sarimax_predict(sarimax_object obj, double *inp, double *xreg, int L,double *newxreg, double *xpred, double *amse);
+
 void ar_predict(ar_object obj, double *inp, int L, double *xpred, double *amse);
 
 void ar(double *inp, int N, int p, int method, double *phi,double *var);
@@ -114,6 +148,8 @@ void ar(double *inp, int N, int p, int method, double *phi,double *var);
 void arima_setMethod(arima_object obj, int value);
 
 void sarima_setMethod(sarima_object obj, int value);
+
+void sarimax_setMethod(sarimax_object obj, int value);
 
 void arima_setOptMethod(arima_object obj, int value);
 
@@ -123,9 +159,13 @@ void arima_vcov(arima_object obj, double *vcov);
 
 void sarima_vcov(sarima_object obj, double *vcov);
 
+void sarima_vcov(sarima_object obj, double *vcov);
+
 void arima_summary(arima_object obj);
 
 void sarima_summary(sarima_object obj);
+
+void sarimax_summary(sarimax_object obj);
 
 int ar_estimate(double *x, int N, int method);
 
@@ -146,6 +186,8 @@ void acvf2acf(double *acf, int M);
 void arima_free(arima_object object);
 
 void sarima_free(sarima_object object);
+
+void sarimax_free(sarimax_object object);
 
 void ar_free(ar_object object);
 

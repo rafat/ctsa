@@ -3,6 +3,21 @@
 #include <math.h>
 #include "../header/ctsa.h"
 
+double ar_mean(double *x, int N) {
+	double mn;
+	int i;
+
+	mn = 0.0;
+
+	for(i = 0; i < N;++i) {
+		mn += x[i];
+	}
+
+	mn /= (double) N;
+
+	return mn;
+}
+
 int main(void) {
 	int i, N;
 	double *inp;
@@ -28,7 +43,7 @@ int main(void) {
 	N = i;
 
 	inp = (double*)malloc(sizeof(double)* N);
-	wmean = mean(temp, N);
+	wmean = ar_mean(temp, N);
 
 	for (i = 0; i < N; ++i) {
 		inp[i] = temp[i];

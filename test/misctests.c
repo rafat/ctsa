@@ -1564,7 +1564,7 @@ int main() {
 	//regex1();
 	//seasdummytest();
 	//sdtests();
-	//arimatest();
+	arimatest();
 	//sarimatest();
 	sarimaxtest();
 	//arimatest();

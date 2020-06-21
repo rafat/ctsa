@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "../src/ctsa.h"
+#include "../header/ctsa.h"
 
 int main(void) {
 	int i, N, d, L;
@@ -10,9 +10,9 @@ int main(void) {
 	double *phi, *theta;
 	double *xpred, *amse;
 	arima_object obj;
-	p = 2;
-	d = 2;
-	q = 2;
+	p = 1;
+	d = 0;
+	q = 1;
 
 
 	L = 5;
@@ -26,7 +26,7 @@ int main(void) {
 	FILE *ifp;
 	double temp[1200];
 
-	ifp = fopen("../data/itdaily.txt", "r");
+	ifp = fopen("../data/seriesA.txt", "r");
 	i = 0;
 	if (!ifp) {
 		printf("Cannot Open File");
@@ -48,8 +48,8 @@ int main(void) {
 
 
 	obj = arima_init(p, d, q, N);
-	arima_setMethod(obj, 1); // Method 0 ("MLE") is default so this step is unnecessary. The method also accepts values 1 ("CSS") and 2 ("Box-Jenkins")
-	//arima_setCSSML(obj,0); // 0 - Only MLE , 1 - CSS + MLE
+	arima_setMethod(obj, 0); // Method 0 ("MLE") is default so this step is unnecessary. The method also accepts values 1 ("CSS") and 2 ("Box-Jenkins")
+	//arima_setCSSML(obj,0); // 0 - Only MLE , 1 - CSS + MLE (Default)
 	arima_setOptMethod(obj,5);// Method 5 ("BFGS") is default. The method also accepts values 0,1,2,3,4,5,6,7. Check the documentation for details.
 	arima_exec(obj, inp);
 	arima_summary(obj);

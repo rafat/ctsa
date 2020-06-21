@@ -148,6 +148,8 @@ void arima_predict(arima_object obj, double *inp, int L, double *xpred, double *
 
 void sarima_predict(sarima_object obj, double *inp, int L, double *xpred, double *amse);
 
+void sarimax_predict(sarimax_object obj, double *inp, double *xreg, int L,double *newxreg, double *xpred, double *amse);
+
 void ar_predict(ar_object obj, double *inp, int L, double *xpred, double *amse);
 
 void ar(double *inp, int N, int p, int method, double *phi,double *var);
@@ -169,6 +171,8 @@ void sarima_setOptMethod(sarima_object obj, int value);
 void arima_vcov(arima_object obj, double *vcov);
 
 void sarima_vcov(sarima_object obj, double *vcov);
+
+void sarimax_vcov(sarimax_object obj, double *vcov);
 
 void arima_summary(arima_object obj);
 
