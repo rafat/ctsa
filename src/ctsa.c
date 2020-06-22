@@ -914,7 +914,7 @@ void sarimax_predict(sarimax_object obj, double *inp, double *xreg, int L,double
 	for (i = 0; i < L; ++i) {
 		xpred[i] += wmean;
 		for(j = 0; j < obj->r;++j) {
-			xpred[i] += obj->exog[j] * xreg[j*L+i];
+			xpred[i] += obj->exog[j] * newxreg[j*L+i];
 		}
 	}
 
