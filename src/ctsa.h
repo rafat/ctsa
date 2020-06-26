@@ -148,6 +148,7 @@ struct sarimax_refit_set{
 	double bic;
 	double aicc;
 	double lambda;
+	double sigma2;
 };
 
 void arima_exec(arima_object obj, double *x);

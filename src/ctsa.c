@@ -327,6 +327,7 @@ sarimax_refit_object sarimax_refit(sarimax_refit_object model,double *y, int N,i
 	sarimax_refit_object obj = NULL;
 	int i, p,d,q,P,D,Q,s,ncoeff;
 	double *x, *origx,*xreg2;
+	double rsum;
 
 	x = (double*) malloc(sizeof(double)*N);
 	origx = (double*) malloc(sizeof(double)*N);
@@ -369,18 +370,17 @@ sarimax_refit_object sarimax_refit(sarimax_refit_object model,double *y, int N,i
 
 		sarimax_exec(obj->sarimax,x,xreg2);
 		obj->aic = obj->sarimax->aic;
-		printf("aic %g \n",obj->aic);
 		ncoeff = (obj->sarimax->p + obj->sarimax->q + obj->sarimax->P + obj->sarimax->Q + obj->sarimax->M) + 1;
 		obj->aicc = obj->aic + 2 * ncoeff * ((double)obj->sarimax->Nused / (double) (obj->sarimax->Nused - ncoeff - 1) - 1.0);
-		printf("aicc %g \n",obj->aicc);
 		obj->bic = obj->aic + ncoeff * (log((double)obj->sarimax->Nused) - 2.0);
-		printf("bic %g \n",obj->bic);
-		/* if (*lambda) {
-			obj->lambda = *lambda;
-		} else {
-			obj->lambda = 0;
-		} */
-		printf("drift 3 %d \n",drift);
+		
+		rsum = 0.0;
+
+		for(i = 0; i < obj->sarimax->Nused;++i) {
+			rsum += obj->sarimax->res[i]*obj->sarimax->res[i];
+		}
+
+		obj->sigma2 = rsum / (double) (obj->sarimax->Nused - ncoeff + 1);
 	}
 
 	free(x);
@@ -1116,7 +1116,7 @@ void sarimax_refit_predict(sarimax_refit_object obj, double *inp, double *xreg, 
 			W[i] -= wmean;
 		}
 		if (obj->idrift == 1) {
-			W[i] -= obj->sarimax->exog[i]*(i+1);
+			W[i] -= obj->sarimax->exog[0]*(i+1);
 		}
 		if (obj->sarimax->r > 0) {
 			for(j = diter; j < obj->sarimax->r;++j) {
@@ -1155,8 +1155,11 @@ void sarimax_refit_predict(sarimax_refit_object obj, double *inp, double *xreg, 
 
 	for (i = 0; i < L; ++i) {
 		xpred[i] += wmean;
-		for(j = 0; j < obj->sarimax->r;++j) {
-			xpred[i] += obj->sarimax->exog[j] * newxreg[j*L+i];
+		if (obj->idrift == 1) {
+			xpred[i] += obj->sarimax->exog[0]*(i+1+N);
+		}
+		for(j = diter; j < obj->sarimax->r;++j) {
+			xpred[i] += obj->sarimax->exog[j] * newxreg[(j - diter)*L+i];
 		}
 	}
 
@@ -1640,7 +1643,7 @@ void sarimax_refit_summary(sarimax_refit_object obj) {
 		t++;
 	}
 	printf("\n");
-	printf("%-17s%-20g \n", "SIGMA^2", obj->sarimax->var);
+	printf("%-17s%-20g \n", "SIGMA^2", obj->sigma2);
 	printf("\n");
 	printf("ESTIMATION METHOD : ");
 	if (obj->sarimax->method == 0) {
