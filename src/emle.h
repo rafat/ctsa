@@ -177,7 +177,7 @@ int css_seas(double *inp, int N, int optmethod, int p, int d, int q, int s, int 
 double fcssx(double *b, int pq, void *params);
 
 int cssx(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, int s, int P, int D, int Q,
-	double *phi, double *theta, double *PHI, double *THETA,  double *exog, int r, double *wmean, double *var,double *loglik,double *hess) ;
+	double *phi, double *theta, double *PHI, double *THETA,  double *exog, int r, double *wmean, double *var,double *loglik,double *hess,int start);
 
 double fas154(double *x, int N, void *params);
 
@@ -186,7 +186,7 @@ int as154(double *x, int N, int optmethod, int p, int d, int q, double *phi, dou
 double fas154x_seas(double *b, int pq, void *params);
 
 int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, int s, int P, int D, int Q, double *phi, double *theta, 
- double *PHI, double *THETA, double *exog, int r, double *wmean, double *var,double *resid,double *loglik,double *hess, int cssml);
+ 	double *PHI, double *THETA, double *exog, int r, double *wmean, double *var,double *resid,double *loglik,double *hess,int cssml,int start);
 
 double fas154_seas(double *b, int pq, void *params);
 

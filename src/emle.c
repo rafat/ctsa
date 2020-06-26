@@ -1545,7 +1545,7 @@ int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, d
 }
 
 int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, int s, int P, int D, int Q, double *phi, double *theta, 
- 	double *PHI, double *THETA, double *exog, int r, double *wmean, double *var,double *resid,double *loglik,double *hess,int cssml) {
+ 	double *PHI, double *THETA, double *exog, int r, double *wmean, double *var,double *resid,double *loglik,double *hess,int cssml,int start) {
 	int i,pq,retval,length,ret,ncxreg,nd,offset,N1,rnk,orig;
 	double *b,*tf,*x,*dx,*thess,*XX,*varcovar,*res,*x0,*inp2,*U,*V,*SIG,*coeff,*sigma;
 	int *ipiv;
@@ -1560,15 +1560,18 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 	nd = d + D;
 
 	if (cssml == 1) {
-		cssx(inp, N, xreg, optmethod, p, d, q, s, P, D, Q, phi, theta, PHI, THETA,exog,r, wmean, var, loglik, hess);
+		cssx(inp, N, xreg, optmethod, p, d, q, s, P, D, Q, phi, theta, PHI, THETA,exog,r, wmean, var, loglik, hess,start);
 
 		checkroots(phi, &p, theta, &q, PHI, &P, THETA, &Q);
 	}
 	else {
-		for (i = 0; i < p; ++i) phi[i] = 0.0;
-		for (i = 0; i < q; ++i) theta[i] = 0.0;
-		for (i = 0; i < P; ++i) PHI[i] = 0.0;
-		for (i = 0; i < Q; ++i) THETA[i] = 0.0;
+
+		if (start == 0) {
+			for (i = 0; i < p; ++i) phi[i] = 0.0;
+			for (i = 0; i < q; ++i) theta[i] = 0.0;
+			for (i = 0; i < P; ++i) PHI[i] = 0.0;
+			for (i = 0; i < Q; ++i) THETA[i] = 0.0;
+		}
 	}
 
 	if (p + q + P + Q == 0 && d == 0 && D == 0 && cssml == 1) {
@@ -1695,19 +1698,20 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 
 	// Initialize Parameters
 
+	//mdisplay(theta,1,q);
+	//mdisplay(THETA,1,Q);
+
 	for (i = 0; i < p; ++i) {
-		b[i] = 0.0;// phi
+		b[i] = phi[i];
 	}
 	for (i = 0; i < q; ++i) {
-		b[p + i] = 0.0; // theta
+		b[p + i] = -theta[i];
 	}
-
-	for(i = 0; i < P;++i) {
-		b[p + q + i] = 0.0; // PHI
+	for (i = 0; i < P; ++i) {
+		b[p + q + i] = PHI[i];
 	}
-
-	for(i = 0; i < Q; ++i) {
-		b[p + q + P + i] = 0.0; // THETA
+	for (i = 0; i < Q; ++i) {
+		b[p + q + P + i] = -THETA[i];
 	}
 
 	if (ncxreg > 0) {
@@ -2212,7 +2216,7 @@ double fcssx(double *b, int pq, void *params) {
 }
 
 int cssx(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, int s, int P, int D, int Q,
-	double *phi, double *theta, double *PHI, double *THETA,  double *exog, int r, double *wmean, double *var,double *loglik,double *hess) {
+	double *phi, double *theta, double *PHI, double *THETA,  double *exog, int r, double *wmean, double *var,double *loglik,double *hess,int start) {
 	int i, pq, retval, length, offset,ret,nd,ncxreg,N1,rnk,orig;
 	double *b, *tf, *x, *inp2,*dx,*thess,*x0,*XX,*U,*V,*SIG,*coeff,*sigma,*varcovar,*res;
 	int *ipiv;
@@ -2228,6 +2232,21 @@ int cssx(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, i
 	ncxreg = (xreg == NULL) ? 0 : r;
 
 	maxstep = 1.0;
+
+	if (start == 0) {
+		for (i = 0; i < p; ++i) {
+			phi[i] = 0.0;
+		}
+		for (i = 0; i < q; ++i) {
+			theta[p + i] = 0.0;
+		}
+		for (i = 0; i < P; ++i) {
+			PHI[p + q + i] = 0.0;
+		}
+		for (i = 0; i < Q; ++i) {
+			THETA[p + q + P + i] = 0.0;
+		}
+	}
 
 	/*
 
@@ -2348,16 +2367,16 @@ int cssx(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, i
 	// Test
 
 	for (i = 0; i < p; ++i) {
-		b[i] = 0.0;
+		b[i] = phi[i];
 	}
 	for (i = 0; i < q; ++i) {
-		b[p + i] = 0.0;
+		b[p + i] = -theta[i];
 	}
 	for (i = 0; i < P; ++i) {
-		b[p + q + i] = 0.0;
+		b[p + q + i] = PHI[i];
 	}
 	for (i = 0; i < Q; ++i) {
-		b[p + q + P + i] = 0.0;
+		b[p + q + P + i] = -THETA[i];
 	}
 
 	if (ncxreg > 0) {

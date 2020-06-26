@@ -29,7 +29,7 @@ int main(void) {
 	r = 2;
 
 
-	L = 5;
+	L = 0;
 
 	xpred = (double*)malloc(sizeof(double)* L);
 	amse = (double*)malloc(sizeof(double)* L);

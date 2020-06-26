@@ -133,7 +133,21 @@ struct sarimax_set{
 	double loglik;
 	double aic;
 	int retval;
+	int start;
 	double params[0];
+};
+
+typedef struct sarimax_refit_set* sarimax_refit_object;
+
+sarimax_refit_object sarimax_refit(sarimax_refit_object model,double *y, int N,int *order, int *seasonal, double *xreg, int r, int drift,double *lambda, int biasadj,int method);
+
+struct sarimax_refit_set{
+	sarimax_object sarimax;
+	int idrift;
+	double aic;
+	double bic;
+	double aicc;
+	double lambda;
 };
 
 void arima_exec(arima_object obj, double *x);
@@ -149,6 +163,8 @@ void arima_predict(arima_object obj, double *inp, int L, double *xpred, double *
 void sarima_predict(sarima_object obj, double *inp, int L, double *xpred, double *amse);
 
 void sarimax_predict(sarimax_object obj, double *inp, double *xreg, int L,double *newxreg, double *xpred, double *amse);
+
+void sarimax_refit_predict(sarimax_refit_object obj, double *inp, double *xreg, int L,double *newxreg, double *xpred, double *amse);
 
 void ar_predict(ar_object obj, double *inp, int L, double *xpred, double *amse);
 
@@ -178,6 +194,8 @@ void arima_summary(arima_object obj);
 
 void sarimax_summary(sarimax_object obj);
 
+void sarimax_refit_summary(sarimax_refit_object obj);
+
 void sarima_summary(sarima_object obj);
 
 int ar_estimate(double *x, int N, int method);
@@ -199,6 +217,8 @@ void acvf2acf(double *acf, int M);
 void arima_free(arima_object object);
 
 void sarimax_free(sarimax_object object);
+
+void sarimax_refit_free(sarimax_refit_object object);
 
 void sarima_free(sarima_object object);
 
