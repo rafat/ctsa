@@ -14,7 +14,7 @@ extern "C" {
 
 typedef struct sarimax_set* sarimax_object;
 
-sarimax_object sarimax_init(int p, int d, int q,int P, int D, int Q,int s, int r, int N);
+sarimax_object sarimax_init(int p, int d, int q,int P, int D, int Q,int s, int r,int imean, int N);
 
 struct sarimax_set{
 	int N;// length of time series
@@ -44,6 +44,8 @@ struct sarimax_set{
 	double loglik;
 	double aic;
 	int retval;
+	int start;
+	int imean;
 	double params[0];
 };
 
@@ -159,7 +161,7 @@ void arima_vcov(arima_object obj, double *vcov);
 
 void sarima_vcov(sarima_object obj, double *vcov);
 
-void sarima_vcov(sarima_object obj, double *vcov);
+void sarimax_vcov(sarimax_object obj, double *vcov);
 
 void arima_summary(arima_object obj);
 

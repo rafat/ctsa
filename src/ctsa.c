@@ -147,18 +147,27 @@ ar_object ar_init(int method, int N) {
 	return obj;
 }
 
-sarimax_object sarimax_init(int p, int d, int q,int P, int D, int Q,int s, int r, int N) {
+sarimax_object sarimax_init(int p, int d, int q,int P, int D, int Q,int s, int r,int imean, int N) {
 	sarimax_object obj = NULL;
 	int i,ncxreg;
 	if (P + D + Q == 0) {
 		s = 0;
 	}
 
+	if (imean <0 || imean > 1) {
+		printf("imean only accepts one of two values - 0 and 1 \n");
+		exit(-1);
+	}
+
 	if (d + D > 0) {
 		ncxreg = r;
 	}
 	else {
-		ncxreg = 1 + r;
+		if (imean == 0) {
+			ncxreg = r;
+		} else {
+			ncxreg = 1 + r;
+		}
 	}
 	if (p < 0 || d < 0 || q < 0 || N <= 0 || P < 0 || D < 0 || Q < 0) {
 		printf("\n Input Values cannot be Negative. Program Exiting. \n");
@@ -185,6 +194,7 @@ sarimax_object sarimax_init(int p, int d, int q,int P, int D, int Q,int s, int r
 	obj->r = r;
 	obj->retval = 0;
 	obj->start = 0;
+	obj->imean = 1;
 
 	for (i = 0; i < (p + q + P + Q + ncxreg + N - d - s*D) + (p + q + P + Q + ncxreg )*(p + q + P + Q + ncxreg ); ++i) {
 		obj->params[i] = 0.0;
@@ -263,7 +273,7 @@ void sarimax_exec(sarimax_object obj, double *inp,double *xreg)  {
 		cssml = 1;
 		obj->retval = as154x(inp, obj->N, xreg, obj->optmethod, obj->p, obj->d, obj->q, obj->s, obj->P, obj->D, obj->Q, obj->params, obj->params + p, obj->params + p + q, 
 			obj->params + p + q + P,obj->params + p + q + P + Q, obj->r, &obj->mean, &obj->var,obj->params + p + q + P + Q + M,
-			 &obj->loglik, obj->params + p + q + P + Q + M + N - d - s*D,cssml,obj->start);
+			 &obj->loglik, obj->params + p + q + P + Q + M + N - d - s*D,cssml,obj->start,obj->imean);
 		//mdisplay(obj->vcov,p+q+P+Q+M,p+q+P+Q+M);
 		obj->loglik = -0.5 * (obj->Nused * (2 * obj->loglik + 1.0 + log(2 * 3.14159)));
 		obj->aic = -2.0 * obj->loglik + 2.0 * (obj->p + obj->q + obj->P + obj->Q + obj->M) + 2.0;
@@ -271,13 +281,14 @@ void sarimax_exec(sarimax_object obj, double *inp,double *xreg)  {
 		cssml = 0;
 		obj->retval = as154x(inp, obj->N, xreg, obj->optmethod, obj->p, obj->d, obj->q, obj->s, obj->P, obj->D, obj->Q, obj->params, obj->params + p, obj->params + p + q, 
 			obj->params + p + q + P,obj->params + p + q + P + Q, obj->r, &obj->mean, &obj->var,obj->params + p + q + P + Q + M,
-			 &obj->loglik, obj->params + p + q + P + Q + M + N - d - s*D,cssml,obj->start);
+			 &obj->loglik, obj->params + p + q + P + Q + M + N - d - s*D,cssml,obj->start,obj->imean);
 		//mdisplay(obj->vcov,p+q+P+Q+M,p+q+P+Q+M);
 		obj->loglik = -0.5 * (obj->Nused * (2 * obj->loglik + 1.0 + log(2 * 3.14159)));
 		obj->aic = -2.0 * obj->loglik + 2.0 * (obj->p + obj->q + obj->P + obj->Q + obj->M) + 2.0;
 	} else if (obj->method == 2) {
 		obj->retval = cssx(inp, obj->N, xreg, obj->optmethod, obj->p, obj->d, obj->q, obj->s, obj->P, obj->D, obj->Q, obj->params, obj->params + p, obj->params + p + q, 
-			obj->params + p + q + P,obj->params + p + q + P + Q, obj->r, &obj->mean, &obj->var,&obj->loglik, obj->params + p + q + P + Q + M + N - d - s*D,obj->start);
+			obj->params + p + q + P,obj->params + p + q + P + Q, obj->r, &obj->mean, &obj->var,&obj->loglik, obj->params + p + q + P + Q + M + N - d - s*D,obj->start,
+			obj->imean);
 		//mdisplay(obj->vcov,p+q+P+Q+M,p+q+P+Q+M);
 		obj->loglik = -0.5 * (obj->Nused * (2 * obj->loglik + 1.0 + log(2 * 3.14159)));
 	} else {
@@ -320,18 +331,19 @@ void sarima_exec(sarima_object obj, double *inp) {
 
 }
 
-sarimax_refit_object sarimax_refit(sarimax_refit_object model,double *y, int N,int *order, int *seasonal, double *xreg, int r, int drift,double *lambda, int biasadj,int method) {
+sarimax_wrapper_object sarimax_wrapper(sarimax_wrapper_object model,double *y, int N,int *order, int *seasonal, double *xreg, int r, int drift,int mean,
+	double *lambda, int biasadj,int method) {
 	/*
 	Init here. { sarimax_object,drift}
 	*/
-	sarimax_refit_object obj = NULL;
+	sarimax_wrapper_object obj = NULL;
 	int i, p,d,q,P,D,Q,s,ncoeff;
 	double *x, *origx,*xreg2;
 	double rsum;
 
 	x = (double*) malloc(sizeof(double)*N);
 	origx = (double*) malloc(sizeof(double)*N);
-	obj = (sarimax_refit_object) malloc (sizeof(struct sarimax_refit_set));
+	obj = (sarimax_wrapper_object) malloc (sizeof(struct sarimax_wrapper_set));
 
 	memcpy(x,y,sizeof(double)*N);
 	memcpy(origx,y,sizeof(double)*N);
@@ -366,7 +378,7 @@ sarimax_refit_object sarimax_refit(sarimax_refit_object model,double *y, int N,i
 			memcpy(xreg2,xreg,sizeof(double)*N*r);
 		}
 		
-		obj->sarimax = sarimax_init(p,d,q,P,D,Q,s,r,N);
+		obj->sarimax = sarimax_init(p,d,q,P,D,Q,s,r,mean,N);
 
 		sarimax_exec(obj->sarimax,x,xreg2);
 		obj->aic = obj->sarimax->aic;
@@ -389,12 +401,65 @@ sarimax_refit_object sarimax_refit(sarimax_refit_object model,double *y, int N,i
 	return obj;
 }
 
-void arima2(sarimax_refit_object model,double *x, int N,int drift,double *xreg, int r,int method) {
+void arima2(sarimax_wrapper_object model,double *x, int N,int drift,double *xreg, int r,int method) {
 	int i;
-	double var;
+	double sigma2;
 
-	var = model->sarimax->var;
+	sigma2 = model->sigma2;
 
+}
+
+void myarima(double *x, int N, int *order, int *seasonal, int constant, const char* ic, int trace, int approx,
+	int offset, double *xreg, int r, int *method) {
+
+	int m,p,d,q,P,D,Q,s,diffs;
+	int use_season,rmethod;
+
+	if (order) {
+		p = order[0];
+		d = order[1];
+		q = order[2];
+	} else {
+		p = 0;
+		d = 0;
+		q = 0;
+	}
+
+	if (seasonal) {
+		P = seasonal[0];
+		D = seasonal[1];
+		Q = seasonal[2];
+		s = seasonal[3];
+		if ( s > 0) {
+			m = s;
+		} else {
+			m = 1;
+		}
+	} else {
+		P = 0;
+		D = 0;
+		Q = 0;
+		s = 0;
+		m = 1;
+	}
+
+	diffs = d + D;
+
+	if ( P + D + Q > 0 && s > 0) {
+		use_season = 1;
+	} else {
+		use_season = 0;
+	}
+
+	if (method == NULL) {
+		if (approx) {
+			rmethod = 2;
+		} else {
+			rmethod = 0;
+		}
+	} else {
+		rmethod = *method;
+	}
 }
 
 void ar_exec(ar_object obj, double *inp) {
@@ -1048,7 +1113,7 @@ void sarimax_predict(sarimax_object obj, double *inp, double *xreg, int L,double
 	free(theta);
 }
 
-void sarimax_refit_predict(sarimax_refit_object obj, double *inp, double *xreg, int L,double *newxreg, double *xpred, double *amse) {
+void sarimax_wrapper_predict(sarimax_wrapper_object obj, double *inp, double *xreg, int L,double *newxreg, double *xpred, double *amse) {
 	int d, i, N, ip, iq, ir,D,P,Q,s,p,q,t,ps,qs,j,diter;
 	double *coef1,*coef2,*delta, *W, *resid, *phi, *theta;
 	double wmean;
@@ -1576,7 +1641,7 @@ void sarimax_summary(sarimax_object obj) {
 	}
 }
 
-void sarimax_refit_summary(sarimax_refit_object obj) {
+void sarimax_wrapper_summary(sarimax_wrapper_object obj) {
 	int i, pq,t,nd,ncxreg,mean;
 	pq = obj->sarimax->p + obj->sarimax->q + obj->sarimax->P + obj->sarimax->Q + obj->sarimax->M;
 	mean = obj->sarimax->M - obj->sarimax->r;
@@ -1978,7 +2043,7 @@ void sarimax_free(sarimax_object object) {
 	free(object);
 }
 
-void sarimax_refit_free(sarimax_refit_object object) {
+void sarimax_wrapper_free(sarimax_wrapper_object object) {
 	sarimax_free(object->sarimax);
 	free(object);
 }

@@ -103,7 +103,7 @@ struct ar_set{
 
 typedef struct sarimax_set* sarimax_object;
 
-sarimax_object sarimax_init(int p, int d, int q,int P, int D, int Q,int s, int r, int N);
+sarimax_object sarimax_init(int p, int d, int q,int P, int D, int Q,int s, int r,int imean, int N);
 
 struct sarimax_set{
 	int N;// length of time series
@@ -134,14 +134,16 @@ struct sarimax_set{
 	double aic;
 	int retval;
 	int start;
+	int imean;
 	double params[0];
 };
 
-typedef struct sarimax_refit_set* sarimax_refit_object;
+typedef struct sarimax_wrapper_set* sarimax_wrapper_object;
 
-sarimax_refit_object sarimax_refit(sarimax_refit_object model,double *y, int N,int *order, int *seasonal, double *xreg, int r, int drift,double *lambda, int biasadj,int method);
+sarimax_wrapper_object sarimax_wrapper(sarimax_wrapper_object model,double *y, int N,int *order, int *seasonal, double *xreg, int r, int drift,int mean,
+	double *lambda, int biasadj,int method);
 
-struct sarimax_refit_set{
+struct sarimax_wrapper_set{
 	sarimax_object sarimax;
 	int idrift;
 	double aic;
@@ -165,7 +167,7 @@ void sarima_predict(sarima_object obj, double *inp, int L, double *xpred, double
 
 void sarimax_predict(sarimax_object obj, double *inp, double *xreg, int L,double *newxreg, double *xpred, double *amse);
 
-void sarimax_refit_predict(sarimax_refit_object obj, double *inp, double *xreg, int L,double *newxreg, double *xpred, double *amse);
+void sarimax_wrapper_predict(sarimax_wrapper_object obj, double *inp, double *xreg, int L,double *newxreg, double *xpred, double *amse);
 
 void ar_predict(ar_object obj, double *inp, int L, double *xpred, double *amse);
 
@@ -195,7 +197,7 @@ void arima_summary(arima_object obj);
 
 void sarimax_summary(sarimax_object obj);
 
-void sarimax_refit_summary(sarimax_refit_object obj);
+void sarimax_wrapper_summary(sarimax_wrapper_object obj);
 
 void sarima_summary(sarima_object obj);
 
@@ -219,7 +221,7 @@ void arima_free(arima_object object);
 
 void sarimax_free(sarimax_object object);
 
-void sarimax_refit_free(sarimax_refit_object object);
+void sarimax_wrapper_free(sarimax_wrapper_object object);
 
 void sarima_free(sarima_object object);
 

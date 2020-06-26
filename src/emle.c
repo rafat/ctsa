@@ -1545,7 +1545,7 @@ int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, d
 }
 
 int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, int s, int P, int D, int Q, double *phi, double *theta, 
- 	double *PHI, double *THETA, double *exog, int r, double *wmean, double *var,double *resid,double *loglik,double *hess,int cssml,int start) {
+ 	double *PHI, double *THETA, double *exog, int r, double *wmean, double *var,double *resid,double *loglik,double *hess,int cssml,int start,int imean) {
 	int i,pq,retval,length,ret,ncxreg,nd,offset,N1,rnk,orig;
 	double *b,*tf,*x,*dx,*thess,*XX,*varcovar,*res,*x0,*inp2,*U,*V,*SIG,*coeff,*sigma;
 	int *ipiv;
@@ -1560,7 +1560,7 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 	nd = d + D;
 
 	if (cssml == 1) {
-		cssx(inp, N, xreg, optmethod, p, d, q, s, P, D, Q, phi, theta, PHI, THETA,exog,r, wmean, var, loglik, hess,start);
+		cssx(inp, N, xreg, optmethod, p, d, q, s, P, D, Q, phi, theta, PHI, THETA,exog,r, wmean, var, loglik, hess,start,imean);
 
 		checkroots(phi, &p, theta, &q, PHI, &P, THETA, &Q);
 	}
@@ -1602,7 +1602,7 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 
 	x0 = (double*) malloc(sizeof(double)*length*(r+1));
 
-	if (nd == 0) {
+	if (nd == 0 && imean == 1) {
 		for(i = 0; i < length;++i) {
 			x0[i] = 1.0;
 		}
@@ -2216,7 +2216,7 @@ double fcssx(double *b, int pq, void *params) {
 }
 
 int cssx(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, int s, int P, int D, int Q,
-	double *phi, double *theta, double *PHI, double *THETA,  double *exog, int r, double *wmean, double *var,double *loglik,double *hess,int start) {
+	double *phi, double *theta, double *PHI, double *THETA,  double *exog, int r, double *wmean, double *var,double *loglik,double *hess,int start,int imean) {
 	int i, pq, retval, length, offset,ret,nd,ncxreg,N1,rnk,orig;
 	double *b, *tf, *x, *inp2,*dx,*thess,*x0,*XX,*U,*V,*SIG,*coeff,*sigma,*varcovar,*res;
 	int *ipiv;
@@ -2274,7 +2274,7 @@ int cssx(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, i
 
 	x0 = (double*) malloc(sizeof(double)*length*(r+1));
 
-	if (nd == 0) {
+	if (nd == 0 && imean == 1) {
 		for(i = 0; i < length;++i) {
 			x0[i] = 1.0;
 		}

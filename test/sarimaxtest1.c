@@ -10,7 +10,7 @@ ARMA example for a stationary time series with no seasonal components and no exo
 int main(void) {
 	int i, N, d, D, L;
 	double *inp;
-	int p, q, P, Q, s, r;
+	int p, q, P, Q, s, r,imean;
 	double *phi, *theta;
 	double *xpred, *amse;
 	sarimax_object obj;
@@ -28,6 +28,7 @@ int main(void) {
 	Q = 0;
 	r = 0;
 
+	imean = 1;
 
 	L = 5;
 
@@ -59,7 +60,7 @@ int main(void) {
 	}
 
 
-	obj = sarimax_init(p, d, q, P, D, Q, s, r , N);
+	obj = sarimax_init(p, d, q, P, D, Q, s, r ,imean, N);
 
     /* setMethod()
     Method 0 ("CSS-MLE") is default. The method also accepts values 1 ("MLE") and 2 ("CSS")

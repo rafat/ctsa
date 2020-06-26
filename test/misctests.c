@@ -1440,6 +1440,7 @@ void sarimaxtest() {
 	double *xreg;
 	double *xpred, *amse;
 	sarimax_object obj;
+	int imean = 1;
 	p = 1;
 	d = 1;
 	q = 1;
@@ -1487,7 +1488,7 @@ void sarimaxtest() {
 	}
 
 
-	obj = sarimax_init(p, d, q, P, D, Q, s, r , N);
+	obj = sarimax_init(p, d, q, P, D, Q, s, r ,imean, N);
 	sarimax_setMethod(obj, 1); // Method 0 ("MLE") is default so this step is unnecessary. The method also accepts values 1 ("CSS") and 2 ("Box-Jenkins")
 	//arima_setOptMethod(obj, 7);// Method 7 ("BFGS with More Thuente Line search") is default so this step is unnecessary. The method also accepts values 0,1,2,3,4,5,6. Check the documentation for details.
 	sarimax_exec(obj, inp,xreg);
@@ -1535,7 +1536,8 @@ void refittest() {
 	int p, q, P, Q, s, r;
 	int drift,biasadj,method;
 	double *xpred, *amse,*xreg,*newxreg;
-	sarimax_refit_object obj;
+	sarimax_wrapper_object obj;
+	int imean = 1;
     /*
     Make sure all the parameter values are correct and consistent with other values. eg., if xreg is NULL r should be 0
     or if P = D = Q = 0 then make sure that s is also 0. 
@@ -1599,7 +1601,7 @@ void refittest() {
 	method = 5;
 
 	//obj = sarimax_init(p, d, q, P, D, Q, s, r , N);
-	obj = sarimax_refit(NULL,inp,N,order,seasonal,xreg,r,drift,NULL,biasadj,method);
+	obj = sarimax_wrapper(NULL,inp,N,order,seasonal,xreg,r,drift,imean,NULL,biasadj,method);
 
     /* setMethod()
     Method 0 ("CSS-MLE") is default. The method also accepts values 1 ("MLE") and 2 ("CSS")
@@ -1611,7 +1613,7 @@ void refittest() {
         set exogenous to NULL if deadling only with a univariate time series.
     */
 	//sarimax_exec(obj, inp,xreg);
-	sarimax_refit_summary(obj);
+	sarimax_wrapper_summary(obj);
 	/* sarimax_predict(sarimax_object obj, double *inp, double *xreg, int L,double *newxreg, double *xpred, double *amse)
         inp - Input Time Series
         xreg - Exogenous Time Series
@@ -1621,7 +1623,7 @@ void refittest() {
         amse - MSE for L future values
     */
 
-	sarimax_refit_predict(obj, inp, xreg, L, newxreg, xpred, amse);
+	sarimax_wrapper_predict(obj, inp, xreg, L, newxreg, xpred, amse);
 	printf("\n");
 	printf("Predicted Values : ");
 	for (i = 0; i < L; ++i) {
@@ -1634,7 +1636,7 @@ void refittest() {
 	}
 	printf("\n");
 
-	sarimax_refit_free(obj);
+	sarimax_wrapper_free(obj);
 	free(inp);
 	free(xpred);
 	free(amse);

@@ -14,6 +14,7 @@ int main(void) {
 	int p, q, P, Q, s, r;
 	double *xpred, *amse,*xreg,*newxreg;
 	sarimax_object obj;
+	int imean = 1;
     /*
     Make sure all the parameter values are correct and consistent with other values. eg., if xreg is NULL r should be 0
     or if P = D = Q = 0 then make sure that s is also 0. 
@@ -70,7 +71,7 @@ int main(void) {
         newxreg[i+L] = temp2[N + i];
     }
 
-	obj = sarimax_init(p, d, q, P, D, Q, s, r , N);
+	obj = sarimax_init(p, d, q, P, D, Q, s, r ,imean, N);
 
     /* setMethod()
     Method 0 ("CSS-MLE") is default. The method also accepts values 1 ("MLE") and 2 ("CSS")
