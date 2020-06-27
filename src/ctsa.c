@@ -154,7 +154,7 @@ sarimax_object sarimax_init(int p, int d, int q,int P, int D, int Q,int s, int r
 		s = 0;
 	}
 
-	if (imean <0 || imean > 1) {
+	if (imean < 0 || imean > 1) {
 		printf("imean only accepts one of two values - 0 and 1 \n");
 		exit(-1);
 	}
@@ -173,10 +173,17 @@ sarimax_object sarimax_init(int p, int d, int q,int P, int D, int Q,int s, int r
 		printf("\n Input Values cannot be Negative. Program Exiting. \n");
 		exit(-1);
 	}
-	//retval = 0 Input Error
-	// retval = 1 Probable Success
-	// retval = 4 Optimization Routine didn't converge
-	// Retval = 15 Optimization Routine Encountered Inf/Nan Values
+	/*
+	Error Codes
+	retval = 0 Input Error
+	retval = 1 Probable Success
+	retval = 4 Optimization Routine didn't converge
+	retval = 7 Exogenous Variables are collinear
+	retval = 10 Nonstationary AR part
+	retavl = 12 Nonstationary Seasonal AR part
+	retval = 15 Optimization Routine Encountered Inf/Nan Values
+
+	*/
 	
 	obj = (sarimax_object)malloc(sizeof(struct sarimax_set) +
 	 sizeof(double)* (p + q + P + Q + ncxreg + N - d - s*D) + sizeof(double)* (p + q + P + Q + ncxreg )*(p + q + P + Q + ncxreg ));
@@ -194,7 +201,7 @@ sarimax_object sarimax_init(int p, int d, int q,int P, int D, int Q,int s, int r
 	obj->r = r;
 	obj->retval = 0;
 	obj->start = 0;
-	obj->imean = 1;
+	obj->imean = imean;
 
 	for (i = 0; i < (p + q + P + Q + ncxreg + N - d - s*D) + (p + q + P + Q + ncxreg )*(p + q + P + Q + ncxreg ); ++i) {
 		obj->params[i] = 0.0;
@@ -409,11 +416,15 @@ void arima2(sarimax_wrapper_object model,double *x, int N,int drift,double *xreg
 
 }
 
-void myarima(double *x, int N, int *order, int *seasonal, int constant, const char* ic, int trace, int approx,
+myarima_object myarima(double *x, int N, int *order, int *seasonal, int constant, const char* ic, int trace, int approx,
 	int offset, double *xreg, int r, int *method) {
 
+	myarima_object fit = NULL;
 	int m,p,d,q,P,D,Q,s,diffs;
 	int use_season,rmethod;
+	double *xreg2;
+
+	fit = (myarima_object) malloc (sizeof(struct myarima_set));
 
 	if (order) {
 		p = order[0];
@@ -460,6 +471,12 @@ void myarima(double *x, int N, int *order, int *seasonal, int constant, const ch
 	} else {
 		rmethod = *method;
 	}
+
+	if (diffs == 1 && constant == 1) {
+
+	}
+
+	return fit;
 }
 
 void ar_exec(ar_object obj, double *inp) {
@@ -1521,6 +1538,15 @@ void sarimax_summary(sarimax_object obj) {
 		else if (obj->retval == 4) {
 			printf("Optimization Routine didn't converge");
 		}
+		else if (obj->retval == 7) {
+			printf("Exogenous Variables are collinear");
+		}
+		else if (obj->retval == 10) {
+			printf("Nonstationary AR part");
+		}
+		else if (obj->retval == 12) {
+			printf("Nonstationary Seasonal AR part");
+		}
 		else if (obj->retval == 15) {
 			printf("Optimization Routine Encountered Inf/Nan Values");
 		}
@@ -1659,6 +1685,15 @@ void sarimax_wrapper_summary(sarimax_wrapper_object obj) {
 		}
 		else if (obj->sarimax->retval == 4) {
 			printf("Optimization Routine didn't converge");
+		}
+		else if (obj->sarimax->retval == 7) {
+			printf("Exogenous Variables are collinear");
+		}
+		else if (obj->sarimax->retval == 10) {
+			printf("Nonstationary AR part");
+		}
+		else if (obj->sarimax->retval == 12) {
+			printf("Nonstationary Seasonal AR part");
 		}
 		else if (obj->sarimax->retval == 15) {
 			printf("Optimization Routine Encountered Inf/Nan Values");

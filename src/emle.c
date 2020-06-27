@@ -1544,9 +1544,48 @@ int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, d
 	return ret;
 }
 
+static int checkroots_cerr(double *phi, int *p, double *theta, int *q, double *PHI, int *P, double *THETA, int *Q) {
+	int ret,out;
+
+	out = 1;
+
+	if (*p > 0) {
+		ret = archeck(*p,phi);
+		if (!ret) {
+			out = 10;
+			printf("\nnon-stationary AR part\n");
+			return out;
+		}
+	}
+
+	if (*q > 0) {
+		invertroot(*q,theta);
+	}
+
+	if (*P == *P) {
+		if (*P > 0) {
+			ret = archeck(*P,PHI);
+			if (!ret) {
+				out = 12;
+				printf("\nnon-stationary seasonal AR part\n");
+				return out;
+			}
+		}
+	}
+
+	if (*Q == *Q) {
+		if (*Q > 0) {
+			invertroot(*Q,THETA);
+		}
+	}
+
+	return out;
+
+}
+
 int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, int s, int P, int D, int Q, double *phi, double *theta, 
  	double *PHI, double *THETA, double *exog, int r, double *wmean, double *var,double *resid,double *loglik,double *hess,int cssml,int start,int imean) {
-	int i,pq,retval,length,ret,ncxreg,nd,offset,N1,rnk,orig;
+	int i,pq,retval,length,ret,ncxreg,nd,offset,N1,rnk,orig,ERR;
 	double *b,*tf,*x,*dx,*thess,*XX,*varcovar,*res,*x0,*inp2,*U,*V,*SIG,*coeff,*sigma;
 	int *ipiv;
 	double maxstep;
@@ -1560,9 +1599,12 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 	nd = d + D;
 
 	if (cssml == 1) {
-		cssx(inp, N, xreg, optmethod, p, d, q, s, P, D, Q, phi, theta, PHI, THETA,exog,r, wmean, var, loglik, hess,start,imean);
+		ERR = cssx(inp, N, xreg, optmethod, p, d, q, s, P, D, Q, phi, theta, PHI, THETA,exog,r, wmean, var, loglik, hess,start,imean);
 
-		checkroots(phi, &p, theta, &q, PHI, &P, THETA, &Q);
+		if ( ERR != 1) return ERR;
+
+		ERR = checkroots_cerr(phi, &p, theta, &q, PHI, &P, THETA, &Q);
+		if (ERR == 10 || ERR == 12) return ERR;
 	}
 	else {
 
@@ -1641,12 +1683,13 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 		rnk = rank(XX,N,ncxreg);
 
 		if (rnk < ncxreg) {
+			ERR = 7;
 			printf("Exogenous Variables are collinear. \n");
 			free(inp2);
 			free(x0);
 			free(XX);
 			free(x);
-			exit(-1);
+			return ERR;
 		}
 
 	}
@@ -1805,7 +1848,7 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 	}
 	
 
-	if (nd == 0) {
+	if (nd == 0 && imean == 1) {
 		*wmean = tf[p + q + Q + P];
 		if (ncxreg > 1) {
 			for(i = 1; i < ncxreg;++i) {
@@ -2217,7 +2260,7 @@ double fcssx(double *b, int pq, void *params) {
 
 int cssx(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, int s, int P, int D, int Q,
 	double *phi, double *theta, double *PHI, double *THETA,  double *exog, int r, double *wmean, double *var,double *loglik,double *hess,int start,int imean) {
-	int i, pq, retval, length, offset,ret,nd,ncxreg,N1,rnk,orig;
+	int i, pq, retval, length, offset,ret,nd,ncxreg,N1,rnk,orig,ERR;
 	double *b, *tf, *x, *inp2,*dx,*thess,*x0,*XX,*U,*V,*SIG,*coeff,*sigma,*varcovar,*res;
 	int *ipiv;
 	double maxstep;
@@ -2313,12 +2356,13 @@ int cssx(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, i
 		rnk = rank(XX,N,ncxreg);
 
 		if (rnk < ncxreg) {
+			ERR = 7;
 			printf("Exogenous Variables are collinear. \n");
 			free(inp2);
 			free(x0);
 			free(XX);
 			free(x);
-			exit(-1);
+			return ERR;
 		}
 
 	}
@@ -2453,7 +2497,7 @@ int cssx(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, i
 		THETA[i] = -tf[p + q + P + i];
 	}
 
-	if (nd == 0) {
+	if (nd == 0 && imean == 1) {
 		*wmean = tf[p + q + Q + P];
 		if (ncxreg > 1) {
 			for(i = 1; i < ncxreg;++i) {
