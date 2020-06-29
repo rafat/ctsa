@@ -417,14 +417,18 @@ void arima2(sarimax_wrapper_object model,double *x, int N,int drift,double *xreg
 }
 
 myarima_object myarima(double *x, int N, int *order, int *seasonal, int constant, const char* ic, int trace, int approx,
-	int offset, double *xreg, int r, int *method) {
+	double offset, double *xreg, int r, int *method) {
 
 	myarima_object fit = NULL;
-	int m,p,d,q,P,D,Q,s,diffs;
-	int use_season,rmethod;
-	double *xreg2;
+	int m,p,d,q,P,D,Q,s,diffs,i,j,imean,ncoeff,isum,imx;
+	int use_season,rmethod,last_nonzero,ip,iq,ir,retval;
+	double rsum,minroot,tol,temp;
+	double *xreg2,*phi,*theta,*zeror,*zeroi;
+	int *K;
 
 	fit = (myarima_object) malloc (sizeof(struct myarima_set));
+
+	tol = 1e-08;
 
 	if (order) {
 		p = order[0];
@@ -473,8 +477,172 @@ myarima_object myarima(double *x, int N, int *order, int *seasonal, int constant
 	}
 
 	if (diffs == 1 && constant == 1) {
-
+		imean = 1;
+		r++;
+		xreg2 = (double*)malloc(sizeof(double)*N*r);
+		for(i = 0; i < N;++i) {
+			xreg2[i] = (double) (i+1);
+		}
+		memcpy(xreg2+N,xreg,sizeof(double)*N*(r-1));
+		fit->sarimax = sarimax_init(p,d,q,P,D,Q,s,r,imean,N);
+		sarimax_exec(fit->sarimax,x,xreg2);
+	} else {
+		imean = constant;
+		xreg2 = (double*)malloc(sizeof(double)*N*r);
+		memcpy(xreg2,xreg,sizeof(double)*N*r);
+		fit->sarimax = sarimax_init(p,d,q,P,D,Q,s,r,imean,N);
+		sarimax_exec(fit->sarimax,x,xreg2);
 	}
+
+	if (fit->sarimax->retval == 1) {
+		ncoeff = (fit->sarimax->p + fit->sarimax->q + fit->sarimax->P + fit->sarimax->Q + fit->sarimax->M) + 1;
+
+		if (rmethod == 2) {
+			fit->sarimax->aic = offset + fit->sarimax->Nused * log(fit->sarimax->var) + 2 * ncoeff;// sigma2 
+		}
+
+		if (fit->sarimax->aic) {
+			fit->aic = fit->sarimax->aic;
+			fit->bic = fit->aic + ncoeff * (log((double)fit->sarimax->Nused) - 2.0);
+			fit->aicc = fit->aic + 2 * ncoeff * (ncoeff + 1) / (double) (fit->sarimax->Nused - ncoeff - 1);
+			if (!strcmp(ic,"aic")) {
+				fit->ic = fit->aic;
+			} else if (!strcmp(ic,"bic")) {
+				fit->ic = fit->bic;
+			} else if (!strcmp(ic,"aicc")) {
+				fit->ic = fit->aicc;
+			}
+		} else {
+			fit->ic = fit->aic = fit->bic = fit->aicc = DBL_MAX;
+		}
+
+		rsum = 0.0;
+
+		for(i = 0; i < fit->sarimax->Nused;++i) {
+			rsum += fit->sarimax->res[i]*fit->sarimax->res[i];
+		}
+
+		fit->sigma2 = rsum / (double) (fit->sarimax->Nused - ncoeff + 1);
+
+		minroot = 2.0;
+
+		ip = p + s*P + 1;
+		iq = q + s*Q + 1;
+
+		phi = (double*)calloc(ip,sizeof(double));
+		theta = (double*)calloc(iq,sizeof(double));
+
+		phi[0] = theta[0] = 1.0;
+
+		for(i = 0; i < p;++i) {
+			phi[i+1] = fit->sarimax->phi[i];
+		}
+
+		for(i = 0; i < q; ++i) {
+			theta[i+1] = -1.0 * fit->sarimax->theta[i];
+		}
+
+		for (j = 0; j < P; ++j) {
+			phi[(j + 1)*s] += fit->sarimax->PHI[j];
+			for (i = 0; i < p; ++i) {
+				phi[(j + 1)*s + i + 1] -= fit->sarimax->phi[i] * fit->sarimax->PHI[j];
+			}
+		}
+
+		for (j = 0; j < Q; ++j) {
+			theta[(j + 1)*s] -= fit->sarimax->THETA[j];
+			for (i = 0; i < q; ++i) {
+				theta[(j + 1)*s + i + 1] += fit->sarimax->theta[i] * fit->sarimax->THETA[j];
+			}
+		}
+
+		ir = (ip > iq) ? ip : iq;
+
+		K = (int*)malloc(sizeof(int)*ir);
+		zeror = (double*)malloc(sizeof(double)*ir);
+		zeroi = (double*)malloc(sizeof(double)*ir);
+
+		if (p + P > 0) {
+			isum = 0;
+			imx = -1;
+			for(i = 0; i < ip - 1; ++i) {
+				K[i] = (fabs(phi[i+1]) > tol) ? 1 : 0; 
+				if (K[i] == 1) {
+					isum += 1;
+					imx = i;
+				}
+			}
+
+			last_nonzero = imx + 1;
+
+			if (last_nonzero > 0) {
+				for(i = 0; i < last_nonzero; ++i) {
+					phi[i+1] *= -1.0;
+				}
+
+				retval = polyroot(phi,last_nonzero,zeror,zeroi);
+
+				if (retval == 0) {
+					for(i = 0; i < last_nonzero;++i) {
+						temp = sqrt(zeror[i]*zeror[i] + zeroi[i]*zeroi[i]);
+						if (temp < minroot) minroot = temp;
+					}
+				} else {
+					fit->ic = DBL_MAX;
+				}
+
+			}
+
+		}
+
+		if (q + Q > 1 && fit->ic < DBL_MAX) {
+			isum = 0;
+			imx = -1;
+			for(i = 0; i < iq - 1; ++i) {
+				K[i] = (fabs(theta[i+1]) > tol) ? 1 : 0; 
+				if (K[i] == 1) {
+					isum += 1;
+					imx = i;
+				}
+			}
+
+			last_nonzero = imx + 1;
+
+			if (last_nonzero > 0) {
+
+				retval = polyroot(theta,last_nonzero,zeror,zeroi);
+
+				if (retval == 0) {
+					for(i = 0; i < last_nonzero;++i) {
+						temp = sqrt(zeror[i]*zeror[i] + zeroi[i]*zeroi[i]);
+						if (temp < minroot) minroot = temp;
+					}
+				} else {
+					fit->ic = DBL_MAX;
+				}
+
+			}
+
+			
+		}
+
+		if (minroot < 1.01) {
+			fit->ic = DBL_MAX;
+		}
+
+
+
+		free(phi);
+		free(theta);
+		free(K);
+		free(zeror);
+		free(zeroi);
+	} else {
+		fit->ic = DBL_MAX;
+	}
+
+
+	free(xreg2);
 
 	return fit;
 }
@@ -2079,6 +2247,11 @@ void sarimax_free(sarimax_object object) {
 }
 
 void sarimax_wrapper_free(sarimax_wrapper_object object) {
+	sarimax_free(object->sarimax);
+	free(object);
+}
+
+void myarima_free(myarima_object object) {
 	sarimax_free(object->sarimax);
 	free(object);
 }

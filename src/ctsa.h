@@ -156,11 +156,16 @@ struct sarimax_wrapper_set{
 typedef struct myarima_set* myarima_object;
 
 myarima_object myarima(double *x, int N, int *order, int *seasonal, int constant, const char* ic, int trace, int approx,
-	int offset, double *xreg, int r, int *method);
+	double offset, double *xreg, int r, int *method);
 
 struct myarima_set{
 	sarimax_object sarimax;
 	int idrift;
+	double ic;
+	double aic;
+	double bic;
+	double aicc;
+	double sigma2;
 };
 
 void arima_exec(arima_object obj, double *x);
@@ -232,6 +237,8 @@ void arima_free(arima_object object);
 void sarimax_free(sarimax_object object);
 
 void sarimax_wrapper_free(sarimax_wrapper_object object);
+
+void myarima_free(myarima_object object);
 
 void sarima_free(sarima_object object);
 

@@ -1545,17 +1545,17 @@ void refittest() {
     */
 	p = 2;
 	d = 1;
-	q = 2;
-	s = 0;
-	P = 0;
+	q = 1;
+	s = 12;
+	P = 1;
 	D = 0;
-	Q = 0;
-	r = 2;
+	Q = 1;
+	r = 0;
 	int order[3] = {p,d,q};
 	int seasonal[4] = {P,D,Q,s};
 
 
-	L = 5;
+	L = 0;
 
 	xpred = (double*)malloc(sizeof(double)* L);
 	amse = (double*)malloc(sizeof(double)* L);
@@ -1601,7 +1601,7 @@ void refittest() {
 	method = 5;
 
 	//obj = sarimax_init(p, d, q, P, D, Q, s, r , N);
-	obj = sarimax_wrapper(NULL,inp,N,order,seasonal,xreg,r,drift,imean,NULL,biasadj,method);
+	obj = sarimax_wrapper(NULL,inp,N,order,seasonal,NULL,r,drift,imean,NULL,biasadj,method);
 
     /* setMethod()
     Method 0 ("CSS-MLE") is default. The method also accepts values 1 ("MLE") and 2 ("CSS")
@@ -1637,6 +1637,105 @@ void refittest() {
 	printf("\n");
 
 	sarimax_wrapper_free(obj);
+	free(inp);
+	free(xpred);
+	free(amse);
+    free(xreg);
+    free(newxreg);
+}
+
+void myarimatest() {
+	int i, N, d, D, L;
+	double *inp;
+	int p, q, P, Q, s, r;
+	int drift,biasadj,method;
+	double *xpred, *amse,*xreg,*newxreg;
+	myarima_object obj;
+	int imean = 1;
+    /*
+    Make sure all the parameter values are correct and consistent with other values. eg., if xreg is NULL r should be 0
+    or if P = D = Q = 0 then make sure that s is also 0. 
+     Recheck the values if the program fails to execute.
+    */
+	p = 2;
+	d = 1;
+	q = 1;
+	s = 12;
+	P = 1;
+	D = 0;
+	Q = 1;
+	r = 0;
+	int order[3] = {p,d,q};
+	int seasonal[4] = {P,D,Q,s};
+	const char *ic = "aic";
+	int trace = 0;
+	int constant = 1;
+	int approx = 0;
+	double offset = 0;
+	int rmethod = 0;
+
+
+	L = 0;
+
+	xpred = (double*)malloc(sizeof(double)* L);
+	amse = (double*)malloc(sizeof(double)* L);
+
+	FILE *ifp;
+	double temp[1200];
+    double temp1[1200];
+    double temp2[1200];
+
+	ifp = fopen("../data/e1m.dat", "r");
+	i = 0;
+	if (!ifp) {
+		printf("Cannot Open File");
+		exit(100);
+	}
+	while (!feof(ifp)) {
+		fscanf(ifp, "%lf %lf %lf \n", &temp[i],&temp1[i],&temp2[i]);
+		i++;
+	}
+	N = i - L;
+
+	inp = (double*)malloc(sizeof(double)* N);
+    xreg = (double*)malloc(sizeof(double)* N * 2);
+    newxreg = (double*)malloc(sizeof(double)* L * 2);
+
+    /*
+    
+    */
+
+	for (i = 0; i < N; ++i) {
+		inp[i] = temp[i];
+        xreg[i] = temp1[i];
+		xreg[N+i] = temp2[i];
+	}
+
+    for(i = 0; i < L;++i) {
+        newxreg[i] = temp1[N + i];
+        newxreg[i+L] = temp2[N + i];
+    }
+
+	drift = 1;
+	biasadj = 0;
+	method = 5;
+
+	//obj = sarimax_init(p, d, q, P, D, Q, s, r , N);
+	obj = myarima(inp,N,order,seasonal, constant, ic, trace, approx, offset,NULL, r, &rmethod) ;
+
+    /* setMethod()
+    Method 0 ("CSS-MLE") is default. The method also accepts values 1 ("MLE") and 2 ("CSS")
+    */
+
+	//sarimax_setMethod(obj, 0); 
+
+    /*sarimax_exec(object, input time series, exogenous time series)
+        set exogenous to NULL if deadling only with a univariate time series.
+    */
+	//sarimax_exec(obj, inp,xreg);
+	
+
+	myarima_free(obj);
 	free(inp);
 	free(xpred);
 	free(amse);
@@ -1684,6 +1783,7 @@ int main() {
 	//sarimaxtest();
 	//arimatest();
 	//mainverttest();
-	refittest();
+	//refittest();
+	myarimatest();
     return 0;
 }
