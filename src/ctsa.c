@@ -647,6 +647,132 @@ myarima_object myarima(double *x, int N, int *order, int *seasonal, int constant
 	return fit;
 }
 
+void auto_arima1(double *y, int N, int *ordermax, int *seasonalmax, int s, int *start, int *stationary, int *seasonal, const char *ic, int *stepwise, int *nmodels,
+	int *method,double *xreg, int r, const char *test, const char *seas, int *allowdrift, int *allowmean, double *lambda) {
+	
+	int p_max,d_max,q_max,P_max, D_max,Q_max;
+	int p_start, q_start, P_start, Q_start,d,D;
+	int istationary, iseasonal, istepwise, models, idrift, imean, m, N3, N3m,rnk;
+	double *x,*xx,*varcovar;
+	reg_object reg;
+
+	if (ordermax == NULL) {
+		p_max = 5;
+		q_max = 5;
+		d_max = 2;
+	} else {
+		p_max = ordermax[0];
+		d_max = ordermax[1];
+		q_max = ordermax[2];
+	}
+
+	if (seasonalmax == NULL) {
+		P_max = 2;
+		Q_max = 2;
+		D_max = 1;
+	} else {
+		P_max = seasonalmax[0];
+		D_max = seasonalmax[1];
+		Q_max = seasonalmax[2];
+	}
+
+	if (start == NULL) {
+		p_start = 2;
+		q_start = 2;
+		P_start = 1;
+		Q_start = 1;
+	}
+
+	if (stationary == NULL) {
+		istationary = 0;
+	}
+
+	if (seasonal == NULL) {
+		iseasonal = 1;
+	}
+
+	if (stepwise == NULL) {
+		istepwise = 1;
+	}
+
+	if (nmodels == NULL) {
+		models = 94;
+	}
+
+	if (allowmean == NULL) {
+		imean = 1;
+	}
+
+	if (allowdrift == NULL) {
+		idrift = 1;
+	}
+
+	x = (double*) malloc(sizeof(double)*N);
+
+	memcpy(x,y,sizeof(double)*N);
+
+	if (s <= 1) {
+		m = 1;
+	} else {
+		m = s;
+	}
+
+	N3 = N / 3;
+
+	p_max = (p_max < N3) ? p_max : N3;
+	q_max = (q_max < N3) ? q_max : N3;
+
+	N3 = N3 / m;
+
+	P_max = (P_max < N3m) ? P_max : N3m;
+	Q_max = (Q_max < N3m) ? Q_max : N3m;
+
+	if ( N <= 3) ic = "aic";
+
+	if (lambda != NULL) boxcox_eval(y,N,*lambda,x);
+
+	xx = (double*) malloc(sizeof(double)*N);
+
+	memcpy(xx,x,sizeof(double)*N);
+
+	if (xreg) {
+		// Collinearity check
+
+		rnk = rank(xreg,N,r);
+
+		if (rnk < r) {
+			free(xx);
+			free(x);
+			printf("Exogenous Variables are collinear. \n");
+			exit(-1);
+		}
+
+		varcovar = (double*)malloc(sizeof(double)*r*r);
+
+		reg = reg_init(N,r);
+
+		//setIntercept(reg,0);
+		regress(reg,xreg,x,xx,varcovar,0.95);
+
+		free(varcovar);
+	}
+
+	D = -1;
+
+	if (stationary) {
+		d = D = 0;
+	}
+
+	if (m == 1) {
+		D = P_max = Q_max = 0;
+	} else if (D == -1) {
+
+	}
+
+	free(x);
+	free(xx);
+}
+
 void ar_exec(ar_object obj, double *inp) {
 	int p, N;
 	double loglik;
