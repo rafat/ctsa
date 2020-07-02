@@ -235,3 +235,20 @@ int nsdiffs(double *x, int N,int f,double *alpha, const char *test, int *max_D) 
 
     return D;
 }
+
+int is_constant(double *x, int N) {
+    int i, cst;
+    double eps,tmp;
+
+    eps = macheps();
+    cst = 1;
+
+    for(i = 1; i < N;++i) {
+        tmp = x[i] - x[i-1];
+        if (fabs(tmp) > eps) {
+            return 0;
+        }
+    }
+
+    return cst;
+}

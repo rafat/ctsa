@@ -1441,17 +1441,17 @@ void sarimaxtest() {
 	double *xpred, *amse;
 	sarimax_object obj;
 	int imean = 1;
-	p = 1;
-	d = 1;
-	q = 1;
+	p = 0;
+	d = 0;
+	q = 0;
 	s = 0;
 	P = 0;
 	D = 0;
 	Q = 0;
-	r = 2;
+	r = 0;
 
 
-	L = 5;
+	L = 0;
 
 	phi = (double*)malloc(sizeof(double)* p);
 	theta = (double*)malloc(sizeof(double)* q);
@@ -1489,8 +1489,8 @@ void sarimaxtest() {
 
 
 	obj = sarimax_init(p, d, q, P, D, Q, s, r ,imean, N);
-	sarimax_setMethod(obj, 1); // Method 0 ("MLE") is default so this step is unnecessary. The method also accepts values 1 ("CSS") and 2 ("Box-Jenkins")
-	//arima_setOptMethod(obj, 7);// Method 7 ("BFGS with More Thuente Line search") is default so this step is unnecessary. The method also accepts values 0,1,2,3,4,5,6. Check the documentation for details.
+	sarimax_setMethod(obj, 0); // Method 0 ("CSS-MLE") is default. The method also accepts values 1 ("MLE") and 2 ("CSS")
+	//sarimax_setOptMethod(obj, 5);// Method 7 ("BFGS with More Thuente Line search") is default so this step is unnecessary. The method also accepts values 0,1,2,3,4,5,6. Check the documentation for details.
 	sarimax_exec(obj, inp,xreg);
 	sarimax_summary(obj);
 	// Predict the next 5 values using the obtained ARIMA model
@@ -1543,13 +1543,13 @@ void refittest() {
     or if P = D = Q = 0 then make sure that s is also 0. 
      Recheck the values if the program fails to execute.
     */
-	p = 2;
-	d = 1;
-	q = 1;
+	p = 0;
+	d = 0;
+	q = 0;
 	s = 12;
-	P = 1;
-	D = 0;
-	Q = 1;
+	P = 0;
+	D = 1;
+	Q = 0;
 	r = 0;
 	int order[3] = {p,d,q};
 	int seasonal[4] = {P,D,Q,s};
@@ -1780,10 +1780,10 @@ int main() {
 	//sdtests();
 	//arimatest();
 	//sarimatest();
-	//sarimaxtest();
+	sarimaxtest();
 	//arimatest();
 	//mainverttest();
 	//refittest();
-	myarimatest();
+	//myarimatest();
     return 0;
 }

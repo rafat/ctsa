@@ -1616,10 +1616,6 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 		}
 	}
 
-	if (p + q + P + Q == 0 && d == 0 && D == 0 && cssml == 1) {
-		return 1;
-	}
-
 	inp2 = (double*)malloc(sizeof(double)* (N - s*D));
 
 	if (D > 0) {
@@ -1641,6 +1637,8 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 			x[i] = inp2[i];
 		}
 	}
+
+	//mdisplay(x,1,N);
 
 	x0 = (double*) malloc(sizeof(double)*length*(r+1));
 
@@ -1713,7 +1711,7 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 		for(i = 0; i < ncxreg;++i) {
 			coeff[i] = (fit->beta+i)->value;
 			sigma[i] = 10.0 * (fit->beta+i)->stdErr;
-			printf("coeff %g sigma %g ",coeff[i],sigma[i]);
+			//printf("coeff %g sigma %g ",coeff[i],sigma[i]);
 		}
 
 		free(varcovar);
@@ -1822,7 +1820,6 @@ int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q,
 	hessian_fd(&as154_min, tf, pq, dx, obj->eps, hess);
 	
 	mtranspose(hess, pq, pq, thess);
-
 	
 
 	for (i = 0; i < pq*pq; ++i) {
@@ -2216,6 +2213,7 @@ double fcssx(double *b, int pq, void *params) {
 	for (i = 0; i < ncond; ++i) {
 		obj->x[offset+N + i] = 0.0;
 	}
+
 
 	if (obj->M > 0) {
 		for (i = 0; i < N; ++i) {
@@ -2967,7 +2965,7 @@ double fas154x_seas(double *b, int pq, void *params) {
 	
 	iupd = 0;
 
-	if (ip == 1 && iq == 0) {
+	if ((ip == 1 && iq == 0) || (ip == 0 && iq == 0)) {
 		*V = 1.0;
 		*A = 0.0;
 		*P = 1.0 / (1.0 - phi[0] * phi[0]);

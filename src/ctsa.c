@@ -647,14 +647,20 @@ myarima_object myarima(double *x, int N, int *order, int *seasonal, int constant
 	return fit;
 }
 
-void auto_arima1(double *y, int N, int *ordermax, int *seasonalmax, int s, int *start, int *stationary, int *seasonal, const char *ic, int *stepwise, int *nmodels,
-	int *method,double *xreg, int r, const char *test, const char *seas, int *allowdrift, int *allowmean, double *lambda) {
+aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax, int s,int *DD, int *dd, int *start, int *stationary, int *seasonal, const char *ic, int *stepwise, int *nmodels,
+	int *method,double *xreg, int r, const char *test,const char *type, double *test_alpha, const char *seas,double *seas_alpha, int *allowdrift, int *allowmean, double *lambda) {
 	
+	
+	aa_ret_object fit = NULL;
 	int p_max,d_max,q_max,P_max, D_max,Q_max;
-	int p_start, q_start, P_start, Q_start,d,D;
-	int istationary, iseasonal, istepwise, models, idrift, imean, m, N3, N3m,rnk;
-	double *x,*xx,*varcovar;
+	int p_start, q_start, P_start, Q_start,d,D,Nd,Ndd;
+	int istationary, iseasonal, istepwise, models, idrift, imean, m, N3, N3m,rnk, i, is1;
+	double *x,*xx,*varcovar,*diffxreg,*dx,*diffdxreg,*diffdx;
 	reg_object reg;
+
+	fit = (aa_ret_object) malloc (sizeof(struct aa_ret_set));
+
+	fit->otype = 0;
 
 	if (ordermax == NULL) {
 		p_max = 5;
@@ -732,6 +738,10 @@ void auto_arima1(double *y, int N, int *ordermax, int *seasonalmax, int s, int *
 	if (lambda != NULL) boxcox_eval(y,N,*lambda,x);
 
 	xx = (double*) malloc(sizeof(double)*N);
+	dx = (double*) malloc(sizeof(double)*N);
+	diffxreg = (double*) malloc(sizeof(double)*N*r);
+	diffdxreg = (double*) malloc(sizeof(double)*N*r);
+	diffdx = (double*) malloc(sizeof(double)*N);
 
 	memcpy(xx,x,sizeof(double)*N);
 
@@ -757,7 +767,7 @@ void auto_arima1(double *y, int N, int *ordermax, int *seasonalmax, int s, int *
 		free(varcovar);
 	}
 
-	D = -1;
+	D = DD == NULL ? -1 : *DD;
 
 	if (stationary) {
 		d = D = 0;
@@ -766,11 +776,90 @@ void auto_arima1(double *y, int N, int *ordermax, int *seasonalmax, int s, int *
 	if (m == 1) {
 		D = P_max = Q_max = 0;
 	} else if (D == -1) {
+		D = nsdiffs(xx,N,s,seas_alpha,seas,&D_max);
+
+		if (D > 0 && xreg) {
+			is1 = 0;
+			Nd = N - s * D;
+			for(i = 0; i < r;++i) {
+				diffs(xreg+i*N,N,D,s,diffxreg+i*Nd);
+				is1 += is_constant(diffxreg+i*Nd,Nd);
+			}
+			
+			
+			if (is1 > 0) {
+				D = D - 1;
+			}
+		}
+	}
+
+	Nd = N - s * D;
+
+	if (D > 0) {
+		Nd = diffs(xx,N,D,s,dx);
+	} else {
+		memcpy(dx,xx,sizeof(double)*N);
+		Nd = N;
+	}
+
+	if (xreg) {
+		if (D > 0) {
+			diffs(xreg,N,D,s,diffxreg);
+		} else {
+			memcpy(diffxreg,xreg,N*r);
+		}
+	}
+
+	d = dd == NULL ? -1 : *dd;
+
+	if (d == -1) {
+		d = ndiffs(dx,Nd,test_alpha,test,type,&d_max);
+
+		Ndd = Nd - d;
+
+		if (d > 0 && xreg) {
+			is1 = 0;
+			for(i = 0; i < r;++i) {
+				diff(diffxreg+i*Nd,Nd,d,diffdxreg+i*Ndd);
+				is1 += is_constant(diffdxreg+i*Ndd,Ndd);
+			}
+			if (is1 > 0) {
+				d = d - 1;
+			}
+		}
+	}
+
+	Ndd = Nd - d;
+
+	if (d > 0) {
+		Ndd = diff(dx,Nd,d,diffdx);
+	} else {
+		Ndd = Nd;
+		memcpy(diffdx,dx,sizeof(double)*Ndd);
+	}
+
+	if (Ndd == 0) {
+		free(x);
+		free(xx);
+		free(dx);
+		free(diffxreg);
+		free(diffdxreg);
+		free(diffdx);
+		fit->Arima = NULL;
+		fit->myarima = NULL;
+		printf("Warning. Data length is 0 after differencing. Exiting. \n");
+		return fit;
+	} else if (is_constant(diffdx,Ndd)) {
 
 	}
 
 	free(x);
 	free(xx);
+	free(dx);
+	free(diffxreg);
+	free(diffdxreg);
+	free(diffdx);
+	return fit;
 }
 
 void ar_exec(ar_object obj, double *inp) {
@@ -1139,6 +1228,54 @@ void arima_setOptMethod(arima_object obj, int value) {
 }
 
 void sarima_setOptMethod(sarima_object obj, int value) {
+	/*
+	* Method 0 - Nelder-Mead
+	* Method 1 - Newton Line Search
+	* Method 2 - Newton Trust Region - Hook Step
+	* Method 3 - Newton Trust Region - Double Dog-Leg
+	* Method 4 - Conjugate Gradient
+	* Method 5 - BFGS
+	* Method 6 - Limited Memory BFGS
+	* Method 7 - BFGS More-Thuente Line Search
+	*/
+	if (value == 0) {
+		obj->optmethod = 0;
+	}
+	else if (value == 1) {
+		obj->optmethod = 1;
+	}
+	else if (value == 2) {
+		obj->optmethod = 2;
+	}
+	else if (value == 3) {
+		obj->optmethod = 3;
+	}
+	else if (value == 4) {
+		obj->optmethod = 4;
+	}
+	else if (value == 5) {
+		obj->optmethod = 5;
+	}
+	else if (value == 6) {
+		obj->optmethod = 6;
+	}
+	else if (value == 7) {
+		obj->optmethod = 7;
+	}
+	else {
+		printf("\n Acceptable Numerical Values 0,1,2,3,4,5,6,7 \n");
+		printf("\n Method 0 - Nelder-Mead \n");
+		printf("\n Method 1 - Newton Line Search \n");
+		printf("\n Method 2 - Newton Trust Region - Hook Step \n");
+		printf("\n Method 3 - Newton Trust Region - Double Dog-Leg \n");
+		printf("\n Method 4 - Conjugate Gradient \n");
+		printf("\n Method 5 - BFGS \n");
+		printf("\n Method 6 - Limited Memory BFGS \n");
+		printf("\n Method 7 - BFGS More-Thuente Line Search \n");
+	}
+}
+
+void sarimax_setOptMethod(sarimax_object obj, int value) {
 	/*
 	* Method 0 - Nelder-Mead
 	* Method 1 - Newton Line Search

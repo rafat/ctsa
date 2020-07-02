@@ -9,6 +9,7 @@
 #define CTSA_H_
 
 #include "emle.h"
+#include "autoutils.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -168,6 +169,17 @@ struct myarima_set{
 	double sigma2;
 };
 
+typedef struct aa_ret_set* aa_ret_object;
+
+aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax, int s,int *DD, int *dd, int *start, int *stationary, int *seasonal, const char *ic, int *stepwise, int *nmodels,
+	int *method,double *xreg, int r, const char *test,const char *type, double *test_alpha, const char *seas,double *seas_alpha, int *allowdrift, int *allowmean, double *lambda);
+
+struct aa_ret_set{
+	sarimax_wrapper_object Arima;
+	myarima_object myarima;
+	int otype;
+};
+
 void arima_exec(arima_object obj, double *x);
 
 void sarimax_exec(sarimax_object obj, double *inp,double *xreg) ;
@@ -201,6 +213,8 @@ void sarima_setCSSML(sarima_object obj, int cssml);
 void arima_setOptMethod(arima_object obj, int value);
 
 void sarima_setOptMethod(sarima_object obj, int value);
+
+void sarimax_setOptMethod(sarimax_object obj, int value);
 
 void arima_vcov(arima_object obj, double *vcov);
 

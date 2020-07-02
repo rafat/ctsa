@@ -157,6 +157,8 @@ void arima_setOptMethod(arima_object obj, int value);
 
 void sarima_setOptMethod(sarima_object obj, int value);
 
+void sarimax_setOptMethod(sarimax_object obj, int value);
+
 void arima_vcov(arima_object obj, double *vcov);
 
 void sarima_vcov(sarima_object obj, double *vcov);
