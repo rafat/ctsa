@@ -338,13 +338,13 @@ void sarima_exec(sarima_object obj, double *inp) {
 
 }
 
-sarimax_wrapper_object sarimax_wrapper(sarimax_wrapper_object model,double *y, int N,int *order, int *seasonal, double *xreg, int r, int drift,int mean,
+sarimax_wrapper_object sarimax_wrapper(sarimax_wrapper_object model,double *y, int N,int *order, int *seasonal, double *xreg, int r, int idrift,int mean,
 	double *lambda, int biasadj,int method) {
 	/*
 	Init here. { sarimax_object,drift}
 	*/
 	sarimax_wrapper_object obj = NULL;
-	int i, p,d,q,P,D,Q,s,ncoeff;
+	int i, p,d,q,P,D,Q,s,ncoeff,drift;
 	double *x, *origx,*xreg2;
 	double rsum;
 
@@ -361,6 +361,7 @@ sarimax_wrapper_object sarimax_wrapper(sarimax_wrapper_object model,double *y, i
 		P = D = Q = s = 0;
 	}
 
+
 	if (model == NULL) {
 		p = order[0];
 		d = order[1];
@@ -371,6 +372,19 @@ sarimax_wrapper_object sarimax_wrapper(sarimax_wrapper_object model,double *y, i
 			Q = seasonal[2];
 			s = seasonal[3];
 		}
+
+		if (idrift == 1) {
+			drift = 1;
+		} else {
+			drift = 0;
+		}
+
+		if (d + D > 1 && idrift == 1) {
+			drift = 0;
+		}
+
+		printf("drift %d \n",drift);
+
 		
 		if (drift == 1) {
 			obj->idrift = 1;
@@ -653,10 +667,13 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax, int
 	
 	aa_ret_object fit = NULL;
 	int p_max,d_max,q_max,P_max, D_max,Q_max;
-	int p_start, q_start, P_start, Q_start,d,D,Nd,Ndd;
+	int p_start, q_start, P_start, Q_start,d,D,Nd,Ndd,amethod;
 	int istationary, iseasonal, istepwise, models, idrift, imean, m, N3, N3m,rnk, i, is1;
 	double *x,*xx,*varcovar,*diffxreg,*dx,*diffdxreg,*diffdx;
 	reg_object reg;
+	int order[3] = {0,0,0};
+	int seasonalorder[4] = {0,0,0,0};
+	int biasadj = 0;
 
 	fit = (aa_ret_object) malloc (sizeof(struct aa_ret_set));
 
@@ -691,6 +708,8 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax, int
 
 	if (stationary == NULL) {
 		istationary = 0;
+	} else {
+		istationary = *stationary;
 	}
 
 	if (seasonal == NULL) {
@@ -699,18 +718,32 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax, int
 
 	if (stepwise == NULL) {
 		istepwise = 1;
+	} else {
+		istepwise = *stepwise;
 	}
 
 	if (nmodels == NULL) {
 		models = 94;
+	} else {
+		models = *nmodels;
 	}
 
 	if (allowmean == NULL) {
 		imean = 1;
+	} else {
+		imean = *allowmean;
 	}
 
 	if (allowdrift == NULL) {
-		idrift = 1;
+		idrift = 0;
+	} else {
+		idrift = *allowdrift;
+	}
+
+	if (method == NULL) {
+		amethod = 0;
+	} else {
+		amethod = *method;
 	}
 
 	x = (double*) malloc(sizeof(double)*N);
@@ -850,6 +883,83 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax, int
 		printf("Warning. Data length is 0 after differencing. Exiting. \n");
 		return fit;
 	} else if (is_constant(diffdx,Ndd)) {
+		if (xreg == NULL) {
+			if (D > 0 && d == 0) {
+				seasonalorder[0] = seasonalorder[2] = 0;
+				seasonalorder[1] = D;
+				seasonalorder[3] = m;
+				order[0] = order[1] = order[2] = 0;
+				imean = 1;
+				idrift = 1;
+				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonal,NULL,r,idrift,imean,NULL,biasadj,amethod);
+				fit->myarima = NULL;
+				fit->otype = 2;
+			}
+			else if ( D > 0 && d > 0) {
+				seasonalorder[0] = seasonalorder[2] = 0;
+				seasonalorder[1] = D;
+				seasonalorder[3] = m;
+				order[0] = order[2] = 0;
+				order[1] = d;
+				idrift = 0;
+				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonal,NULL,r,idrift,imean,NULL,biasadj,amethod);
+				fit->myarima = NULL;
+				fit->otype = 2;
+			} else if (d == 2) {
+				seasonalorder[0] = seasonalorder[2] = 0;
+				seasonalorder[1] = 0;
+				seasonalorder[3] = 0;
+				order[0] = order[2] = 0;
+				order[1] = d;
+				idrift = 0;
+				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonal,NULL,r,idrift,imean,NULL,biasadj,amethod);
+				fit->myarima = NULL;
+				fit->otype = 2;
+			} else if (d < 2) {
+				seasonalorder[0] = seasonalorder[2] = 0;
+				seasonalorder[1] = 0;
+				seasonalorder[3] = 0;
+				order[0] = order[2] = 0;
+				order[1] = d;
+				idrift = 1;
+				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonal,NULL,r,idrift,imean,NULL,biasadj,amethod);
+				fit->myarima = NULL;
+				fit->otype = 2;
+			} else {
+				printf("data is not sitable for ARIMA modelling. \n");
+				fit->Arima = NULL;
+				fit->myarima = NULL;
+			}
+		} else {
+			if (D > 0) {
+				seasonalorder[0] = seasonalorder[2] = 0;
+				seasonalorder[1] = D;
+				seasonalorder[3] = m;
+				order[0] = order[2] = 0;
+				order[1] = d;
+				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonal,xreg,r,idrift,imean,NULL,biasadj,amethod);
+				fit->myarima = NULL;
+				fit->otype = 2;
+			} else {
+				seasonalorder[0] = seasonalorder[2] = 0;
+				seasonalorder[1] = 0;
+				seasonalorder[3] = 0;
+				order[0] = order[2] = 0;
+				order[1] = d;
+				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonal,xreg,r,idrift,imean,NULL,biasadj,amethod);
+				fit->myarima = NULL;
+				fit->otype = 2;
+			}
+
+		}
+
+		free(x);
+		free(xx);
+		free(dx);
+		free(diffxreg);
+		free(diffdxreg);
+		free(diffdx);
+		return fit;
 
 	}
 

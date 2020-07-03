@@ -1546,11 +1546,11 @@ void refittest() {
 	p = 0;
 	d = 0;
 	q = 0;
-	s = 12;
+	s = 0;
 	P = 0;
-	D = 1;
+	D = 0;
 	Q = 0;
-	r = 0;
+	r = 2;
 	int order[3] = {p,d,q};
 	int seasonal[4] = {P,D,Q,s};
 
@@ -1596,12 +1596,12 @@ void refittest() {
         newxreg[i+L] = temp2[N + i];
     }
 
-	drift = 1;
+	drift = 0;
 	biasadj = 0;
-	method = 5;
+	method = 0;
 
 	//obj = sarimax_init(p, d, q, P, D, Q, s, r , N);
-	obj = sarimax_wrapper(NULL,inp,N,order,seasonal,NULL,r,drift,imean,NULL,biasadj,method);
+	obj = sarimax_wrapper(NULL,inp,N,order,seasonal,xreg,r,drift,imean,NULL,biasadj,method);
 
     /* setMethod()
     Method 0 ("CSS-MLE") is default. The method also accepts values 1 ("MLE") and 2 ("CSS")
@@ -1780,10 +1780,10 @@ int main() {
 	//sdtests();
 	//arimatest();
 	//sarimatest();
-	sarimaxtest();
+	//sarimaxtest();
 	//arimatest();
 	//mainverttest();
-	//refittest();
+	refittest();
 	//myarimatest();
     return 0;
 }
