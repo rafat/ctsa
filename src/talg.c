@@ -904,7 +904,7 @@ int invertroot(int q, double *ma) {
 			xr[j] = yr[j];
 			xi[j] = yi[j];
 		}
-		mdisplay(xr, 1, qn+1);
+		//mdisplay(xr, 1, qn+1);
 	}
 
 	for (i = 0; i < qn; ++i) {

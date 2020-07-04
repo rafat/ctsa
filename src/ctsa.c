@@ -434,7 +434,7 @@ myarima_object myarima(double *x, int N, int *order, int *seasonal, int constant
 	double offset, double *xreg, int r, int *method) {
 
 	myarima_object fit = NULL;
-	int m,p,d,q,P,D,Q,s,diffs,i,j,imean,ncoeff,isum,imx;
+	int m,p,d,q,P,D,Q,s,diffs,i,j,imean,ncoeff,isum,imx,rr;
 	int use_season,rmethod,last_nonzero,ip,iq,ir,retval;
 	double rsum,minroot,tol,temp;
 	double *xreg2,*phi,*theta,*zeror,*zeroi;
@@ -490,22 +490,24 @@ myarima_object myarima(double *x, int N, int *order, int *seasonal, int constant
 		rmethod = *method;
 	}
 
+	rr = r;
+
 	if (diffs == 1 && constant == 1) {
 		imean = 1;
-		r++;
-		xreg2 = (double*)malloc(sizeof(double)*N*r);
+		rr++;
+		xreg2 = (double*)malloc(sizeof(double)*N*rr);
 		for(i = 0; i < N;++i) {
 			xreg2[i] = (double) (i+1);
 		}
-		memcpy(xreg2+N,xreg,sizeof(double)*N*(r-1));
-		fit->sarimax = sarimax_init(p,d,q,P,D,Q,s,r,imean,N);
+		memcpy(xreg2+N,xreg,sizeof(double)*N*(rr-1));
+		fit->sarimax = sarimax_init(p,d,q,P,D,Q,s,rr,imean,N);
 		sarimax_exec(fit->sarimax,x,xreg2);
 		//sarimax_summary(fit->sarimax);
 	} else {
 		imean = constant;
-		xreg2 = (double*)malloc(sizeof(double)*N*r);
-		memcpy(xreg2,xreg,sizeof(double)*N*r);
-		fit->sarimax = sarimax_init(p,d,q,P,D,Q,s,r,imean,N);
+		xreg2 = (double*)malloc(sizeof(double)*N*rr);
+		memcpy(xreg2,xreg,sizeof(double)*N*rr);
+		fit->sarimax = sarimax_init(p,d,q,P,D,Q,s,rr,imean,N);
 		sarimax_exec(fit->sarimax,x,xreg2);
 	}
 
@@ -705,7 +707,7 @@ myarima_object search_arima(double *x, int N,int d, int D, int p_max, int q_max,
 								seasonal[3] = s;
 							}
 
-							fit = myarima(x,N,order,seasonal, maxK, ic, trace, approximation, offset,xreg, r, &method);
+							fit = myarima(x,N,order,seasonal, K, ic, trace, approximation, offset,xreg, r, &method);
 
 							if (best_ic > fit->ic) {
 								best_ic = fit->ic;
