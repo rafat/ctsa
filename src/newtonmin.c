@@ -325,7 +325,6 @@ int hessian_fd(custom_function *funcpt,double *x,int N,double *dx,double eps,dou
 			stepj = fd * stepmax;
 			xj[j] += stepj;
 			xij[j] += stepj;
-			//printf("stepmax %g %g \n",stepi,stepj);
 
 			f[i*N+j] = ((FUNCPT_EVAL(funcpt,xij,N) - FUNCPT_EVAL(funcpt,xi,N)) - (FUNCPT_EVAL(funcpt,xj,N) - FUNCPT_EVAL(funcpt,x,N)))/(stepi * stepj);
 			if (f[i*N+j] >= DBL_MAX || f[i*N+j] <= -DBL_MAX) {

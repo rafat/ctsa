@@ -1657,14 +1657,14 @@ void myarimatest() {
     or if P = D = Q = 0 then make sure that s is also 0. 
      Recheck the values if the program fails to execute.
     */
-	p = 2;
+	p = 0;
 	d = 1;
-	q = 1;
-	s = 12;
-	P = 1;
+	q = 4;
+	s = 0;
+	P = 0;
 	D = 0;
-	Q = 1;
-	r = 0;
+	Q = 0;
+	r = 2;
 	int order[3] = {p,d,q};
 	int seasonal[4] = {P,D,Q,s};
 	const char *ic = "aic";
@@ -1721,7 +1721,7 @@ void myarimatest() {
 	method = 5;
 
 	//obj = sarimax_init(p, d, q, P, D, Q, s, r , N);
-	obj = myarima(inp,N,order,seasonal, constant, ic, trace, approx, offset,NULL, r, &rmethod) ;
+	obj = myarima(inp,N,order,seasonal, constant, ic, trace, approx, offset,xreg, r, &rmethod) ;
 
     /* setMethod()
     Method 0 ("CSS-MLE") is default. The method also accepts values 1 ("MLE") and 2 ("CSS")
@@ -1741,6 +1741,61 @@ void myarimatest() {
 	free(amse);
     free(xreg);
     free(newxreg);
+}
+
+void searchtest() {
+	int i,j,p_max,q_max,P_max,Q_max,Order_max,d,D,s,stationary;
+	myarima_object obj;
+	double *inp,*xreg;
+	int N,r = 2;
+	const char *ic = "aic";
+	int approximation = 0;
+	double offset = 0;
+	int allowdrift,allowmean,method;
+
+	FILE *ifp;
+	double temp[1200];
+    double temp1[1200];
+    double temp2[1200];
+
+	ifp = fopen("../data/e1m.dat", "r");
+	i = 0;
+	if (!ifp) {
+		printf("Cannot Open File");
+		exit(100);
+	}
+	while (!feof(ifp)) {
+		fscanf(ifp, "%lf %lf %lf \n", &temp[i],&temp1[i],&temp2[i]);
+		i++;
+	}
+	N = i;
+
+	inp = (double*)malloc(sizeof(double)* N);
+    xreg = (double*)malloc(sizeof(double)* N * r);
+
+	for (i = 0; i < N; ++i) {
+		inp[i] = temp[i];
+        xreg[i] = temp1[i];
+		xreg[N+i] = temp2[i];
+	}
+	d = 1;
+	D = 0;
+	s = 0;
+	P_max = 0;
+	Q_max = 0;
+	p_max = 5;
+	q_max = 5;
+	Order_max = 5;
+	stationary = 0;
+	allowdrift = 1;
+	allowmean = 1;
+	method = 0;
+
+	obj = search_arima(inp,N,d,D,p_max,q_max,P_max,Q_max,Order_max,stationary,s,ic,approximation, xreg,r,offset,allowdrift,allowmean,method);
+
+	free(inp);
+	free(xreg);
+	myarima_free(obj);
 }
 
 int main() {
@@ -1783,7 +1838,8 @@ int main() {
 	//sarimaxtest();
 	//arimatest();
 	//mainverttest();
-	refittest();
-	//myarimatest();
+	//refittest();
+	myarimatest();
+	searchtest();
     return 0;
 }

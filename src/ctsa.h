@@ -171,14 +171,18 @@ struct myarima_set{
 
 typedef struct aa_ret_set* aa_ret_object;
 
-aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax, int s,int *DD, int *dd, int *start, int *stationary, int *seasonal, const char *ic, int *stepwise, int *nmodels,
-	int *method,double *xreg, int r, const char *test,const char *type, double *test_alpha, const char *seas,double *seas_alpha, int *allowdrift, int *allowmean, double *lambda);
+aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax, int s,int *DD, int *dd, int *start, int *stationary, int *seasonal, 
+	const char *ic, int *stepwise, int *nmodels,int *approximation,int *method,double *xreg, int r, const char *test,const char *type, double *test_alpha, 
+	const char *seas, double *seas_alpha, int *allowdrift, int *allowmean, double *lambda) ;
 
 struct aa_ret_set{
 	sarimax_wrapper_object Arima;
 	myarima_object myarima;
 	int otype;
 };
+
+myarima_object search_arima(double *x, int N,int d, int D, int p_max, int q_max, int P_max, int Q_max, int Order_max, int stationary,int s, const char *ic,
+	int approximation, double *xreg, int r, double offset,int allowdrift, int allowmean, int method);
 
 void arima_exec(arima_object obj, double *x);
 
