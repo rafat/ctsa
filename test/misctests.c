@@ -1793,6 +1793,8 @@ void searchtest() {
 
 	obj = search_arima(inp,N,d,D,p_max,q_max,P_max,Q_max,Order_max,stationary,s,ic,approximation, xreg,r,offset,allowdrift,allowmean,method);
 
+	printf("ic %g \n",obj->ic);
+
 	free(inp);
 	free(xreg);
 	myarima_free(obj);

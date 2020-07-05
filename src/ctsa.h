@@ -171,9 +171,9 @@ struct myarima_set{
 
 typedef struct aa_ret_set* aa_ret_object;
 
-aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax, int s,int *DD, int *dd, int *start, int *stationary, int *seasonal, 
+aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int *maxcoeff, int s,int *DD, int *dd, int *start, int *stationary, int *seasonal, 
 	const char *ic, int *stepwise, int *nmodels,int *approximation,int *method,double *xreg, int r, const char *test,const char *type, double *test_alpha, 
-	const char *seas, double *seas_alpha, int *allowdrift, int *allowmean, double *lambda) ;
+	const char *seas, double *seas_alpha, int *allowdrift, int *allowmean, double *lambda);
 
 struct aa_ret_set{
 	sarimax_wrapper_object Arima;
