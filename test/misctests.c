@@ -1544,11 +1544,11 @@ void refittest() {
      Recheck the values if the program fails to execute.
     */
 	p = 0;
-	d = 0;
+	d = 1;
 	q = 0;
-	s = 0;
+	s = 12;
 	P = 0;
-	D = 0;
+	D = 1;
 	Q = 0;
 	r = 2;
 	int order[3] = {p,d,q};
@@ -1596,7 +1596,7 @@ void refittest() {
         newxreg[i+L] = temp2[N + i];
     }
 
-	drift = 0;
+	drift = 1;
 	biasadj = 0;
 	method = 0;
 
@@ -1840,8 +1840,8 @@ int main() {
 	//sarimaxtest();
 	//arimatest();
 	//mainverttest();
-	//refittest();
-	myarimatest();
-	searchtest();
+	refittest();
+	//myarimatest();
+	//searchtest();
     return 0;
 }
