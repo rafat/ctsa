@@ -1809,7 +1809,7 @@ int main() {
 	//interpolatetest();
 	//urdf_test();
 	//urkpss_test();
-	//interpolatetest2();
+	interpolatetest2();
 	//urpp_test();
 	//decomposetest();
 	//lagstests();
@@ -1840,7 +1840,7 @@ int main() {
 	//sarimaxtest();
 	//arimatest();
 	//mainverttest();
-	refittest();
+	//refittest();
 	//myarimatest();
 	//searchtest();
     return 0;

@@ -785,7 +785,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 	int p_max,d_max,q_max,P_max, D_max,Q_max,p,q,P,Q,trace;
 	int p_start, q_start, P_start, Q_start,d,D,Nd,Ndd,amethod, iapprox,constant,Order_max;
 	int istationary, iseasonal, istepwise, models, idrift, imean, m, N3, N3m,rnk, i, is1,k;
-	double *x,*xx,*varcovar,*diffxreg,*dx,*diffdxreg,*diffdx,*results;
+	double *x,*xx,*varcovar,*diffxreg,*dx,*diffdxreg,*diffdx,*results,*icvector;
 	reg_object reg;
 	sarimax_object approxfit;
 	myarima_object bestfit;
@@ -793,8 +793,9 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 	int seasonalorder[4] = {0,0,0,0};
 	int bestorder[3] = {0,0,0};
 	int bestseasonalorder[4] = {0,0,0,0};
-	int biasadj = 0,bestconstant,startk;
+	int biasadj = 0,bestconstant,startk,ntconstant;
 	double offset, best_ic;
+	int *icindex;
 
 	fit = (aa_ret_object) malloc (sizeof(struct aa_ret_set));
 
@@ -1300,10 +1301,569 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 
 	while (startk < k && k < models) {
 		startk = k;
+
+		if (P > 0 && newmodel(p,d,q,P-1,D,Q,constant,results,k)) {
+			k = k + 1;
+			if (k > models) continue;
+			order[0] = p;
+			order[1] = d;
+			order[2] = q;
+			seasonalorder[0] = P-1;
+			seasonalorder[1] = D;
+			seasonalorder[2] = Q;
+			seasonalorder[3] = s;
+
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+
+			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
+
+			if (fit->myarima->ic < best_ic) {
+				best_ic = fit->myarima->ic;
+				memcpy(bestorder,order,sizeof(int)*3);
+				memcpy(bestseasonalorder,seasonalorder,sizeof(int)*4);
+				bestconstant = constant;
+				P = P - 1;
+				myarima_free(fit->myarima);
+				continue;
+			}
+			
+			myarima_free(fit->myarima);
+
+		}
+
+		if (Q > 0 && newmodel(p,d,q,P,D,Q-1,constant,results,k)) {
+			k = k + 1;
+			if (k > models) continue;
+			order[0] = p;
+			order[1] = d;
+			order[2] = q;
+			seasonalorder[0] = P;
+			seasonalorder[1] = D;
+			seasonalorder[2] = Q-1;
+			seasonalorder[3] = s;
+
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+
+			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
+
+			if (fit->myarima->ic < best_ic) {
+				best_ic = fit->myarima->ic;
+				memcpy(bestorder,order,sizeof(int)*3);
+				memcpy(bestseasonalorder,seasonalorder,sizeof(int)*4);
+				bestconstant = constant;
+				Q = Q - 1;
+				myarima_free(fit->myarima);
+				continue;
+			}
+			
+			myarima_free(fit->myarima);
+
+		}
+
+		if (P < P_max && newmodel(p,d,q,P+1,D,Q,constant,results,k)) {
+			k = k + 1;
+			if (k > models) continue;
+			order[0] = p;
+			order[1] = d;
+			order[2] = q;
+			seasonalorder[0] = P+1;
+			seasonalorder[1] = D;
+			seasonalorder[2] = Q;
+			seasonalorder[3] = s;
+
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+
+			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
+
+			if (fit->myarima->ic < best_ic) {
+				best_ic = fit->myarima->ic;
+				memcpy(bestorder,order,sizeof(int)*3);
+				memcpy(bestseasonalorder,seasonalorder,sizeof(int)*4);
+				bestconstant = constant;
+				P = P + 1;
+				myarima_free(fit->myarima);
+				continue;
+			}
+			
+			myarima_free(fit->myarima);
+
+		}
+
+		if (Q < Q_max && newmodel(p,d,q,P,D,Q+1,constant,results,k)) {
+			k = k + 1;
+			if (k > models) continue;
+			order[0] = p;
+			order[1] = d;
+			order[2] = q;
+			seasonalorder[0] = P;
+			seasonalorder[1] = D;
+			seasonalorder[2] = Q+1;
+			seasonalorder[3] = s;
+
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+
+			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
+
+			if (fit->myarima->ic < best_ic) {
+				best_ic = fit->myarima->ic;
+				memcpy(bestorder,order,sizeof(int)*3);
+				memcpy(bestseasonalorder,seasonalorder,sizeof(int)*4);
+				bestconstant = constant;
+				Q = Q + 1;
+				myarima_free(fit->myarima);
+				continue;
+			}
+			
+			myarima_free(fit->myarima);
+
+		}
+
+		if ((Q > 0 ) && (P > 0 )&& newmodel(p,d,q,P-1,D,Q-1,constant,results,k)) {
+			k = k + 1;
+			if (k > models) continue;
+			order[0] = p;
+			order[1] = d;
+			order[2] = q;
+			seasonalorder[0] = P-1;
+			seasonalorder[1] = D;
+			seasonalorder[2] = Q-1;
+			seasonalorder[3] = s;
+
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+
+			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
+
+			if (fit->myarima->ic < best_ic) {
+				best_ic = fit->myarima->ic;
+				memcpy(bestorder,order,sizeof(int)*3);
+				memcpy(bestseasonalorder,seasonalorder,sizeof(int)*4);
+				bestconstant = constant;
+				P = P - 1;
+				Q = Q - 1;
+				myarima_free(fit->myarima);
+				continue;
+			}
+			
+			myarima_free(fit->myarima);
+
+		}	
+
+		if ((Q < Q_max ) && (P > 0 )&& newmodel(p,d,q,P-1,D,Q+1,constant,results,k)) {
+			k = k + 1;
+			if (k > models) continue;
+			order[0] = p;
+			order[1] = d;
+			order[2] = q;
+			seasonalorder[0] = P-1;
+			seasonalorder[1] = D;
+			seasonalorder[2] = Q+1;
+			seasonalorder[3] = s;
+
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+
+			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
+
+			if (fit->myarima->ic < best_ic) {
+				best_ic = fit->myarima->ic;
+				memcpy(bestorder,order,sizeof(int)*3);
+				memcpy(bestseasonalorder,seasonalorder,sizeof(int)*4);
+				bestconstant = constant;
+				P = P - 1;
+				Q = Q + 1;
+				myarima_free(fit->myarima);
+				continue;
+			}
+			
+			myarima_free(fit->myarima);
+
+		}	
+
+		if ((Q > 0 ) && (P < P_max )&& newmodel(p,d,q,P+1,D,Q-1,constant,results,k)) {
+			k = k + 1;
+			if (k > models) continue;
+			order[0] = p;
+			order[1] = d;
+			order[2] = q;
+			seasonalorder[0] = P+1;
+			seasonalorder[1] = D;
+			seasonalorder[2] = Q-1;
+			seasonalorder[3] = s;
+
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+
+			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
+
+			if (fit->myarima->ic < best_ic) {
+				best_ic = fit->myarima->ic;
+				memcpy(bestorder,order,sizeof(int)*3);
+				memcpy(bestseasonalorder,seasonalorder,sizeof(int)*4);
+				bestconstant = constant;
+				P = P + 1;
+				Q = Q - 1;
+				myarima_free(fit->myarima);
+				continue;
+			}
+			
+			myarima_free(fit->myarima);
+
+		}	
+
+		if ((Q < Q_max ) && (P < P_max )&& newmodel(p,d,q,P+1,D,Q+1,constant,results,k)) {
+			k = k + 1;
+			if (k > models) continue;
+			order[0] = p;
+			order[1] = d;
+			order[2] = q;
+			seasonalorder[0] = P+1;
+			seasonalorder[1] = D;
+			seasonalorder[2] = Q+1;
+			seasonalorder[3] = s;
+
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+
+			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
+
+			if (fit->myarima->ic < best_ic) {
+				best_ic = fit->myarima->ic;
+				memcpy(bestorder,order,sizeof(int)*3);
+				memcpy(bestseasonalorder,seasonalorder,sizeof(int)*4);
+				bestconstant = constant;
+				P = P + 1;
+				Q = Q + 1;
+				myarima_free(fit->myarima);
+				continue;
+			}
+			
+			myarima_free(fit->myarima);
+
+		}
+
+		if (p > 0 && newmodel(p-1,d,q,P,D,Q,constant,results,k)) {
+			k = k + 1;
+			if (k > models) continue;
+			order[0] = p-1;
+			order[1] = d;
+			order[2] = q;
+			seasonalorder[0] = P;
+			seasonalorder[1] = D;
+			seasonalorder[2] = Q;
+			seasonalorder[3] = s;
+
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+
+			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
+
+			if (fit->myarima->ic < best_ic) {
+				best_ic = fit->myarima->ic;
+				memcpy(bestorder,order,sizeof(int)*3);
+				memcpy(bestseasonalorder,seasonalorder,sizeof(int)*4);
+				bestconstant = constant;
+				p = p - 1;
+				myarima_free(fit->myarima);
+				continue;
+			}
+			
+			myarima_free(fit->myarima);
+
+		}
+
+		if (q > 0 && newmodel(p,d,q-1,P,D,Q,constant,results,k)) {
+			k = k + 1;
+			if (k > models) continue;
+			order[0] = p;
+			order[1] = d;
+			order[2] = q-1;
+			seasonalorder[0] = P;
+			seasonalorder[1] = D;
+			seasonalorder[2] = Q;
+			seasonalorder[3] = s;
+
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+
+			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
+
+			if (fit->myarima->ic < best_ic) {
+				best_ic = fit->myarima->ic;
+				memcpy(bestorder,order,sizeof(int)*3);
+				memcpy(bestseasonalorder,seasonalorder,sizeof(int)*4);
+				bestconstant = constant;
+				q = q - 1;
+				myarima_free(fit->myarima);
+				continue;
+			}
+			
+			myarima_free(fit->myarima);
+
+		}
+
+		if (p < p_max && newmodel(p+1,d,q,P,D,Q,constant,results,k)) {
+			k = k + 1;
+			if (k > models) continue;
+			order[0] = p+1;
+			order[1] = d;
+			order[2] = q;
+			seasonalorder[0] = P;
+			seasonalorder[1] = D;
+			seasonalorder[2] = Q;
+			seasonalorder[3] = s;
+
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+
+			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
+
+			if (fit->myarima->ic < best_ic) {
+				best_ic = fit->myarima->ic;
+				memcpy(bestorder,order,sizeof(int)*3);
+				memcpy(bestseasonalorder,seasonalorder,sizeof(int)*4);
+				bestconstant = constant;
+				p = p + 1;
+				myarima_free(fit->myarima);
+				continue;
+			}
+			
+			myarima_free(fit->myarima);
+
+		}
+
+		if (q < q_max && newmodel(p,d,q+1,P,D,Q,constant,results,k)) {
+			k = k + 1;
+			if (k > models) continue;
+			order[0] = p;
+			order[1] = d;
+			order[2] = q+1;
+			seasonalorder[0] = P;
+			seasonalorder[1] = D;
+			seasonalorder[2] = Q;
+			seasonalorder[3] = s;
+
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+
+			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
+
+			if (fit->myarima->ic < best_ic) {
+				best_ic = fit->myarima->ic;
+				memcpy(bestorder,order,sizeof(int)*3);
+				memcpy(bestseasonalorder,seasonalorder,sizeof(int)*4);
+				bestconstant = constant;
+				q = q + 1;
+				myarima_free(fit->myarima);
+				continue;
+			}
+			
+			myarima_free(fit->myarima);
+
+		}
+
+		if ((q > 0 ) && (p > 0 )&& newmodel(p-1,d,q-1,P,D,Q,constant,results,k)) {
+			k = k + 1;
+			if (k > models) continue;
+			order[0] = p-1;
+			order[1] = d;
+			order[2] = q-1;
+			seasonalorder[0] = P;
+			seasonalorder[1] = D;
+			seasonalorder[2] = Q;
+			seasonalorder[3] = s;
+
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+
+			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
+
+			if (fit->myarima->ic < best_ic) {
+				best_ic = fit->myarima->ic;
+				memcpy(bestorder,order,sizeof(int)*3);
+				memcpy(bestseasonalorder,seasonalorder,sizeof(int)*4);
+				bestconstant = constant;
+				p = p - 1;
+				q = q - 1;
+				myarima_free(fit->myarima);
+				continue;
+			}
+			
+			myarima_free(fit->myarima);
+
+		}	
+
+		if ((q < q_max ) && (p > 0 )&& newmodel(p-1,d,q+1,P,D,Q,constant,results,k)) {
+			k = k + 1;
+			if (k > models) continue;
+			order[0] = p-1;
+			order[1] = d;
+			order[2] = q+1;
+			seasonalorder[0] = P;
+			seasonalorder[1] = D;
+			seasonalorder[2] = Q;
+			seasonalorder[3] = s;
+
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+
+			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
+
+			if (fit->myarima->ic < best_ic) {
+				best_ic = fit->myarima->ic;
+				memcpy(bestorder,order,sizeof(int)*3);
+				memcpy(bestseasonalorder,seasonalorder,sizeof(int)*4);
+				bestconstant = constant;
+				p = p - 1;
+				q = q + 1;
+				myarima_free(fit->myarima);
+				continue;
+			}
+			
+			myarima_free(fit->myarima);
+
+		}	
+
+		if ((q > 0 ) && (p < p_max )&& newmodel(p+1,d,q-1,P,D,Q,constant,results,k)) {
+			k = k + 1;
+			if (k > models) continue;
+			order[0] = p+1;
+			order[1] = d;
+			order[2] = q-1;
+			seasonalorder[0] = P;
+			seasonalorder[1] = D;
+			seasonalorder[2] = Q;
+			seasonalorder[3] = s;
+
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+
+			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
+
+			if (fit->myarima->ic < best_ic) {
+				best_ic = fit->myarima->ic;
+				memcpy(bestorder,order,sizeof(int)*3);
+				memcpy(bestseasonalorder,seasonalorder,sizeof(int)*4);
+				bestconstant = constant;
+				p = p + 1;
+				q = q - 1;
+				myarima_free(fit->myarima);
+				continue;
+			}
+			
+			myarima_free(fit->myarima);
+
+		}	
+
+		if ((q < q_max ) && (p < p_max )&& newmodel(p+1,d,q+1,P,D,Q,constant,results,k)) {
+			k = k + 1;
+			if (k > models) continue;
+			order[0] = p+1;
+			order[1] = d;
+			order[2] = q+1;
+			seasonalorder[0] = P;
+			seasonalorder[1] = D;
+			seasonalorder[2] = Q;
+			seasonalorder[3] = s;
+
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+
+			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
+
+			if (fit->myarima->ic < best_ic) {
+				best_ic = fit->myarima->ic;
+				memcpy(bestorder,order,sizeof(int)*3);
+				memcpy(bestseasonalorder,seasonalorder,sizeof(int)*4);
+				bestconstant = constant;
+				p = p + 1;
+				q = q + 1;
+				myarima_free(fit->myarima);
+				continue;
+			}
+			
+			myarima_free(fit->myarima);
+
+		}	
+
+		if (idrift || imean) {
+			ntconstant = (constant == 1) ? 0 : 1;
+			if (newmodel(p,d,q,P,D,Q,ntconstant,results,k)) {
+				k = k + 1;
+				if (k > models) continue;
+				order[0] = p;
+				order[1] = d;
+				order[2] = q;
+				seasonalorder[0] = P;
+				seasonalorder[1] = D;
+				seasonalorder[2] = Q;
+				seasonalorder[3] = s;
+
+				fit->myarima = myarima(x,N,order,seasonalorder,ntconstant, ic, trace, iapprox, offset,xreg, r, &amethod);
+
+				set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
+
+				if (fit->myarima->ic < best_ic) {
+					best_ic = fit->myarima->ic;
+					memcpy(bestorder,order,sizeof(int)*3);
+					memcpy(bestseasonalorder,seasonalorder,sizeof(int)*4);
+					bestconstant = constant =  ntconstant;
+					myarima_free(fit->myarima);
+					continue;
+				}
+				
+				myarima_free(fit->myarima);
+
+			}	
+		}
+
+		
+	
+	}
+
+	if (k > models) {
+		printf("Warning : Stepwise search was stopped early due to reaching the model number limit: %d \n",models);
+		k--;
 	}
 
 
+	// Delete the previous best model
+
 	myarima_free(bestfit);
+
+	// Refit if Approximation was used
+
+	if (iapprox) {
+		icvector = (double*)malloc(sizeof(double)*k);
+		icindex = (int*)calloc(k,sizeof(int));
+
+		for(i = 0; i < k;++i) {
+			icvector[i] = results[i*8+7];
+		}
+
+		sort1d_ascending(icvector,k,icindex);
+
+		for(i = 0; i < k;++i) {
+			myarima_free(fit->myarima);
+			order[0] = results[icindex[i]*8];
+			order[1] = d;
+			order[2] = results[icindex[i]*8 + 2];
+			seasonalorder[0] = results[icindex[i]*8 + 3];
+			seasonalorder[1] = D;
+			seasonalorder[2] = results[icindex[i]*8 + 5];
+			seasonalorder[3] = s;
+			fit->myarima = myarima(x,N,order,seasonalorder,results[icindex[i]*8 + 6], ic, trace, 0, offset,xreg, r, &amethod);
+
+			if (fit->myarima->ic < DBL_MAX) {
+				best_ic = fit->myarima->ic;
+				memcpy(bestorder,order,sizeof(int)*3);
+				memcpy(bestseasonalorder,seasonalorder,sizeof(int)*4);
+				bestconstant = constant;
+				free(icvector);
+				free(icindex);
+				iapprox = 0;
+				break;
+			}
+		}
+
+
+		free(icvector);
+		free(icindex);
+	}
+
+	// Refit The Best Model
+
+	fit->myarima = myarima(x,N,bestorder,bestseasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+
+	
 
 	free(x);
 	free(xx);
