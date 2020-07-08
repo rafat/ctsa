@@ -1743,6 +1743,107 @@ void myarimatest() {
     free(newxreg);
 }
 
+void aa1test() {
+	int i, N, d, D, L;
+	double *inp;
+	int p, q, P, Q, s, r;
+	int drift,biasadj,method;
+	double *xpred, *amse,*xreg,*newxreg;
+	aa_ret_object obj;
+	int imean = 1;
+    /*
+    Make sure all the parameter values are correct and consistent with other values. eg., if xreg is NULL r should be 0
+    or if P = D = Q = 0 then make sure that s is also 0. 
+     Recheck the values if the program fails to execute.
+    */
+	p = 0;
+	d = 0;
+	q = 0;
+	s = 0;
+	P = 0;
+	D = 0;
+	Q = 0;
+	r = 2;
+	int order[3] = {p,d,q};
+	int seasonal[4] = {P,D,Q,s};
+	const char *ic = "aic";
+	int trace = 0;
+	int constant = 1;
+	int approx = 0;
+	double offset = 0;
+	int rmethod = 0;
+
+
+	L = 0;
+
+	xpred = (double*)malloc(sizeof(double)* L);
+	amse = (double*)malloc(sizeof(double)* L);
+
+	FILE *ifp;
+	double temp[1200];
+    double temp1[1200];
+    double temp2[1200];
+
+	ifp = fopen("../data/e1m.dat", "r");
+	i = 0;
+	if (!ifp) {
+		printf("Cannot Open File");
+		exit(100);
+	}
+	while (!feof(ifp)) {
+		fscanf(ifp, "%lf %lf %lf \n", &temp[i],&temp1[i],&temp2[i]);
+		i++;
+	}
+	N = i - L;
+
+	inp = (double*)malloc(sizeof(double)* N);
+    xreg = (double*)malloc(sizeof(double)* N * 2);
+    newxreg = (double*)malloc(sizeof(double)* L * 2);
+
+    /*
+    
+    */
+
+	for (i = 0; i < N; ++i) {
+		inp[i] = temp[i];
+        xreg[i] = temp1[i];
+		xreg[N+i] = temp2[i];
+	}
+
+    for(i = 0; i < L;++i) {
+        newxreg[i] = temp1[N + i];
+        newxreg[i+L] = temp2[N + i];
+    }
+
+	drift = 1;
+	biasadj = 0;
+	method = 5;
+
+	//obj = sarimax_init(p, d, q, P, D, Q, s, r , N);
+	//obj = myarima(inp,N,order,seasonal, constant, ic, trace, approx, offset,xreg, r, &rmethod) ;
+	obj = auto_arima1(inp, N,NULL,NULL,NULL,s,NULL,NULL,NULL,NULL,NULL, "aic", NULL,NULL,NULL,NULL,xreg,r, "kpss","level", NULL, "seas", NULL, NULL, NULL,NULL);
+
+	aa_ret_summary(obj);
+
+    /* setMethod()
+    Method 0 ("CSS-MLE") is default. The method also accepts values 1 ("MLE") and 2 ("CSS")
+    */
+
+	//sarimax_setMethod(obj, 0); 
+
+    /*sarimax_exec(object, input time series, exogenous time series)
+        set exogenous to NULL if deadling only with a univariate time series.
+    */
+	//sarimax_exec(obj, inp,xreg);
+	
+
+	free(inp);
+	free(xpred);
+	free(amse);
+    free(xreg);
+    free(newxreg);
+}
+
 void searchtest() {
 	int i,j,p_max,q_max,P_max,Q_max,Order_max,d,D,s,stationary;
 	myarima_object obj;
@@ -1809,7 +1910,7 @@ int main() {
 	//interpolatetest();
 	//urdf_test();
 	//urkpss_test();
-	interpolatetest2();
+	//interpolatetest2();
 	//urpp_test();
 	//decomposetest();
 	//lagstests();
@@ -1843,5 +1944,6 @@ int main() {
 	//refittest();
 	//myarimatest();
 	//searchtest();
+	aa1test();
     return 0;
 }

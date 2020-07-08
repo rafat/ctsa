@@ -797,6 +797,8 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 	double offset, best_ic;
 	int *icindex;
 
+	printf("DEBUG 1. \n");
+
 	fit = (aa_ret_object) malloc (sizeof(struct aa_ret_set));
 
 	fit->otype = 0;
@@ -884,6 +886,8 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 
 	memcpy(x,y,sizeof(double)*N);
 
+	printf("DEBUG 2. \n");
+
 	if (s <= 1) {
 		m = 1;
 	} else {
@@ -944,9 +948,11 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		free(varcovar);
 	}
 
+	printf("DEBUG 3. \n");
+
 	D = DD == NULL ? -1 : *DD;
 
-	if (stationary) {
+	if (istationary) {
 		d = D = 0;
 	}
 
@@ -970,6 +976,8 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		}
 	}
 
+	printf("D %d \n",D);
+
 	Nd = N - s * D;
 
 	if (D > 0) {
@@ -989,7 +997,11 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 
 	d = dd == NULL ? -1 : *dd;
 
+	printf("d %d Nd %d \n",d,Nd);
+
 	if (d == -1) {
+		mdisplay(dx,1,Nd);
+		printf("alpha %g test %s type %s d_max %d \n",test_alpha,test,type,d_max);
 		d = ndiffs(dx,Nd,test_alpha,test,type,&d_max);
 
 		Ndd = Nd - d;
@@ -1006,6 +1018,8 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		}
 	}
 
+	printf("d %d \n",d);
+
 	Ndd = Nd - d;
 
 	if (d > 0) {
@@ -1014,6 +1028,8 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		Ndd = Nd;
 		memcpy(diffdx,dx,sizeof(double)*Ndd);
 	}
+
+	printf("DEBUG 4. \n");
 
 	if (Ndd == 0) {
 		free(x);
@@ -1106,6 +1122,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		return fit;
 
 	}
+
 
 	if (m > 1) {
 		if (P_max > 0) {
@@ -3234,6 +3251,18 @@ void sarimax_wrapper_summary(sarimax_wrapper_object obj) {
 	if (obj->sarimax->method == 0 || obj->sarimax->method == 1 || obj->sarimax->method == 2) {
 		printf("Log Likelihood : %g ", obj->sarimax->loglik);
 		printf("\n\n");
+	}
+}
+
+void aa_ret_summary(aa_ret_object obj) {
+	if (obj->otype == 2) {
+		sarimax_summary(obj->Arima->sarimax);
+		printf(" AIC %g BIC %g AICC %g \n",obj->Arima->aic,obj->Arima->bic,obj->Arima->aicc);
+	} else if (obj->otype == 1) {
+		sarimax_summary(obj->myarima->sarimax);
+		printf(" IC %g AIC %g BIC %g AICC %g \n",obj->myarima->ic,obj->myarima->aic,obj->myarima->bic,obj->myarima->aicc);
+	} else {
+		printf("aa_ret Error \n");
 	}
 }
 

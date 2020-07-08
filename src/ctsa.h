@@ -232,6 +232,8 @@ void sarimax_summary(sarimax_object obj);
 
 void sarimax_wrapper_summary(sarimax_wrapper_object obj);
 
+void aa_ret_summary(aa_ret_object obj);
+
 void sarima_summary(sarima_object obj);
 
 int ar_estimate(double *x, int N, int method);

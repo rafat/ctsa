@@ -117,15 +117,13 @@ int ndiffs(double *x, int N,double *alpha, const char *test,const char *type, in
     }
 
     cc = checkConstant(x,N);
-    //printf("cc %d \n",cc);
 
     if (cc == 1) return d;
 
     NX = N;
 
-    dodiff = runstattests(x,N,test,type,*alpha);
+    dodiff = runstattests(x,N,test,type,alpha_);
 
-    //printf("dodiff %d \n",dodiff);
 
     if (dodiff != dodiff) return d;
 
@@ -147,7 +145,7 @@ int ndiffs(double *x, int N,double *alpha, const char *test,const char *type, in
 
         if (cc == 1) break;
 
-        dodiff = runstattests(z,NX,test,type,*alpha);
+        dodiff = runstattests(z,NX,test,type,alpha_);
 
         //printf("dodiff %d \n",dodiff);
 
