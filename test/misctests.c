@@ -1441,9 +1441,9 @@ void sarimaxtest() {
 	double *xpred, *amse;
 	sarimax_object obj;
 	int imean = 1;
-	p = 0;
-	d = 0;
-	q = 0;
+	p = 1;
+	d = 1;
+	q = 1;
 	s = 0;
 	P = 0;
 	D = 0;
@@ -1464,14 +1464,14 @@ void sarimaxtest() {
 	double temp2[1200];
 	double temp3[1200];
 
-	ifp = fopen("../data/e1m.dat", "r");
+	ifp = fopen("../data/seriesB.txt", "r");
 	i = 0;
 	if (!ifp) {
 		printf("Cannot Open File");
 		exit(100);
 	}
 	while (!feof(ifp)) {
-		fscanf(ifp, "%lf %lf %lf \n", &temp[i],&temp2[i],&temp3[i]);
+		fscanf(ifp, "%lf \n", &temp[i]);
 		i++;
 	}
 	N = i;
@@ -1482,8 +1482,8 @@ void sarimaxtest() {
 
 	for (i = 0; i < N; ++i) {
 		inp[i] = temp[i];
-		xreg[i] = temp2[i];
-		xreg[N+i] = temp3[i];
+		//xreg[i] = temp2[i];
+		//xreg[N+i] = temp3[i];
 		//printf("%g \n",inp[i]);
 	}
 
@@ -1491,7 +1491,7 @@ void sarimaxtest() {
 	obj = sarimax_init(p, d, q, P, D, Q, s, r ,imean, N);
 	sarimax_setMethod(obj, 0); // Method 0 ("CSS-MLE") is default. The method also accepts values 1 ("MLE") and 2 ("CSS")
 	//sarimax_setOptMethod(obj, 5);// Method 7 ("BFGS with More Thuente Line search") is default so this step is unnecessary. The method also accepts values 0,1,2,3,4,5,6. Check the documentation for details.
-	sarimax_exec(obj, inp,xreg);
+	sarimax_exec(obj, inp,NULL);
 	sarimax_summary(obj);
 	// Predict the next 5 values using the obtained ARIMA model
 	//arima_predict(obj, inp, L, xpred, amse);
@@ -1657,19 +1657,19 @@ void myarimatest() {
     or if P = D = Q = 0 then make sure that s is also 0. 
      Recheck the values if the program fails to execute.
     */
-	p = 0;
+	p = 1;
 	d = 1;
-	q = 4;
+	q = 1;
 	s = 0;
 	P = 0;
 	D = 0;
 	Q = 0;
-	r = 2;
+	r = 0;
 	int order[3] = {p,d,q};
 	int seasonal[4] = {P,D,Q,s};
 	const char *ic = "aic";
 	int trace = 0;
-	int constant = 1;
+	int constant = 0;
 	int approx = 0;
 	double offset = 0;
 	int rmethod = 0;
@@ -1685,14 +1685,14 @@ void myarimatest() {
     double temp1[1200];
     double temp2[1200];
 
-	ifp = fopen("../data/e1m.dat", "r");
+	ifp = fopen("../data/seriesB.txt", "r");
 	i = 0;
 	if (!ifp) {
 		printf("Cannot Open File");
 		exit(100);
 	}
 	while (!feof(ifp)) {
-		fscanf(ifp, "%lf %lf %lf \n", &temp[i],&temp1[i],&temp2[i]);
+		fscanf(ifp, "%lf \n", &temp[i]);
 		i++;
 	}
 	N = i - L;
@@ -1707,8 +1707,8 @@ void myarimatest() {
 
 	for (i = 0; i < N; ++i) {
 		inp[i] = temp[i];
-        xreg[i] = temp1[i];
-		xreg[N+i] = temp2[i];
+        //xreg[i] = temp1[i];
+		//xreg[N+i] = temp2[i];
 	}
 
     for(i = 0; i < L;++i) {
@@ -1718,10 +1718,12 @@ void myarimatest() {
 
 	drift = 1;
 	biasadj = 0;
-	method = 5;
+	method = 0;
 
 	//obj = sarimax_init(p, d, q, P, D, Q, s, r , N);
-	obj = myarima(inp,N,order,seasonal, constant, ic, trace, approx, offset,xreg, r, &rmethod) ;
+	obj = myarima(inp,N,order,seasonal, constant, ic, trace, approx, offset,NULL, r, &rmethod) ;
+
+	myarima_summary(obj);
 
     /* setMethod()
     Method 0 ("CSS-MLE") is default. The method also accepts values 1 ("MLE") and 2 ("CSS")
@@ -1747,7 +1749,6 @@ void aa1test() {
 	int i, N, d, D, L;
 	double *inp;
 	int p, q, P, Q, s, r;
-	int drift,biasadj,method;
 	double *xpred, *amse,*xreg,*newxreg;
 	aa_ret_object obj;
 	int imean = 1;
@@ -1756,22 +1757,14 @@ void aa1test() {
     or if P = D = Q = 0 then make sure that s is also 0. 
      Recheck the values if the program fails to execute.
     */
-	p = 0;
-	d = 0;
-	q = 0;
+	
 	s = 0;
-	P = 0;
-	D = 0;
-	Q = 0;
-	r = 2;
+	r = 0;
 	int order[3] = {p,d,q};
-	int seasonal[4] = {P,D,Q,s};
+	int seasonal[3] = {P,D,Q};
 	const char *ic = "aic";
-	int trace = 0;
-	int constant = 1;
-	int approx = 0;
-	double offset = 0;
-	int rmethod = 0;
+	int approx = 1;
+	int stepwise = 0;
 
 
 	L = 0;
@@ -1784,14 +1777,14 @@ void aa1test() {
     double temp1[1200];
     double temp2[1200];
 
-	ifp = fopen("../data/e1m.dat", "r");
+	ifp = fopen("../data/seriesB.txt", "r");
 	i = 0;
 	if (!ifp) {
 		printf("Cannot Open File");
 		exit(100);
 	}
 	while (!feof(ifp)) {
-		fscanf(ifp, "%lf %lf %lf \n", &temp[i],&temp1[i],&temp2[i]);
+		fscanf(ifp, "%lf \n", &temp[i]);
 		i++;
 	}
 	N = i - L;
@@ -1806,8 +1799,8 @@ void aa1test() {
 
 	for (i = 0; i < N; ++i) {
 		inp[i] = temp[i];
-        xreg[i] = temp1[i];
-		xreg[N+i] = temp2[i];
+        //xreg[i] = temp1[i];
+		//xreg[N+i] = temp2[i];
 	}
 
     for(i = 0; i < L;++i) {
@@ -1815,13 +1808,10 @@ void aa1test() {
         newxreg[i+L] = temp2[N + i];
     }
 
-	drift = 1;
-	biasadj = 0;
-	method = 5;
 
 	//obj = sarimax_init(p, d, q, P, D, Q, s, r , N);
 	//obj = myarima(inp,N,order,seasonal, constant, ic, trace, approx, offset,xreg, r, &rmethod) ;
-	obj = auto_arima1(inp, N,NULL,NULL,NULL,s,NULL,NULL,NULL,NULL,NULL, "aic", NULL,NULL,NULL,NULL,xreg,r, "kpss","level", NULL, "seas", NULL, NULL, NULL,NULL);
+	obj = auto_arima1(inp, N,order,seasonal,NULL,s,NULL,NULL,NULL,NULL,NULL, ic, &stepwise,NULL,&approx,NULL,NULL,r, "kpss","level", NULL, "seas", NULL, NULL, NULL,NULL);
 
 	aa_ret_summary(obj);
 
@@ -1844,11 +1834,55 @@ void aa1test() {
     free(newxreg);
 }
 
+void ndiffstest2() {
+	int i, L, N;
+	double *inp;
+
+	FILE *ifp;
+	double temp[1200];
+    double temp1[1200];
+    double temp2[1200];
+
+	ifp = fopen("../data/seriesB.txt", "r");
+	i = 0;
+	if (!ifp) {
+		printf("Cannot Open File");
+		exit(100);
+	}
+	while (!feof(ifp)) {
+		fscanf(ifp, "%lf %lf %lf \n", &temp[i],&temp1[i],&temp2[i]);
+		i++;
+	}
+	N = i - L;
+
+	inp = (double*)malloc(sizeof(double)* N);
+
+    /*
+    
+    */
+
+	for (i = 0; i < N; ++i) {
+		inp[i] = temp[i];
+        //xreg[i] = temp1[i];
+		//xreg[N+i] = temp2[i];
+	}
+
+	double alpha = 0.05;
+	const char *test = "kpss";
+	const char* type = "level";
+	int max_d = 2;
+	int d;
+
+	d = ndiffs(inp,N,&alpha,test,type,&max_d);
+
+	printf("d %d \n",d);
+}
+
 void searchtest() {
 	int i,j,p_max,q_max,P_max,Q_max,Order_max,d,D,s,stationary;
 	myarima_object obj;
 	double *inp,*xreg;
-	int N,r = 2;
+	int N,r = 0;
 	const char *ic = "aic";
 	int approximation = 0;
 	double offset = 0;
@@ -1859,14 +1893,14 @@ void searchtest() {
     double temp1[1200];
     double temp2[1200];
 
-	ifp = fopen("../data/e1m.dat", "r");
+	ifp = fopen("../data/seriesB.txt", "r");
 	i = 0;
 	if (!ifp) {
 		printf("Cannot Open File");
 		exit(100);
 	}
 	while (!feof(ifp)) {
-		fscanf(ifp, "%lf %lf %lf \n", &temp[i],&temp1[i],&temp2[i]);
+		fscanf(ifp, "%lf \n", &temp[i]);
 		i++;
 	}
 	N = i;
@@ -1876,23 +1910,23 @@ void searchtest() {
 
 	for (i = 0; i < N; ++i) {
 		inp[i] = temp[i];
-        xreg[i] = temp1[i];
-		xreg[N+i] = temp2[i];
+        //xreg[i] = temp1[i];
+		//xreg[N+i] = temp2[i];
 	}
 	d = 1;
 	D = 0;
 	s = 0;
 	P_max = 0;
 	Q_max = 0;
-	p_max = 5;
-	q_max = 5;
+	p_max = 1;
+	q_max = 1;
 	Order_max = 5;
 	stationary = 0;
-	allowdrift = 1;
+	allowdrift = 0;
 	allowmean = 1;
 	method = 0;
 
-	obj = search_arima(inp,N,d,D,p_max,q_max,P_max,Q_max,Order_max,stationary,s,ic,approximation, xreg,r,offset,allowdrift,allowmean,method);
+	obj = search_arima(inp,N,d,D,p_max,q_max,P_max,Q_max,Order_max,stationary,s,ic,approximation, NULL,r,offset,allowdrift,allowmean,method);
 
 	printf("ic %g \n",obj->ic);
 
@@ -1945,5 +1979,6 @@ int main() {
 	//myarimatest();
 	//searchtest();
 	aa1test();
+	//ndiffstest2();
     return 0;
 }

@@ -139,6 +139,68 @@ struct sarimax_set{
 	double params[0];
 };
 
+typedef struct auto_arima_set* auto_arima_object;
+
+auto_arima_object auto_arima_init(int *pdqmax,int *PDQmax,int s, int r,int imean, int N);
+
+struct auto_arima_set{
+	int N;// length of time series
+	int Nused;//length of time series after differencing, Nused = N - d
+	int method;
+	int optmethod;
+	int pmax;// Maximum size of phi
+	int dmax;// Maximum Number of times the series is to be differenced
+	int qmax;// Maximum size of theta
+	int Pmax;//Maximum Size of seasonal phi
+	int Dmax;// Maximum number of times the seasonal series is to be differenced
+	int Qmax;//Maximum size of Seasonal Theta
+	int p;// size of phi
+	int d;// Number of times the series is to be differenced
+	int q;//size of theta
+	int s;// Seasonality/Period
+	int P;//Size of seasonal phi
+	int D;// The number of times the seasonal series is to be differenced
+	int Q;//size of Seasonal Theta
+	int r;// Number of exogenous variables
+	int M; // M = 0 if mean is 0.0 else M = 1
+	int ncoeff;// Total Number of Coefficients to be estimated
+	double *phi;
+	double *theta;
+	double *PHI;
+	double *THETA;
+	double *exog;
+	double *vcov;// Variance-Covariance Matrix Of length lvcov
+	int lvcov; //length of VCOV
+	double *res;
+	double mean;
+	double var;
+	double loglik;
+	double ic;
+	int retval;
+	int start;
+	int imean;
+	int idrift;
+	int stationary;
+	int seasonal;
+	int Order_max;
+	int p_start;
+	int q_start;
+	int P_start;
+	int Q_start;
+	char information_criteria[10];
+	int stepwise;
+	int num_models;
+	int approximation;
+	char test[10];
+	char type[10];
+	char seas[10];
+	double alpha_test;
+	double alpha_seas;
+	double lambda;
+	double params[0];
+};
+
+
 typedef struct sarimax_wrapper_set* sarimax_wrapper_object;
 
 sarimax_wrapper_object sarimax_wrapper(sarimax_wrapper_object model,double *y, int N,int *order, int *seasonal, double *xreg, int r, int drift,int mean,
@@ -235,6 +297,8 @@ void sarimax_wrapper_summary(sarimax_wrapper_object obj);
 void aa_ret_summary(aa_ret_object obj);
 
 void sarima_summary(sarima_object obj);
+
+void myarima_summary(myarima_object obj);
 
 int ar_estimate(double *x, int N, int method);
 
