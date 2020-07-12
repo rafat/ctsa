@@ -141,7 +141,7 @@ struct sarimax_set{
 
 typedef struct auto_arima_set* auto_arima_object;
 
-auto_arima_object auto_arima_init(int *pdqmax,int *PDQmax,int s, int r,int imean, int N);
+auto_arima_object auto_arima_init(int *pdqmax,int *PDQmax,int s, int r, int N);
 
 struct auto_arima_set{
 	int N;// length of time series
@@ -252,6 +252,8 @@ void sarimax_exec(sarimax_object obj, double *inp,double *xreg) ;
 
 void sarima_exec(sarima_object obj, double *x);
 
+void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg);
+
 void ar_exec(ar_object obj, double *inp);
 
 void arima_predict(arima_object obj, double *inp, int L, double *xpred, double *amse);
@@ -325,6 +327,8 @@ void sarimax_wrapper_free(sarimax_wrapper_object object);
 void myarima_free(myarima_object object);
 
 void sarima_free(sarima_object object);
+
+void aa_ret_free(aa_ret_object object);
 
 void ar_free(ar_object object);
 

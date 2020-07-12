@@ -225,7 +225,7 @@ sarimax_object sarimax_init(int p, int d, int q,int P, int D, int Q,int s, int r
 	return obj;
 }
 
-auto_arima_object auto_arima_init(int *pdqmax,int *PDQmax,int s, int r,int imean, int N) {
+auto_arima_object auto_arima_init(int *pdqmax,int *PDQmax,int s, int r, int N) {
 	auto_arima_object obj = NULL;
 	int pmax,dmax,qmax,Pmax,Dmax,Qmax;
 	int i,ncxreg;
@@ -250,21 +250,7 @@ auto_arima_object auto_arima_init(int *pdqmax,int *PDQmax,int s, int r,int imean
 		Qmax = PDQmax[2];
 	}
 
-	if (imean < 0 || imean > 1) {
-		printf("imean only accepts one of two values - 0 and 1 \n");
-		exit(-1);
-	}
-
-	if (dmax + Dmax > 0) {
-		ncxreg = r;
-	}
-	else {
-		if (imean == 0) {
-			ncxreg = r;
-		} else {
-			ncxreg = 1 + r;
-		}
-	}
+	ncxreg = r + 1;
 	if (pmax < 0 || dmax < 0 || qmax < 0 || N <= 0 || Pmax < 0 || Dmax < 0 || Qmax < 0) {
 		printf("\n Input Values cannot be Negative. Program Exiting. \n");
 		exit(-1);
@@ -285,7 +271,6 @@ auto_arima_object auto_arima_init(int *pdqmax,int *PDQmax,int s, int r,int imean
 	obj->r = r;
 	obj->retval = 0;
 	obj->start = 0;
-	obj->imean = imean;
 
 	for(i = 0; i < (pmax + qmax + Pmax + Qmax + ncxreg + N) + (pmax + qmax + Pmax + Qmax + ncxreg )*(pmax + qmax + Pmax + Qmax + ncxreg ); ++i ) {
 		obj->params[i] = 0.0;
@@ -312,6 +297,7 @@ auto_arima_object auto_arima_init(int *pdqmax,int *PDQmax,int s, int r,int imean
 	obj->stepwise = 1;
 	obj->stationary = 0;
 	obj->approximation = (N > 150 || s >  12) ? 1 : 0;
+	//obj->approximation = 0;
 	obj->Order_max = 5;
 	obj->seasonal = 1;
 	obj->num_models = 94;
@@ -323,6 +309,7 @@ auto_arima_object auto_arima_init(int *pdqmax,int *PDQmax,int s, int r,int imean
 	strcpy(obj->test,"kpss");
 	strcpy(obj->seas,"seas");
 	strcpy(obj->information_criteria,"aicc");
+	strcpy(obj->type,"level");
 
 	obj->p_start = 2;
 	obj->q_start = 2;
@@ -410,6 +397,32 @@ void sarimax_exec(sarimax_object obj, double *inp,double *xreg)  {
 		printf("Only three methods are supported : 0 , 1 and 2 , where 0 is CSS-MLE ,1 is MLE and 2 is CSS \n");
 		exit(-1);
 	}
+}
+
+void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
+	aa_ret_object fit;
+	int order[3];
+	int seasonal[3];
+	int start[4];
+
+	order[0] = obj->pmax;
+	order[1] = obj->dmax;
+	order[2] = obj->qmax;
+	seasonal[0] = obj->Pmax;
+	seasonal[1] = obj->Dmax;
+	seasonal[2] = obj->Qmax;
+	start[0] = obj->p_start;
+	start[1] = obj->q_start;
+	start[2] = obj->P_start;
+	start[3] = obj->Q_start;
+
+	fit = auto_arima1(inp,obj->N,order,seasonal,&obj->Order_max,obj->s,NULL,NULL,start,&obj->stationary,&obj->seasonal, obj->information_criteria,
+	 &obj->stepwise,&obj->num_models,&obj->approximation,&obj->method,xreg,obj->r,obj->test,obj->type, &obj->alpha_test,obj->seas, &obj->alpha_seas,
+	 &obj->idrift, &obj->imean, &obj->lambda);
+
+	aa_ret_summary(fit);
+
+	//aa_ret_free(fit);
 }
 
 void sarima_exec(sarima_object obj, double *inp) {
@@ -777,7 +790,6 @@ myarima_object myarima(double *x, int N, int *order, int *seasonal, int constant
 	} else {
 		fit->ic = DBL_MAX;
 	}
-
 
 	return fit;
 }
@@ -1248,6 +1260,8 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			q_max = (q_max < m-1) ? q_max : m - 1;
 		}
 	}
+
+	printf("iapprox %d \n",iapprox);
 
 	if (iapprox) {
 		approxfit = sarimax_init(0,d,0,0,D,0,s,r,imean,N);
@@ -1939,10 +1953,10 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 
 			}	
 		}
-
-		
 	
 	}
+
+	printf("DEBUG 5 \n");
 
 	if (k > models) {
 		printf("Warning : Stepwise search was stopped early due to reaching the model number limit: %d \n",models);
@@ -1953,6 +1967,8 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 	// Delete the previous best model
 
 	myarima_free(bestfit);
+
+	printf("DEBUG 6 k %d \n",k);
 
 	// Refit if Approximation was used
 
@@ -1967,7 +1983,11 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		sort1d_ascending(icvector,k,icindex);
 
 		for(i = 0; i < k;++i) {
-			myarima_free(fit->myarima);
+			if (i > 0) {
+				myarima_free(fit->myarima);
+			}
+			
+			printf(" Free %d \n",i+1);
 			order[0] = results[icindex[i]*8];
 			order[1] = d;
 			order[2] = results[icindex[i]*8 + 2];
@@ -1989,9 +2009,11 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			}
 		}
 
-
-		free(icvector);
-		free(icindex);
+		if (iapprox != 0) {
+			free(icvector);
+			free(icindex);
+		}
+		
 	}
 
 	// Refit The Best Model
@@ -3800,6 +3822,15 @@ void sarimax_wrapper_free(sarimax_wrapper_object object) {
 
 void myarima_free(myarima_object object) {
 	sarimax_free(object->sarimax);
+	free(object);
+}
+
+void aa_ret_free(aa_ret_object object) {
+	if (object->otype == 1) {
+		free(object->myarima);
+	} else {
+		free(object->Arima);
+	}
 	free(object);
 }
 
