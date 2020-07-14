@@ -418,7 +418,11 @@ void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
 
 	fit = auto_arima1(inp,obj->N,order,seasonal,&obj->Order_max,obj->s,NULL,NULL,start,&obj->stationary,&obj->seasonal, obj->information_criteria,
 	 &obj->stepwise,&obj->num_models,&obj->approximation,&obj->method,xreg,obj->r,obj->test,obj->type, &obj->alpha_test,obj->seas, &obj->alpha_seas,
-	 &obj->idrift, &obj->imean, &obj->lambda);
+	 &obj->idrift, &obj->imean, NULL);
+
+	//fit = auto_arima1(inp,obj->N,order,seasonal,&obj->Order_max,obj->s,NULL,NULL,start,&obj->stationary,&obj->seasonal, obj->information_criteria,
+	// &obj->stepwise,&obj->num_models,&obj->approximation,&obj->method,xreg,obj->r,obj->test,obj->type, &obj->alpha_test,obj->seas, &obj->alpha_seas,
+	// &obj->idrift, &obj->imean, &obj->lambda);
 
 	aa_ret_summary(fit);
 
@@ -1015,6 +1019,8 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 
 	memcpy(x,y,sizeof(double)*N);
 
+	mdisplay(x,1,N);
+
 	printf("DEBUG 2. \n");
 
 	if (s <= 1) {
@@ -1046,6 +1052,8 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 	if ( N <= 3) ic = "aic";
 
 	if (lambda != NULL) boxcox_eval(y,N,*lambda,x);
+
+	mdisplay(x,1,N);
 
 	xx = (double*) malloc(sizeof(double)*N);
 	dx = (double*) malloc(sizeof(double)*N);
@@ -1265,7 +1273,12 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 
 	if (iapprox) {
 		approxfit = sarimax_init(0,d,0,0,D,0,s,r,imean,N);
-		sarimax_exec(approxfit,x,xreg);
+		mdisplay(x,1,N);
+		if (r == 0) {
+			sarimax_exec(approxfit,x,NULL);
+		} else {
+			sarimax_exec(approxfit,x,xreg);
+		}
 
 		if (approxfit->retval == 1) {
 			offset = -2.0 * approxfit->loglik - (double) N * log(approxfit->var);
@@ -1273,10 +1286,14 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			offset = 0;
 		}
 
+		sarimax_summary(approxfit);
+
 		sarimax_free(approxfit);
 	} else {
 		offset = 0;
 	}
+
+	printf("offset %g \n",offset);
 
 	idrift = idrift && (d + D == 1);
 	imean = imean && (d + D == 0);
@@ -1963,6 +1980,8 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		k--;
 	}
 
+	mdisplay(results,models,8);
+
 
 	// Delete the previous best model
 
@@ -2268,6 +2287,21 @@ void sarimax_setMethod(sarimax_object obj, int value) {
 	}
 }
 
+void auto_arima_setMethod(auto_arima_object obj, int value) {
+	if (value == 0) {
+		obj->method = 0;
+	}
+	else if (value == 1) {
+		obj->method = 1;
+	}
+	else if (value == 2) {
+		obj->method = 2;
+	}
+	else {
+		printf("\n Acceptable Numerical Values 0 - CSS-MLE, 1 - MLE, 2 - CSS \n");
+	}
+}
+
 void sarimax_setParams(sarimax_object obj, double *phi, double *theta, double *PHI, double *THETA) {
 	int i;
 	if (phi) {
@@ -2493,6 +2527,54 @@ void sarimax_setOptMethod(sarimax_object obj, int value) {
 	}
 }
 
+void auto_arima_setOptMethod(auto_arima_object obj, int value) {
+	/*
+	* Method 0 - Nelder-Mead
+	* Method 1 - Newton Line Search
+	* Method 2 - Newton Trust Region - Hook Step
+	* Method 3 - Newton Trust Region - Double Dog-Leg
+	* Method 4 - Conjugate Gradient
+	* Method 5 - BFGS
+	* Method 6 - Limited Memory BFGS
+	* Method 7 - BFGS More-Thuente Line Search
+	*/
+	if (value == 0) {
+		obj->optmethod = 0;
+	}
+	else if (value == 1) {
+		obj->optmethod = 1;
+	}
+	else if (value == 2) {
+		obj->optmethod = 2;
+	}
+	else if (value == 3) {
+		obj->optmethod = 3;
+	}
+	else if (value == 4) {
+		obj->optmethod = 4;
+	}
+	else if (value == 5) {
+		obj->optmethod = 5;
+	}
+	else if (value == 6) {
+		obj->optmethod = 6;
+	}
+	else if (value == 7) {
+		obj->optmethod = 7;
+	}
+	else {
+		printf("\n Acceptable Numerical Values 0,1,2,3,4,5,6,7 \n");
+		printf("\n Method 0 - Nelder-Mead \n");
+		printf("\n Method 1 - Newton Line Search \n");
+		printf("\n Method 2 - Newton Trust Region - Hook Step \n");
+		printf("\n Method 3 - Newton Trust Region - Double Dog-Leg \n");
+		printf("\n Method 4 - Conjugate Gradient \n");
+		printf("\n Method 5 - BFGS \n");
+		printf("\n Method 6 - Limited Memory BFGS \n");
+		printf("\n Method 7 - BFGS More-Thuente Line Search \n");
+	}
+}
+
 void arima_vcov(arima_object obj, double *vcov) {
 	int i;
 
@@ -2514,6 +2596,14 @@ void sarimax_vcov(sarimax_object obj, double *vcov) {
 
 	for (i = 0; i < obj->lvcov; ++i) {
 		vcov[i] = obj->vcov[i];
+	}
+}
+
+void auto_arima_setApproximation(auto_arima_object obj, int approximation) {
+	if (approximation == 0 || approximation == 1) {
+		obj->approximation = approximation;
+	} else {
+		printf("Approximation parameter accepts only two values - 0 or 1 \n");
 	}
 }
 

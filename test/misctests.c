@@ -1543,14 +1543,14 @@ void refittest() {
     or if P = D = Q = 0 then make sure that s is also 0. 
      Recheck the values if the program fails to execute.
     */
-	p = 0;
+	p = 2;
 	d = 1;
-	q = 0;
-	s = 12;
+	q = 2;
+	s = 0;
 	P = 0;
-	D = 1;
+	D = 0;
 	Q = 0;
-	r = 2;
+	r = 0;
 	int order[3] = {p,d,q};
 	int seasonal[4] = {P,D,Q,s};
 
@@ -1565,14 +1565,14 @@ void refittest() {
     double temp1[1200];
     double temp2[1200];
 
-	ifp = fopen("../data/e1m.dat", "r");
+	ifp = fopen("../data/seriesB.txt", "r");
 	i = 0;
 	if (!ifp) {
 		printf("Cannot Open File");
 		exit(100);
 	}
 	while (!feof(ifp)) {
-		fscanf(ifp, "%lf %lf %lf \n", &temp[i],&temp1[i],&temp2[i]);
+		fscanf(ifp, "%lf \n", &temp[i]);
 		i++;
 	}
 	N = i - L;
@@ -1587,8 +1587,8 @@ void refittest() {
 
 	for (i = 0; i < N; ++i) {
 		inp[i] = temp[i];
-        xreg[i] = temp1[i];
-		xreg[N+i] = temp2[i];
+        //xreg[i] = temp1[i];
+		//xreg[N+i] = temp2[i];
 	}
 
     for(i = 0; i < L;++i) {
@@ -1601,7 +1601,7 @@ void refittest() {
 	method = 0;
 
 	//obj = sarimax_init(p, d, q, P, D, Q, s, r , N);
-	obj = sarimax_wrapper(NULL,inp,N,order,seasonal,xreg,r,drift,imean,NULL,biasadj,method);
+	obj = sarimax_wrapper(NULL,inp,N,order,seasonal,NULL,r,drift,imean,NULL,biasadj,method);
 
     /* setMethod()
     Method 0 ("CSS-MLE") is default. The method also accepts values 1 ("MLE") and 2 ("CSS")
@@ -1693,9 +1693,6 @@ void autotest1() {
     xreg = (double*)malloc(sizeof(double)* N * 2);
     newxreg = (double*)malloc(sizeof(double)* L * 2);
 
-    /*
-    
-    */
 
 	for (i = 0; i < N; ++i) {
 		inp[i] = temp[i];
@@ -1839,8 +1836,8 @@ void aa1test() {
 	int order[3] = {p,d,q};
 	int seasonal[3] = {P,D,Q};
 	const char *ic = "aicc";
-	int approx = 1;
-	int stepwise = 1;
+	int approx = 0;
+	int stepwise = 0;
 
 
 	L = 0;
@@ -1887,7 +1884,7 @@ void aa1test() {
 
 	//obj = sarimax_init(p, d, q, P, D, Q, s, r , N);
 	//obj = myarima(inp,N,order,seasonal, constant, ic, trace, approx, offset,xreg, r, &rmethod) ;
-	obj = auto_arima1(inp, N,order,seasonal,NULL,s,NULL,NULL,NULL,NULL,NULL, ic, &stepwise,NULL,&approx,NULL,NULL,r, "kpss","level", NULL, "seas", NULL, NULL, NULL,NULL);
+	obj = auto_arima1(inp, N,NULL,NULL,NULL,s,NULL,NULL,NULL,NULL,NULL, ic, &stepwise,NULL,&approx,NULL,NULL,r, "kpss","level", NULL, "seas", NULL, NULL, NULL,NULL);
 
 	aa_ret_summary(obj);
 

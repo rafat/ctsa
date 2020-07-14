@@ -10,12 +10,12 @@ int main(void) {
 	double *phi, *theta;
 	double *xpred, *amse;
 	arima_object obj;
-	p = 1;
-	d = 0;
-	q = 1;
+	p = 0;
+	d = 1;
+	q = 0;
 
 
-	L = 5;
+	L = 0;
 
 	phi = (double*)malloc(sizeof(double)* p);
 	theta = (double*)malloc(sizeof(double)* q);
