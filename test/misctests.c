@@ -1707,6 +1707,9 @@ void autotest1() {
 
 	obj = auto_arima_init(order,seasonal,s,r,N);
 
+	auto_arima_setApproximation(obj,0);
+	auto_arima_setStepwise(obj,0);
+
 	auto_arima_exec(obj,inp,NULL);
 
 	

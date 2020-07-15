@@ -420,9 +420,11 @@ void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
 	 &obj->stepwise,&obj->num_models,&obj->approximation,&obj->method,xreg,obj->r,obj->test,obj->type, &obj->alpha_test,obj->seas, &obj->alpha_seas,
 	 &obj->idrift, &obj->imean, NULL);
 
-	//fit = auto_arima1(inp,obj->N,order,seasonal,&obj->Order_max,obj->s,NULL,NULL,start,&obj->stationary,&obj->seasonal, obj->information_criteria,
-	// &obj->stepwise,&obj->num_models,&obj->approximation,&obj->method,xreg,obj->r,obj->test,obj->type, &obj->alpha_test,obj->seas, &obj->alpha_seas,
-	// &obj->idrift, &obj->imean, &obj->lambda);
+	if (fit->otype == 2) {
+
+	} else if (fit->otype == 1) {
+		
+	}
 
 	aa_ret_summary(fit);
 
@@ -2302,6 +2304,7 @@ void auto_arima_setMethod(auto_arima_object obj, int value) {
 	}
 }
 
+
 void sarimax_setParams(sarimax_object obj, double *phi, double *theta, double *PHI, double *THETA) {
 	int i;
 	if (phi) {
@@ -2604,6 +2607,75 @@ void auto_arima_setApproximation(auto_arima_object obj, int approximation) {
 		obj->approximation = approximation;
 	} else {
 		printf("Approximation parameter accepts only two values - 0 or 1 \n");
+	}
+}
+
+void auto_arima_setStepwise(auto_arima_object obj, int stepwise) {
+	if (stepwise == 0 || stepwise == 1) {
+		obj->stepwise = stepwise;
+	} else {
+		printf("Stepwise parameter accepts only two values - 0 or 1 \n");
+	}
+}
+
+void auto_arima_setStationary(auto_arima_object obj, int stationary) {
+	if (stationary == 0 || stationary == 1) {
+		obj->stationary = stationary;
+	} else {
+		printf("Stationary parameter accepts only two values - 0 or 1 \n");
+	}
+}
+
+void auto_arima_setSeasonal(auto_arima_object obj, int seasonal) {
+	if (seasonal == 0 || seasonal == 1) {
+		obj->seasonal = seasonal;
+	} else {
+		printf("Seasonal parameter accepts only two values - 0 or 1 \n");
+	}
+}
+
+void auto_arima_setStationarityParameters(auto_arima_object obj,const char *test, double alpha, const char *type) {
+	if (!strcmp(test,"kpss") || !strcmp(test,"pp") || !strcmp(test,"df") || !strcmp(test,"adf")) {
+		strcpy(obj->test,test);
+	} else {
+		printf("Only three tests are allowed - kpss, df and pp \n");
+		exit(-1);
+	}
+
+	if (!strcmp(type,"level") || !strcmp(type,"trend")) {
+		strcpy(obj->type,type);
+	} else {
+		printf("Only two tests are allowed - level and trend \n");
+		exit(-1);
+	}
+
+	obj->alpha_test = alpha;
+}
+
+void auto_arima_setSeasonalParameters(auto_arima_object obj,const char *test, double alpha) {
+	if (!strcmp(test,"ocsb") || !strcmp(test,"seas")) {
+		strcpy(obj->seas,test);
+	} else {
+		printf("Only two tests are allowed - seas and ocsb \n");
+		exit(-1);
+	}
+
+	obj->alpha_seas = alpha;
+}
+
+void auto_arima_allowMean(auto_arima_object obj, int allowmean) {
+	if (allowmean == 0 || allowmean == 1) {
+		obj->imean = allowmean;
+	} else {
+		printf("Allowmean parameter accepts only two values - 0 or 1 \n");
+	}
+}
+
+void auto_arima_allowDrift(auto_arima_object obj, int allowdrift) {
+	if (allowdrift == 0 || allowdrift == 1) {
+		obj->idrift = allowdrift;
+	} else {
+		printf("Allowdrift parameter accepts only two values - 0 or 1 \n");
 	}
 }
 

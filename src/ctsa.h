@@ -294,6 +294,18 @@ void sarima_vcov(sarima_object obj, double *vcov);
 
 void sarimax_vcov(sarimax_object obj, double *vcov);
 
+void auto_arima_setApproximation(auto_arima_object obj, int approximation);
+
+void auto_arima_setStepwise(auto_arima_object obj, int stepwise);
+
+void auto_arima_setStationary(auto_arima_object obj, int stationary);
+
+void auto_arima_setSeasonal(auto_arima_object obj, int seasonal);
+
+void auto_arima_setStationarityParameters(auto_arima_object obj,const char *test, double alpha, const char *type);
+
+void auto_arima_setSeasonalParameters(auto_arima_object obj,const char *test, double alpha);
+
 void arima_summary(arima_object obj);
 
 void sarimax_summary(sarimax_object obj);
