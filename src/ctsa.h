@@ -197,6 +197,10 @@ struct auto_arima_set{
 	double alpha_test;
 	double alpha_seas;
 	double lambda;
+	double sigma2;
+	double aic;
+	double bic;
+	double aicc;
 	double params[0];
 };
 
@@ -262,6 +266,8 @@ void sarima_predict(sarima_object obj, double *inp, int L, double *xpred, double
 
 void sarimax_predict(sarimax_object obj, double *inp, double *xreg, int L,double *newxreg, double *xpred, double *amse);
 
+void auto_arima_predict(auto_arima_object obj, double *inp, double *xreg, int L,double *newxreg, double *xpred, double *amse);
+
 void sarimax_wrapper_predict(sarimax_wrapper_object obj, double *inp, double *xreg, int L,double *newxreg, double *xpred, double *amse);
 
 void ar_predict(ar_object obj, double *inp, int L, double *xpred, double *amse);
@@ -309,6 +315,8 @@ void auto_arima_setSeasonalParameters(auto_arima_object obj,const char *test, do
 void arima_summary(arima_object obj);
 
 void sarimax_summary(sarimax_object obj);
+
+void auto_arima_summary(auto_arima_object obj);
 
 void sarimax_wrapper_summary(sarimax_wrapper_object obj);
 
