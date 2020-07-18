@@ -1712,6 +1712,10 @@ void autotest1() {
 
 	auto_arima_exec(obj,inp,NULL);
 
+	auto_arima_summary(obj);
+
+	auto_arima_free(obj);
+
 	
 	free(inp);
 	free(xpred);

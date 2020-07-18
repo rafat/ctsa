@@ -435,10 +435,12 @@ void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
 		r = fit->Arima->sarimax->r;
 		s = fit->Arima->sarimax->s;
 		M = fit->Arima->sarimax->M;
+		N = fit->Arima->sarimax->N;
 		retval = fit->Arima->sarimax->retval;
 		obj->mean = fit->Arima->sarimax->mean;
 	    obj->var = fit->Arima->sarimax->var;
 		obj->loglik = fit->Arima->sarimax->loglik;
+		obj->idrift = fit->Arima->idrift;
 
 		iter = (p + q + P + Q + M + N - d - s*D) + (p + q + P + Q + M )*(p + q + P + Q + M );
 
@@ -462,10 +464,12 @@ void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
 		r = fit->myarima->sarimax->r;
 		s = fit->myarima->sarimax->s;
 		M = fit->myarima->sarimax->M;
+		N = fit->myarima->sarimax->N;
 		retval = fit->myarima->sarimax->retval;
 		obj->mean = fit->myarima->sarimax->mean;
 	    obj->var = fit->myarima->sarimax->var;
 		obj->loglik = fit->myarima->sarimax->loglik;
+		obj->idrift = fit->myarima->idrift;
 
 		iter = (p + q + P + Q + M + N - d - s*D) + (p + q + P + Q + M )*(p + q + P + Q + M );
 
@@ -507,7 +511,7 @@ void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
 
 	aa_ret_summary(fit);
 
-	//aa_ret_free(fit);
+	aa_ret_free(fit);
 }
 
 void sarima_exec(sarima_object obj, double *inp) {
@@ -3039,7 +3043,7 @@ void auto_arima_predict(auto_arima_object obj, double *inp, double *xreg, int L,
 		if (obj->idrift == 1) {
 			W[i] -= obj->exog[0]*(i+1);
 		}
-		if (obj->sarimax->r > 0) {
+		if (obj->r > 0) {
 			for(j = diter; j < obj->r;++j) {
 				W[i] -= obj->exog[j] * xreg[(j-diter)*N+i];
 			}
@@ -4326,6 +4330,10 @@ void aa_ret_free(aa_ret_object object) {
 	} else {
 		free(object->Arima);
 	}
+	free(object);
+}
+
+void auto_arima_free(auto_arima_object object) {
 	free(object);
 }
 

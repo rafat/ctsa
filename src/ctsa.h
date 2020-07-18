@@ -346,6 +346,8 @@ void arima_free(arima_object object);
 
 void sarimax_free(sarimax_object object);
 
+void auto_arima_free(auto_arima_object object);
+
 void sarimax_wrapper_free(sarimax_wrapper_object object);
 
 void myarima_free(myarima_object object);
