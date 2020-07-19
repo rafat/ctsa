@@ -509,7 +509,7 @@ void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
 	obj->lvcov = (p + q + P + Q + M )*(p + q + P + Q + M );
 	obj->ncoeff = p + q + P + Q + M ;
 
-	aa_ret_summary(fit);
+	//aa_ret_summary(fit);
 
 	aa_ret_free(fit);
 }
@@ -715,7 +715,7 @@ myarima_object myarima(double *x, int N, int *order, int *seasonal, int constant
 		fit->sarimax = sarimax_init(p,d,q,P,D,Q,s,rr,imean,N);
 		sarimax_exec(fit->sarimax,x,xreg2);
 		free(xreg2);
-		//sarimax_summary(fit->sarimax);
+		sarimax_summary(fit->sarimax);
 	} else {
 		imean = constant;
 		if (rr > 0) {
@@ -726,9 +726,10 @@ myarima_object myarima(double *x, int N, int *order, int *seasonal, int constant
 			sarimax_exec(fit->sarimax,x,xreg2);
 			free(xreg2);
 		} else {
-			printf("p: %d d: %d q: %d P: %d D: %d Q: %d \n",p,d,q,P,D,Q);
+			//printf("p: %d d: %d q: %d P: %d D: %d Q: %d s: %d imean %d \n",p,d,q,P,D,Q,s,imean);
 			fit->sarimax = sarimax_init(p,d,q,P,D,Q,s,0,imean,N);
 			sarimax_setMethod(fit->sarimax,rmethod);
+			//mdisplay(x,1,N);
 			sarimax_exec(fit->sarimax,x,NULL);
 			//sarimax_summary(fit->sarimax);
 		}
@@ -803,6 +804,8 @@ myarima_object myarima(double *x, int N, int *order, int *seasonal, int constant
 		zeror = (double*)malloc(sizeof(double)*ir);
 		zeroi = (double*)malloc(sizeof(double)*ir);
 
+		//printf(" p P %d \n", p+P);
+
 		if (p + P > 0) {
 			isum = 0;
 			imx = -1;
@@ -835,6 +838,8 @@ myarima_object myarima(double *x, int N, int *order, int *seasonal, int constant
 			}
 
 		}
+
+		//printf(" q Q %d \n", q+Q);
 
 		if (q + Q > 1 && fit->ic < DBL_MAX) {
 			isum = 0;
@@ -907,6 +912,8 @@ myarima_object search_arima(double *x, int N,int d, int D, int p_max, int q_max,
 
 	//serial implementation
 
+	//printf("d %d D %d p_max %d q_max %d P_max %d Q_max %d maxK %d \n",d,D,p_max,q_max,P_max,Q_max,maxK);
+
 	best_ic = DBL_MAX;
 
 	for(i = 0; i <= p_max; ++i) {
@@ -921,7 +928,7 @@ myarima_object search_arima(double *x, int N,int d, int D, int p_max, int q_max,
 							
 							if (s == 0) {
 								seasonal[0] = seasonal[1] = seasonal[2] = seasonal[3] = 0;
-							} else if (I == J == D == 0) {
+							} else if (I == 0 && J == 0 && D == 0) {
 								seasonal[3] = 0;
 							} else {
 								seasonal[0] = I;
@@ -931,7 +938,7 @@ myarima_object search_arima(double *x, int N,int d, int D, int p_max, int q_max,
 							}
 
 							fit = myarima(x,N,order,seasonal, K, ic, trace, approximation, offset,xreg, r, &method);
-							myarima_summary(fit);
+							//myarima_summary(fit);
 
 							if (best_ic > fit->ic) {
 								best_ic = fit->ic;
@@ -1017,8 +1024,6 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 	double offset, best_ic;
 	int *icindex;
 
-	printf("DEBUG 1. \n");
-
 	fit = (aa_ret_object) malloc (sizeof(struct aa_ret_set));
 
 	fit->otype = 0;
@@ -1042,6 +1047,9 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		D_max = seasonalmax[1];
 		Q_max = seasonalmax[2];
 	}
+
+	printf("seasonalmax %d %d %d \n",seasonalmax[0],seasonalmax[1],seasonalmax[2]);
+	printf("seasonalmax %d %d %d \n", P_max,D_max,Q_max);
 
 	if (maxcoeff == NULL) {
 		Order_max = 5;
@@ -1108,8 +1116,6 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 
 	mdisplay(x,1,N);
 
-	printf("DEBUG 2. \n");
-
 	if (s <= 1) {
 		m = 1;
 	} else {
@@ -1131,7 +1137,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 	p_max = (p_max < N3) ? p_max : N3;
 	q_max = (q_max < N3) ? q_max : N3;
 
-	N3 = N3 / m;
+	N3m = N3 / m;
 
 	P_max = (P_max < N3m) ? P_max : N3m;
 	Q_max = (Q_max < N3m) ? Q_max : N3m;
@@ -1140,7 +1146,6 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 
 	if (lambda != NULL) boxcox_eval(y,N,*lambda,x);
 
-	mdisplay(x,1,N);
 
 	xx = (double*) malloc(sizeof(double)*N);
 	dx = (double*) malloc(sizeof(double)*N);
@@ -1172,8 +1177,6 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		free(varcovar);
 	}
 
-	printf("DEBUG 3. \n");
-
 	D = DD == NULL ? -1 : *DD;
 
 	if (istationary) {
@@ -1200,8 +1203,6 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		}
 	}
 
-	printf("D %d \n",D);
-
 	Nd = N - s * D;
 
 	if (D > 0) {
@@ -1221,8 +1222,6 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 
 	d = dd == NULL ? -1 : *dd;
 
-	printf("d %d Nd %d \n",d,Nd);
-
 	if (d == -1) {
 		printf("alpha %g test %s type %s d_max %d \n",test_alpha,test,type,d_max);
 		d = ndiffs(dx,Nd,test_alpha,test,type,&d_max);
@@ -1241,8 +1240,6 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		}
 	}
 
-	printf("d %d \n",d);
-
 	Ndd = Nd - d;
 
 	if (d > 0) {
@@ -1251,8 +1248,6 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		Ndd = Nd;
 		memcpy(diffdx,dx,sizeof(double)*Ndd);
 	}
-
-	printf("DEBUG 4. \n");
 
 	if (Ndd == 0) {
 		free(x);
@@ -1346,7 +1341,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 
 	}
 
-
+	printf("P_max %d Q_max %d \n",P_max,Q_max);
 	if (m > 1) {
 		if (P_max > 0) {
 			p_max = (p_max < m-1) ? p_max : m - 1;
@@ -1356,11 +1351,10 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		}
 	}
 
-	printf("iapprox %d \n",iapprox);
 
 	if (iapprox) {
 		approxfit = sarimax_init(0,d,0,0,D,0,s,r,imean,N);
-		mdisplay(x,1,N);
+		//mdisplay(x,1,N);
 		if (r == 0) {
 			sarimax_exec(approxfit,x,NULL);
 		} else {
@@ -1373,19 +1367,19 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			offset = 0;
 		}
 
-		sarimax_summary(approxfit);
+		//sarimax_summary(approxfit);
 
 		sarimax_free(approxfit);
 	} else {
 		offset = 0;
 	}
 
-	printf("offset %g \n",offset);
-
 	idrift = idrift && (d + D == 1);
 	imean = imean && (d + D == 0);
 
 	constant =  (idrift || imean);
+
+	printf("P_max %d Q_max %d \n",P_max,Q_max);
 
 	if (!istepwise) {
 		fit->otype = 1;
@@ -2060,8 +2054,6 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 	
 	}
 
-	printf("DEBUG 5 \n");
-
 	if (k > models) {
 		printf("Warning : Stepwise search was stopped early due to reaching the model number limit: %d \n",models);
 		k--;
@@ -2073,8 +2065,6 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 	// Delete the previous best model
 
 	myarima_free(bestfit);
-
-	printf("DEBUG 6 k %d \n",k);
 
 	// Refit if Approximation was used
 
@@ -2093,7 +2083,6 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 				myarima_free(fit->myarima);
 			}
 			
-			printf(" Free %d \n",i+1);
 			order[0] = results[icindex[i]*8];
 			order[1] = d;
 			order[2] = results[icindex[i]*8 + 2];
