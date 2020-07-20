@@ -715,7 +715,7 @@ myarima_object myarima(double *x, int N, int *order, int *seasonal, int constant
 		fit->sarimax = sarimax_init(p,d,q,P,D,Q,s,rr,imean,N);
 		sarimax_exec(fit->sarimax,x,xreg2);
 		free(xreg2);
-		sarimax_summary(fit->sarimax);
+		//sarimax_summary(fit->sarimax);
 	} else {
 		imean = constant;
 		if (rr > 0) {
@@ -938,6 +938,7 @@ myarima_object search_arima(double *x, int N,int d, int D, int p_max, int q_max,
 							}
 
 							fit = myarima(x,N,order,seasonal, K, ic, trace, approximation, offset,xreg, r, &method);
+							printf("p: %d d: %d q: %d P: %d D: %d Q: %d ic: %g \n",fit->sarimax->p,d,fit->sarimax->q,fit->sarimax->P,D,fit->sarimax->Q,fit->ic);
 							//myarima_summary(fit);
 
 							if (best_ic > fit->ic) {

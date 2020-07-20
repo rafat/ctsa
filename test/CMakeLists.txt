@@ -42,8 +42,12 @@ add_executable(sarimaxtest3 sarimaxtest3.c)
 
 target_link_libraries(sarimaxtest3 ctsalib m)
 
+add_executable(autoarimatest2 autoarimatest2.c)
 
-set_target_properties(acftest arimatest artest artest2 pacftest sarimatest misctests dwttests sarimaxtest1 sarimaxtest2 sarimaxtest3
+target_link_libraries(autoarimatest2 ctsalib m)
+
+
+set_target_properties(acftest arimatest artest artest2 pacftest sarimatest misctests dwttests sarimaxtest1 sarimaxtest2 sarimaxtest3 autoarimatest2
         PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/test"
 )
