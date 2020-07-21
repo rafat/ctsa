@@ -2265,8 +2265,8 @@ int main() {
 	//searchtest();
 	//aa1test();
 	//ndiffstest2();
-	//autotest1();
+	autotest1();
 	//autotest2();
-	autotest3();
+	//autotest3();
     return 0;
 }

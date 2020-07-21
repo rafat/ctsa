@@ -938,7 +938,7 @@ myarima_object search_arima(double *x, int N,int d, int D, int p_max, int q_max,
 							}
 
 							fit = myarima(x,N,order,seasonal, K, ic, trace, approximation, offset,xreg, r, &method);
-							printf("p: %d d: %d q: %d P: %d D: %d Q: %d ic: %g \n",fit->sarimax->p,d,fit->sarimax->q,fit->sarimax->P,D,fit->sarimax->Q,fit->ic);
+							//printf("p: %d d: %d q: %d P: %d D: %d Q: %d ic: %g \n",fit->sarimax->p,d,fit->sarimax->q,fit->sarimax->P,D,fit->sarimax->Q,fit->ic);
 							//myarima_summary(fit);
 
 							if (best_ic > fit->ic) {
@@ -3751,6 +3751,10 @@ void auto_arima_summary(auto_arima_object obj) {
 		printf("Log Likelihood : %g ", obj->loglik);
 		printf("\n\n");
 	}
+	printf("Auto ARIMA Parameters ");
+	printf("\n\n");
+	printf("Approximation: %s \n", obj->approximation == 1 ? "TRUE" : "FALSE");
+	printf("Stepwise: %s", obj->stepwise == 1 ? "TRUE" : "FALSE");
 }
 
 void sarimax_wrapper_summary(sarimax_wrapper_object obj) {
