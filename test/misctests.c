@@ -2096,7 +2096,7 @@ void aa1test() {
 
 	//obj = sarimax_init(p, d, q, P, D, Q, s, r , N);
 	//obj = myarima(inp,N,order,seasonal, constant, ic, trace, approx, offset,xreg, r, &rmethod) ;
-	obj = auto_arima1(inp, N,NULL,NULL,NULL,s,NULL,NULL,NULL,NULL,NULL, ic, &stepwise,NULL,&approx,NULL,NULL,r, "kpss","level", NULL, "seas", NULL, NULL, NULL,NULL);
+	obj = auto_arima1(inp, N,NULL,NULL,NULL,s,NULL,NULL,NULL,NULL,NULL, ic, &stepwise,NULL,&approx,NULL,NULL,r, "kpss","level", NULL, "seas", NULL, NULL, NULL,0,NULL);
 
 	aa_ret_summary(obj);
 
@@ -2211,7 +2211,7 @@ void searchtest() {
 	allowmean = 1;
 	method = 0;
 
-	obj = search_arima(inp,N,d,D,p_max,q_max,P_max,Q_max,Order_max,stationary,s,ic,approximation, NULL,r,offset,allowdrift,allowmean,method);
+	obj = search_arima(inp,N,d,D,p_max,q_max,P_max,Q_max,Order_max,stationary,s,ic,approximation, NULL,r,offset,allowdrift,allowmean,0,method);
 
 	printf("ic %g \n",obj->ic);
 

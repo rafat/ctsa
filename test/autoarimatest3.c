@@ -73,6 +73,7 @@ int main(void) {
 
 	auto_arima_setApproximation(obj,0);
 	auto_arima_setStepwise(obj,0);
+	auto_arima_setVerbose(obj,1);
 
 	auto_arima_exec(obj,inp,xreg);
 

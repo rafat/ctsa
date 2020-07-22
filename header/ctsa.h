@@ -64,6 +64,7 @@ struct auto_arima_set{
 	int stepwise;
 	int num_models;
 	int approximation;
+	int verbose;
 	char test[10];
 	char type[10];
 	char seas[10];
@@ -250,6 +251,8 @@ void auto_arima_setSeasonal(auto_arima_object obj, int seasonal);
 void auto_arima_setStationarityParameters(auto_arima_object obj,const char *test, double alpha, const char *type);
 
 void auto_arima_setSeasonalParameters(auto_arima_object obj,const char *test, double alpha);
+
+void auto_arima_setVerbose(auto_arima_object obj,int verbose);
 
 void arima_summary(arima_object obj);
 

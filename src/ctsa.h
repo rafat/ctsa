@@ -191,6 +191,7 @@ struct auto_arima_set{
 	int stepwise;
 	int num_models;
 	int approximation;
+	int verbose;
 	char test[10];
 	char type[10];
 	char seas[10];
@@ -239,7 +240,7 @@ typedef struct aa_ret_set* aa_ret_object;
 
 aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int *maxcoeff, int s,int *DD, int *dd, int *start, int *stationary, int *seasonal, 
 	const char *ic, int *stepwise, int *nmodels,int *approximation,int *method,double *xreg, int r, const char *test,const char *type, double *test_alpha, 
-	const char *seas, double *seas_alpha, int *allowdrift, int *allowmean, double *lambda);
+	const char *seas, double *seas_alpha, int *allowdrift, int *allowmean,int verbose, double *lambda);
 
 struct aa_ret_set{
 	sarimax_wrapper_object Arima;
@@ -248,7 +249,7 @@ struct aa_ret_set{
 };
 
 myarima_object search_arima(double *x, int N,int d, int D, int p_max, int q_max, int P_max, int Q_max, int Order_max, int stationary,int s, const char *ic,
-	int approximation, double *xreg, int r, double offset,int allowdrift, int allowmean, int method);
+	int approximation, double *xreg, int r, double offset,int allowdrift, int allowmean,int verbose, int method);
 
 void arima_exec(arima_object obj, double *x);
 
@@ -311,6 +312,8 @@ void auto_arima_setSeasonal(auto_arima_object obj, int seasonal);
 void auto_arima_setStationarityParameters(auto_arima_object obj,const char *test, double alpha, const char *type);
 
 void auto_arima_setSeasonalParameters(auto_arima_object obj,const char *test, double alpha);
+
+void auto_arima_setVerbose(auto_arima_object obj,int verbose);
 
 void arima_summary(arima_object obj);
 
