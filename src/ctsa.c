@@ -938,7 +938,7 @@ myarima_object search_arima(double *x, int N,int d, int D, int p_max, int q_max,
 								seasonal[3] = s;
 							}
 
-							fit = myarima(x,N,order,seasonal, K, ic, trace, approximation, offset,xreg, r, &method);
+							fit = myarima(x,N,order,seasonal, K, ic, trace, approximation, offset,xreg, r, NULL);
 							if (verbose == 1) {
 								printf("p: %d d: %d q: %d P: %d D: %d Q: %d Drift/Mean: %d ic: %g \n",fit->sarimax->p,d,fit->sarimax->q,fit->sarimax->P,D,fit->sarimax->Q,K,fit->ic);
 							}
@@ -963,7 +963,7 @@ myarima_object search_arima(double *x, int N,int d, int D, int p_max, int q_max,
 
 	printf("best_ic %g \n",best_ic);
 
-	bestfit = myarima(x,N,bestorder,bestseasonal, bestK, ic, trace, approximation, offset,xreg, r, &method);
+	bestfit = myarima(x,N,bestorder,bestseasonal, bestK, ic, trace, approximation, offset,xreg, r, NULL);
 
 	if (approximation) {
 		if (bestfit->ic == DBL_MAX) {
@@ -996,11 +996,14 @@ static void set_results(double *results, int row, int p, int d, int q, int P, in
 
 
 static int newmodel(int p, int d, int q, int P, int D, int Q, int constant, double *result, int n) {
-	int i;
+	int i,iter, lresult;
+
+	lresult = 8;
 
 	for(i = 0; i < n;++i) {
-		if ((double)p == result[0] && (double)d == result[1] && (double)q == result[2] && (double)P == result[3] &&
-		 (double)D == result[4] && (double)Q == result[5] && (double)constant == result[6]) {
+		iter = i * lresult;
+		if ((double)p == result[iter+0] && (double)d == result[iter+1] && (double)q == result[iter+2] && (double)P == result[iter+3] &&
+		 (double)D == result[iter+4] && (double)Q == result[iter+5] && (double)constant == result[iter+6]) {
 			return 0;
 		}
 	}
@@ -1420,7 +1423,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 	trace = 0; // Make it variable
 	bestconstant = constant;
 
-	bestfit = myarima(x,N,bestorder,bestseasonalorder,bestconstant, ic, trace, iapprox, offset,xreg, r, &amethod);
+	bestfit = myarima(x,N,bestorder,bestseasonalorder,bestconstant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 	best_ic = bestfit->ic;
 
@@ -1439,7 +1442,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 	seasonalorder[2] = 0;
 	seasonalorder[3] = s;
 
-	fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+	fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 	set_results(results,2,0,d,0,0,D,0,constant,fit->myarima->ic);
 
@@ -1466,7 +1469,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		seasonalorder[2] = 0;
 		seasonalorder[3] = s;
 
-		fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+		fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 		set_results(results,k+1,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
 
@@ -1496,7 +1499,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		seasonalorder[2] = (Q_max > 0) && (m > 1);
 		seasonalorder[3] = s;
 
-		fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+		fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 		set_results(results,k+1,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
 
@@ -1525,7 +1528,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		seasonalorder[2] = 0;
 		seasonalorder[3] = s;
 
-		fit->myarima = myarima(x,N,order,seasonalorder,0, ic, trace, iapprox, offset,xreg, r, &amethod);
+		fit->myarima = myarima(x,N,order,seasonalorder,0, ic, trace, iapprox, offset,xreg, r, NULL);
 
 		set_results(results,k+1,0,d,0,0,D,0,0,fit->myarima->ic);
 
@@ -1558,7 +1561,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			seasonalorder[2] = Q;
 			seasonalorder[3] = s;
 
-			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
 
@@ -1587,7 +1590,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			seasonalorder[2] = Q-1;
 			seasonalorder[3] = s;
 
-			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
 
@@ -1616,7 +1619,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			seasonalorder[2] = Q;
 			seasonalorder[3] = s;
 
-			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
 
@@ -1645,7 +1648,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			seasonalorder[2] = Q+1;
 			seasonalorder[3] = s;
 
-			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
 
@@ -1674,7 +1677,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			seasonalorder[2] = Q-1;
 			seasonalorder[3] = s;
 
-			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
 
@@ -1704,7 +1707,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			seasonalorder[2] = Q+1;
 			seasonalorder[3] = s;
 
-			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
 
@@ -1734,7 +1737,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			seasonalorder[2] = Q-1;
 			seasonalorder[3] = s;
 
-			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
 
@@ -1764,7 +1767,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			seasonalorder[2] = Q+1;
 			seasonalorder[3] = s;
 
-			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
 
@@ -1783,6 +1786,8 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 
 		}
 
+		
+
 		if (p > 0 && newmodel(p-1,d,q,P,D,Q,constant,results,k)) {
 			k = k + 1;
 			if (k > models) continue;
@@ -1794,7 +1799,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			seasonalorder[2] = Q;
 			seasonalorder[3] = s;
 
-			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
 
@@ -1823,7 +1828,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			seasonalorder[2] = Q;
 			seasonalorder[3] = s;
 
-			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
 
@@ -1852,7 +1857,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			seasonalorder[2] = Q;
 			seasonalorder[3] = s;
 
-			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
 
@@ -1881,7 +1886,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			seasonalorder[2] = Q;
 			seasonalorder[3] = s;
 
-			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
 
@@ -1910,7 +1915,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			seasonalorder[2] = Q;
 			seasonalorder[3] = s;
 
-			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
 
@@ -1940,7 +1945,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			seasonalorder[2] = Q;
 			seasonalorder[3] = s;
 
-			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
 
@@ -1970,7 +1975,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			seasonalorder[2] = Q;
 			seasonalorder[3] = s;
 
-			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
 
@@ -2000,7 +2005,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			seasonalorder[2] = Q;
 			seasonalorder[3] = s;
 
-			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+			fit->myarima = myarima(x,N,order,seasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 			set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
 
@@ -2032,33 +2037,32 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 				seasonalorder[2] = Q;
 				seasonalorder[3] = s;
 
-				fit->myarima = myarima(x,N,order,seasonalorder,ntconstant, ic, trace, iapprox, offset,xreg, r, &amethod);
+				fit->myarima = myarima(x,N,order,seasonalorder,ntconstant, ic, trace, iapprox, offset,xreg, r, NULL);
 
-				set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],constant,fit->myarima->ic);
+				set_results(results,k,order[0],order[1],order[2],seasonalorder[0],seasonalorder[1],seasonalorder[2],ntconstant,fit->myarima->ic);
 
 				if (fit->myarima->ic < best_ic) {
 					best_ic = fit->myarima->ic;
 					memcpy(bestorder,order,sizeof(int)*3);
 					memcpy(bestseasonalorder,seasonalorder,sizeof(int)*4);
 					bestconstant = constant =  ntconstant;
-					myarima_free(fit->myarima);
-					continue;
 				}
 				
 				myarima_free(fit->myarima);
 
 			}	
 		}
+
 	
 	}
 
-	if (k > models) {
+	k--;
+	if (k == models) {
 		printf("Warning : Stepwise search was stopped early due to reaching the model number limit: %d \n",models);
-		k--;
 	}
 
 	if (verbose == 1) {
-		mdisplay(results,models,8);
+		mdisplay(results,k,8);
 	}
 
 
@@ -2090,7 +2094,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 			seasonalorder[1] = D;
 			seasonalorder[2] = results[icindex[i]*8 + 5];
 			seasonalorder[3] = s;
-			fit->myarima = myarima(x,N,order,seasonalorder,results[icindex[i]*8 + 6], ic, trace, 0, offset,xreg, r, &amethod);
+			fit->myarima = myarima(x,N,order,seasonalorder,results[icindex[i]*8 + 6], ic, trace, 0, offset,xreg, r, NULL);
 
 			if (fit->myarima->ic < DBL_MAX) {
 				best_ic = fit->myarima->ic;
@@ -2099,6 +2103,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 				bestconstant = constant;
 				free(icvector);
 				free(icindex);
+				myarima_free(fit->myarima);
 				iapprox = 0;
 				break;
 			}
@@ -2113,7 +2118,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 
 	// Refit The Best Model
 
-	fit->myarima = myarima(x,N,bestorder,bestseasonalorder,constant, ic, trace, iapprox, offset,xreg, r, &amethod);
+	fit->myarima = myarima(x,N,bestorder,bestseasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
 
 	
 

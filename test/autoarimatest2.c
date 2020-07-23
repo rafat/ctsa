@@ -31,7 +31,7 @@ int main(void) {
 	int seasonal[3] = {P,D,Q};
 
 
-	L = 5;
+	L = 0;
 
 	xpred = (double*)malloc(sizeof(double)* L);
 	amse = (double*)malloc(sizeof(double)* L);
@@ -60,8 +60,9 @@ int main(void) {
 
 	obj = auto_arima_init(order,seasonal,s,r,N);
 
-	auto_arima_setApproximation(obj,1);
+	auto_arima_setApproximation(obj,0);
 	auto_arima_setStepwise(obj,1);
+	auto_arima_setVerbose(obj,1);
 
 	auto_arima_exec(obj,inp,NULL);
 
