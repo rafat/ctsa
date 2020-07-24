@@ -594,7 +594,7 @@ sarimax_wrapper_object sarimax_wrapper(sarimax_wrapper_object model,double *y, i
 			drift = 0;
 		}
 
-		printf("drift %d \n",drift);
+		//printf("drift %d \n",drift);
 
 		rr = r;
 
@@ -759,7 +759,7 @@ myarima_object myarima(double *x, int N, int *order, int *seasonal, int constant
 			fit->ic = fit->aic = fit->bic = fit->aicc = DBL_MAX;
 		}
 
-		printf("aic %g bic %g aicc %g ic %g \n",fit->aic,fit->bic,fit->aicc,fit->ic);
+		//printf("aic %g bic %g aicc %g ic %g \n",fit->aic,fit->bic,fit->aicc,fit->ic);
 
 		rsum = 0.0;
 
@@ -963,7 +963,7 @@ myarima_object search_arima(double *x, int N,int d, int D, int p_max, int q_max,
 		}
 	}
 
-	printf("best_ic %g \n",best_ic);
+	//printf("best_ic %g \n",best_ic);
 
 	bestfit = myarima(x,N,bestorder,bestseasonal, bestK, ic, trace, approximation, offset,xreg, r, NULL);
 
@@ -1122,7 +1122,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 
 	memcpy(x,y,sizeof(double)*N);
 
-	mdisplay(x,1,N);
+	//mdisplay(x,1,N);
 
 	if (s <= 1) {
 		m = 1;
@@ -1378,7 +1378,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		offset = 0;
 	}
 
-	printf("offset %g \n",offset);
+	//printf("offset %g \n",offset);
 
 	idrift = idrift && (d + D == 1);
 	imean = imean && (d + D == 0);
@@ -2066,7 +2066,12 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 	}
 
 	if (verbose == 1) {
-		mdisplay(results,k,8);
+		for(i = 0; i < k; ++i) {
+			printf("p: %d d: %d q: %d P: %d D: %d Q: %d Drift/Mean: %d ic: %g \n",(int)results[i*8],(int)results[i*8+1],(int)results[i*8+2],(int)results[i*8+3],
+			(int)results[i*8+4], (int)results[i*8+5],(int)results[i*8+6],results[i*8+7]);
+		}
+		
+		//mdisplay(results,k,8);
 	}
 
 
