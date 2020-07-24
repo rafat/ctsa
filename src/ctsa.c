@@ -759,6 +759,8 @@ myarima_object myarima(double *x, int N, int *order, int *seasonal, int constant
 			fit->ic = fit->aic = fit->bic = fit->aicc = DBL_MAX;
 		}
 
+		printf("aic %g bic %g aicc %g ic %g \n",fit->aic,fit->bic,fit->aicc,fit->ic);
+
 		rsum = 0.0;
 
 		for(i = 0; i < fit->sarimax->Nused;++i) {
@@ -1375,6 +1377,8 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 	} else {
 		offset = 0;
 	}
+
+	printf("offset %g \n",offset);
 
 	idrift = idrift && (d + D == 1);
 	imean = imean && (d + D == 0);

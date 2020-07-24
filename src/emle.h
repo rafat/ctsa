@@ -100,6 +100,7 @@ struct xlik_css_set{
 	int length;// length of the original time series
 	int N;// length of time series after differencing 
 	int M;// M = Total Number of Exogenous variables + 1 (if mean is to be calculated)
+	int Nmncond;// N - ncond
 	double eps;
 	double mean;
 	double ssq;// Contains the sum of squares value 

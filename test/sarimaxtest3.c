@@ -21,7 +21,7 @@ int main(void) {
      Recheck the values if the program fails to execute.
     */
 	p = 2;
-	d = 1;
+	d = 0;
 	q = 2;
 	s = 0;
 	P = 0;
@@ -30,7 +30,7 @@ int main(void) {
 	r = 2;
 
 
-	L = 0;
+	L = 5;
 
 	xpred = (double*)malloc(sizeof(double)* L);
 	amse = (double*)malloc(sizeof(double)* L);
@@ -77,7 +77,7 @@ int main(void) {
     Method 0 ("CSS-MLE") is default. The method also accepts values 1 ("MLE") and 2 ("CSS")
     */
 
-	sarimax_setMethod(obj, 0); 
+	sarimax_setMethod(obj, 2); 
 
     /*sarimax_exec(object, input time series, exogenous time series)
         set exogenous to NULL if deadling only with a univariate time series.

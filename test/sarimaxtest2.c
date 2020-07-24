@@ -21,11 +21,11 @@ int main(void) {
     or if P = D = Q = 0 then make sure that s is also 0. 
      Recheck the values if the program fails to execute.
     */
-	p = 0;
+	p = 2;
 	d = 1;
-	q = 1;
+	q = 2;
 	s = 12;
-	P = 0;
+	P = 1;
 	D = 1;
 	Q = 1;
 	r = 0;
@@ -73,7 +73,7 @@ int main(void) {
     Method 0 ("CSS-MLE") is default. The method also accepts values 1 ("MLE") and 2 ("CSS")
     */
 
-	sarimax_setMethod(obj, 0); 
+	sarimax_setMethod(obj, 2); 
 
     /*sarimax_exec(object, input time series, exogenous time series)
         set exogenous to NULL if deadling only with a univariate time series.

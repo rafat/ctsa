@@ -230,6 +230,7 @@ xlik_css_object xlik_css_init(int p, int d, int q, int s, int P, int D, int Q,in
 	obj->Q = Q;
 	obj->M = M; // This will include the mean term and the exogenous terms
 	obj->N = N;
+	obj->Nmncond = N;
 	obj->length = N;
 	obj->pq = p + q + P + Q + M;
 
@@ -2148,7 +2149,7 @@ int css_seas(double *inp, int N, int optmethod, int p, int d, int q, int s, int 
 
 double fcssx(double *b, int pq, void *params) {
 	double value, ssq,temp;
-	int p, q, ps, qs, s, offset,jm;
+	int p, q, ps, qs, s, d, D, offset,jm;
 	int ip, iq, i, j, N,iter,ncond,M,naram;
 	double *phi, *theta,*reg;
 
@@ -2166,9 +2167,14 @@ double fcssx(double *b, int pq, void *params) {
 	qs = obj->Q;
 	s = obj->s;
 	M = obj->M;
+	d = obj->d;
+	D = obj->D;
+
 	offset = obj->offset;
 	ncond = p + s* ps;
 	naram = p + q + ps + qs;
+
+	//ncond = ncond + ncond1;
 
 	reg = &obj->x[offset+3*N];
 
@@ -2225,6 +2231,7 @@ double fcssx(double *b, int pq, void *params) {
 		}
 	}
 	iter = 0;
+	ssq = 0.0;
 	for (i = ncond; i < N; ++i) {
 		iter++;
 		temp = obj->x[offset+i];
@@ -2248,6 +2255,7 @@ double fcssx(double *b, int pq, void *params) {
 		ssq += temp * temp;
 	}
 	obj->ssq = ssq;
+	obj->Nmncond = iter;
 	value = 0.5 * log(ssq / (double)iter);
 	obj->loglik = value;
 
@@ -2515,7 +2523,8 @@ int cssx(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, i
 	wmean += (obj->x[N + i] * obj->x[N + i]);
 	}*/
 
-	*var = (obj->ssq) / (double)N;
+	*var = (obj->ssq) / (double) obj->Nmncond;
+	//*var = (obj->ssq) / (double) N;
 	*loglik = obj->loglik;
 	
 	free(b);

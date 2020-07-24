@@ -60,7 +60,7 @@ int main(void) {
 
 	obj = auto_arima_init(order,seasonal,s,r,N);
 
-	auto_arima_setApproximation(obj,0);
+	auto_arima_setApproximation(obj,1);
 	auto_arima_setStepwise(obj,1);
 	auto_arima_setVerbose(obj,1);
 
