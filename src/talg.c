@@ -810,10 +810,6 @@ int invertroot(int q, double *ma) {
 	int *ind;
 	double mod,tempr,tempi;
 
-	temp = (double*)malloc(sizeof(double)* (q + 1));
-	zeror = (double*)malloc(sizeof(double)* q);
-	zeroi = (double*)malloc(sizeof(double)* q);
-	ind = (int*)malloc(sizeof(int)* q);
 
 	retval = 0;
 	index = -1;
@@ -826,6 +822,11 @@ int invertroot(int q, double *ma) {
 	if (index == -1) {
 		return retval;
 	}
+	
+	temp = (double*)malloc(sizeof(double)* (q + 1));
+	zeror = (double*)malloc(sizeof(double)* q);
+	zeroi = (double*)malloc(sizeof(double)* q);
+	ind = (int*)malloc(sizeof(int)* q);
 
 	index++;
 	temp[0] = 1.0;
@@ -845,6 +846,14 @@ int invertroot(int q, double *ma) {
 	//mdisplay(zeroi, 1, qn);
 
 	if (fail == 1) {
+		free(zeror);
+		free(zeroi);
+		free(temp);
+		free(ind);
+		free(xr);
+		free(xi);
+		free(yr);
+		free(yi);
 		return retval;
 	}
 
@@ -860,6 +869,14 @@ int invertroot(int q, double *ma) {
 	}
 
 	if (rcheck == 0) {
+		free(zeror);
+		free(zeroi);
+		free(temp);
+		free(ind);
+		free(xr);
+		free(xi);
+		free(yr);
+		free(yi);
 		return retval;
 	}
 	else {
@@ -871,6 +888,14 @@ int invertroot(int q, double *ma) {
 		for (i = 1; i < q; ++i) {
 			ma[i] = 0.0;
 		}
+		free(zeror);
+		free(zeroi);
+		free(temp);
+		free(ind);
+		free(xr);
+		free(xi);
+		free(yr);
+		free(yi);
 		return retval;
 	}
 

@@ -316,6 +316,11 @@ auto_arima_object auto_arima_init(int *pdqmax,int *PDQmax,int s, int r, int N) {
 	obj->q_start = 2;
 	obj->P_start = 1;
 	obj->Q_start = 1;
+	
+	// Temporary Init
+	
+	obj->p = obj->d = obj->q = obj->P = obj->D = obj->Q = 0;
+	obj->aic = obj->bic = obj->aicc = 0;
 
 
 	return obj;
@@ -654,6 +659,8 @@ myarima_object myarima(double *x, int N, int *order, int *seasonal, int constant
 	int *K;
 
 	fit = (myarima_object) malloc (sizeof(struct myarima_set));
+	
+	fit->ic = fit->aic = fit->bic = fit->aicc = DBL_MAX;
 
 	tol = 1e-08;
 
@@ -3645,7 +3652,7 @@ void sarimax_summary(sarimax_object obj) {
 }
 
 void auto_arima_summary(auto_arima_object obj) {
-	int i, pq,t,nd,ncxreg,mean,drift;
+	int i, pq,t,ncxreg,mean,drift;
 	pq = obj->p + obj->q + obj->P + obj->Q + obj->M;
 	mean = obj->M - obj->r;
 
@@ -3680,6 +3687,7 @@ void auto_arima_summary(auto_arima_object obj) {
 	printf("  ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->p,obj->d,obj->q,
 	 obj->P,obj->D,obj->Q );
 	printf("\n");
+	t = 0;
 
 	printf("%-20s%-20s%-20s \n\n", "Coefficients", "Value", "Standard Error");
 	for (i = 0; i < obj->p; ++i) {

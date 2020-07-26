@@ -731,6 +731,10 @@ void SHtest(double *x, int N, int *f, int Nseas, double *season) {
         season[j] = tmp1 > 0 ? tmp1 : 0;
 
     }
+    
+    for(i = 0; i < Nseas;++i) {
+        free(seasonal[i]);
+    }
 
     free(seasonal);
     free(trend);

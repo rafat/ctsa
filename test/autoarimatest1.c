@@ -12,7 +12,7 @@ int main(void) {
     int i, N, d, D, L;
 	double *inp;
 	int p, q, P, Q, s, r;
-	double *xpred, *amse,*xreg,*newxreg;
+	double *xpred, *amse;
 	auto_arima_object obj;
     /*
     Make sure all the parameter values are correct and consistent with other values. eg., if xreg is NULL r should be 0
@@ -54,21 +54,14 @@ int main(void) {
 	N = i;
 
 	inp = (double*)malloc(sizeof(double)* N);
-    xreg = (double*)malloc(sizeof(double)* N * 2);
-    newxreg = (double*)malloc(sizeof(double)* L * 2);
 
 
 	for (i = 0; i < N; ++i) {
 		inp[i] = temp[i];
-        //xreg[i] = temp1[i];
-		//xreg[N+i] = temp2[i];
+       
 	}
 
-    for(i = 0; i < L;++i) {
-        //newxreg[i] = temp1[N + i];
-        //newxreg[i+L] = temp2[N + i];
-    }
-
+   
 	obj = auto_arima_init(order,seasonal,s,r,N);
 
 	auto_arima_setApproximation(obj,0);
@@ -98,8 +91,7 @@ int main(void) {
 	free(inp);
 	free(xpred);
 	free(amse);
-    free(xreg);
-    free(newxreg);
-
+	fclose(ifp);
+	
     return 0;
 }

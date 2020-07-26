@@ -90,6 +90,7 @@ int main(void) {
 	free(inp);
 	free(xpred);
 	free(amse);
+	fclose(ifp);
 
     return 0;
 }
