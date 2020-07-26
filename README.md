@@ -14,8 +14,8 @@ Git and CMake
 
 ## Getting Started
 ```
-Clone the project.
-cd to directory
+git clone https://github.com/rafat/ctsa.git
+cd ctsa
 cmake .
 make
 ```
