@@ -20,7 +20,17 @@ cmake .
 make
 ```
 
-Documentation is tentatively available at 
+
+|**[Auto ARIMA](https://github.com/rafat/ctsa/wiki/AUTO-ARIMA)**| Auto ARIMA Class + Examples        |
+|:-----------------------------------------------------|:----------------------------------|
+|**[SARIMAX](https://github.com/rafat/ctsa/wiki/SARIMAX/)**| SARIMAX Class + Examples             |
+|**[ARIMA](https://github.com/rafat/ctsa/wiki/ARIMA)**| ARIMA Class + Example             |
+|**[Seasonal ARIMA](https://github.com/rafat/ctsa/wiki/SARIMA)**| Seasonal ARIMA Class + Example    |
+|**[AR](https://github.com/rafat/ctsa/wiki/AR)**      | AR Class + Example                |
+|**[ACF](https://github.com/rafat/ctsa/wiki/ACF)**    | Autocovariance, Autocorrelation and Partial Autocorrelation + Examples|
+|**[References](https://github.com/rafat/ctsa/wiki/References)**| References (List Being Updated)   |
+
+Wiki is available at 
 
 https://github.com/rafat/ctsa/wiki
 
