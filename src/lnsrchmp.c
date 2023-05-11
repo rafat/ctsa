@@ -496,6 +496,8 @@ int cvsrch(custom_function *funcpt, custom_gradient *funcgrad, double *x, double
 
 
 	if (N <= 0 || *stp <= 0.0 || ftol < 0.0 || gtol < 0.0 || xtol < 0.0) {
+		free(rcheck);
+		free(wa);
 		return info;
 	}
 
@@ -526,6 +528,8 @@ int cvsrch(custom_function *funcpt, custom_gradient *funcgrad, double *x, double
 	}
 
 	if (dginit >= 0.0) {
+		free(rcheck);
+		free(wa);
 		return info;
 	}
 
