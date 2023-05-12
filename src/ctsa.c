@@ -4348,10 +4348,11 @@ void myarima_free(myarima_object object) {
 }
 
 void aa_ret_free(aa_ret_object object) {
+	// use proper free wrapers for given type 
 	if (object->otype == 1) {
-		free(object->myarima);
+		myarima_free(object->myarima);
 	} else {
-		free(object->Arima);
+		sarimax_wrapper_free(object->Arima);
 	}
 	free(object);
 }
