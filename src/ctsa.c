@@ -632,6 +632,10 @@ sarimax_wrapper_object sarimax_wrapper(sarimax_wrapper_object model,double *y, i
 		}
 
 		obj->sigma2 = rsum / (double) (obj->sarimax->Nused - ncoeff + 1);
+		
+		/// memory leak fix
+		free(xreg2);
+
 	}
 
 	free(x);

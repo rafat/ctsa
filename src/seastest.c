@@ -702,7 +702,7 @@ void SHtest(double *x, int N, int *f, int Nseas, double *season) {
     /*
     Seasonal Heuristic Test
     */
-    int i,j;
+    int i,j,Niter;
     double **seasonal, *trend, *remainder, *vari;
     double vare,tmp1;
 
@@ -714,11 +714,15 @@ void SHtest(double *x, int N, int *f, int Nseas, double *season) {
     remainder = (double*)calloc(N,sizeof(double));
     vari = (double*)calloc(N,sizeof(double));
 
-    mstl(x, N,f,&Nseas,NULL,NULL,NULL,seasonal,trend,remainder);
+    /// memory leak fix, copy Nseas to Niter then pass address 
+    /// of Niter to mstl as mstl has potential of modifying Niter
+    /// which affects freeing of seasonal double array below
+    Niter = Nseas;
+    mstl(x, N,f,&Niter,NULL,NULL,NULL,seasonal,trend,remainder);
 
     vare = var(remainder,N);
 
-    for(j = 0; j < Nseas; ++j) {
+    for(j = 0; j < Niter; ++j) {
 
         for(i = 0; i < N;++i) {
             vari[i] = remainder[i] + seasonal[j][i];

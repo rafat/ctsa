@@ -5,7 +5,9 @@ int checkConstant(double *x, int N) {
     double diff;
     cc = 0;
 
-    for(i = 1; i < N;++i) {
+    /// heap buffer overflow fix, since accessing x[i+1] need to 
+    /// stop loop at -1 index from end of array as dictated by length defined by N
+    for(i = 1; i < N - 1;++i) {
         diff = x[i+1] - x[i];
         if (fabs(diff) > 0) {
             return cc;
