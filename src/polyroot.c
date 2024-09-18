@@ -132,24 +132,22 @@ static double CAUCHY(int NN, double *PT, double *Q) {
 	}
 
 	XM = 0.1 * X;
-	F = 0.1;
-	while (1) {
-		F = PT[0];
-		for (i = 1; i < NN; ++i) {
-			F = F*XM + PT[i];
-		}
-
-		if (F > 0.0) {
-			X = XM;
-		}
-		else {
-			break;
-		}
-	}
+    F = PT[0];
+    int max_iterations = 1000; // Maximum number of iterations to prevent infinite loop
+    int iterations = 0; // Initialize the iteration counter
+    while (F > 0.0 && iterations < max_iterations) {
+        F = PT[0];
+        for (i = 1; i < NN; ++i) {
+            F = F*XM + PT[i];
+        }
+        X = XM;
+        XM *= 0.1; // Reduce XM for the next iteration
+        iterations++; // Increment the iteration counter
+    }
 
 	DX = X;
-
-	while (fabs(DX / X) > 0.005) {
+	iterations = 0; // Initialize the iteration counter
+	while (fabs(DX / X) > 0.005 && iterations < max_iterations) {
 		Q[0] = PT[0];
 		for (i = 1; i < NN; ++i) {
 			Q[i] = Q[i - 1]*X + PT[i];
@@ -161,6 +159,7 @@ static double CAUCHY(int NN, double *PT, double *Q) {
 		}
 		DX = F / DF;
 		X = X - DX;
+        iterations++; // Increment the iteration counter
 	}
 
 	cauchy = X;

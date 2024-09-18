@@ -438,7 +438,7 @@ void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
 		P = fit->Arima->sarimax->P;
 		D = fit->Arima->sarimax->D;
 		Q = fit->Arima->sarimax->Q;
-		r = fit->Arima->sarimax->r;
+		// r = fit->Arima->sarimax->r;
 		s = fit->Arima->sarimax->s;
 		M = fit->Arima->sarimax->M;
 		N = fit->Arima->sarimax->N;
@@ -467,7 +467,7 @@ void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
 		P = fit->myarima->sarimax->P;
 		D = fit->myarima->sarimax->D;
 		Q = fit->myarima->sarimax->Q;
-		r = fit->myarima->sarimax->r;
+		// r = fit->myarima->sarimax->r;
 		s = fit->myarima->sarimax->s;
 		M = fit->myarima->sarimax->M;
 		N = fit->myarima->sarimax->N;
@@ -500,7 +500,11 @@ void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
 	obj->Q = Q;
 	obj->Nused = N - d - s*D;
 	obj->M = M;
-	obj->r = r;
+	// bug fix: do not set regressor
+	// to inner sarimax which can create it's own
+	// exogenous variables that do not necessairly align
+	// with exogenous variables defined in model obj
+	// obj->r = r;
 	obj->retval = retval;
 	
 
@@ -1287,7 +1291,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 				order[0] = order[1] = order[2] = 0;
 				imean = 1;
 				idrift = 1;
-				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonal,NULL,r,idrift,imean,NULL,biasadj,amethod);
+				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonalorder,NULL,r,idrift,imean,NULL,biasadj,amethod);
 				fit->myarima = NULL;
 				fit->otype = 2;
 			}
@@ -1298,7 +1302,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 				order[0] = order[2] = 0;
 				order[1] = d;
 				idrift = 0;
-				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonal,NULL,r,idrift,imean,NULL,biasadj,amethod);
+				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonalorder,NULL,r,idrift,imean,NULL,biasadj,amethod);
 				fit->myarima = NULL;
 				fit->otype = 2;
 			} else if (d == 2) {
@@ -1308,7 +1312,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 				order[0] = order[2] = 0;
 				order[1] = d;
 				idrift = 0;
-				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonal,NULL,r,idrift,imean,NULL,biasadj,amethod);
+				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonalorder,NULL,r,idrift,imean,NULL,biasadj,amethod);
 				fit->myarima = NULL;
 				fit->otype = 2;
 			} else if (d < 2) {
@@ -1318,7 +1322,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 				order[0] = order[2] = 0;
 				order[1] = d;
 				idrift = 1;
-				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonal,NULL,r,idrift,imean,NULL,biasadj,amethod);
+				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonalorder,NULL,r,idrift,imean,NULL,biasadj,amethod);
 				fit->myarima = NULL;
 				fit->otype = 2;
 			} else {
@@ -1333,7 +1337,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 				seasonalorder[3] = m;
 				order[0] = order[2] = 0;
 				order[1] = d;
-				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonal,xreg,r,idrift,imean,NULL,biasadj,amethod);
+				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonalorder,xreg,r,idrift,imean,NULL,biasadj,amethod);
 				fit->myarima = NULL;
 				fit->otype = 2;
 			} else {
@@ -1342,7 +1346,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 				seasonalorder[3] = 0;
 				order[0] = order[2] = 0;
 				order[1] = d;
-				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonal,xreg,r,idrift,imean,NULL,biasadj,amethod);
+				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonalorder,xreg,r,idrift,imean,NULL,biasadj,amethod);
 				fit->myarima = NULL;
 				fit->otype = 2;
 			}
