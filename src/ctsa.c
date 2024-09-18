@@ -438,7 +438,7 @@ void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
 		P = fit->Arima->sarimax->P;
 		D = fit->Arima->sarimax->D;
 		Q = fit->Arima->sarimax->Q;
-		r = fit->Arima->sarimax->r;
+		// r = fit->Arima->sarimax->r;
 		s = fit->Arima->sarimax->s;
 		M = fit->Arima->sarimax->M;
 		N = fit->Arima->sarimax->N;
@@ -467,7 +467,7 @@ void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
 		P = fit->myarima->sarimax->P;
 		D = fit->myarima->sarimax->D;
 		Q = fit->myarima->sarimax->Q;
-		r = fit->myarima->sarimax->r;
+		// r = fit->myarima->sarimax->r;
 		s = fit->myarima->sarimax->s;
 		M = fit->myarima->sarimax->M;
 		N = fit->myarima->sarimax->N;
@@ -500,7 +500,11 @@ void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
 	obj->Q = Q;
 	obj->Nused = N - d - s*D;
 	obj->M = M;
-	obj->r = r;
+	// bug fix: do not set regressor
+	// to inner sarimax which can create it's own
+	// exogenous variables that do not necessairly align
+	// with exogenous variables defined in model obj
+	// obj->r = r;
 	obj->retval = retval;
 	
 
