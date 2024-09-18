@@ -944,10 +944,15 @@ myarima_object search_arima(double *x, int N,int d, int D, int p_max, int q_max,
 							order[1] = d;
 							order[2] = j;
 							
-							if (s == 0) {
+							// bug fix: still need to set PDQ or else carries over
+							// prior PDQ parameters in seasonal which may be non 0 but then attempt
+							// to optimize model with > 0 PDQ which can throw seg faults
+							// for example in emle.fcssx when mutating phi which assumes s is > 0 if P+Q is > 0
+							if (
+								s == 0 ||
+								(I == 0 && J == 0 && D == 0)
+							) {
 								seasonal[0] = seasonal[1] = seasonal[2] = seasonal[3] = 0;
-							} else if (I == 0 && J == 0 && D == 0) {
-								seasonal[3] = 0;
 							} else {
 								seasonal[0] = I;
 								seasonal[1] = D;
