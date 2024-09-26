@@ -1394,7 +1394,9 @@ int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, d
 		P = 0;
 		Q = 0;
 
-		checkroots(phi, &p, theta, &q, NULL, &P, NULL, &Q);
+		ERR = checkroots_cerr(phi, &p, theta, &q, NULL, &P, NULL, &Q);
+		if (ERR == 10 || ERR == 12) return ERR;
+
 		coeff = *wmean;
 	}
 	else {
@@ -2701,7 +2703,9 @@ int as154_seas(double *inp, int N, int optmethod, int p, int d, int q, int s, in
 	if (cssml == 1) {
 		css_seas(inp, N, optmethod, p, d, q, s, P, D, Q, phi, theta, PHI, THETA, wmean, var, loglik, hess);
 
-		checkroots(phi, &p, theta, &q, PHI, &P, THETA, &Q);
+		ERR = checkroots_cerr(phi, &p, theta, &q, PHI, &P, THETA, &Q);
+		if (ERR == 10 || ERR == 12) return ERR;
+
 		coeff = *wmean;
 	}
 	else {
