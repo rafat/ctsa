@@ -1,6 +1,78 @@
 
 #include "emle.h"
 
+void checkroots(double *phi, int *p, double *theta, int *q, double *PHI, int *P, double *THETA, int *Q) {
+	int ret;
+
+	if (*p > 0) {
+		ret = archeck(*p,phi);
+		if (!ret) {
+			printf("\nnon-stationary AR part\n");
+			exit(-1);
+		}
+	}
+
+	if (*q > 0) {
+		invertroot(*q,theta);
+	}
+
+	if (*P == *P) {
+		if (*P > 0) {
+			ret = archeck(*P,PHI);
+			if (!ret) {
+				printf("\nnon-stationary seasonal AR part\n");
+				exit(-1);
+			}
+		}
+	}
+
+	if (*Q == *Q) {
+		if (*Q > 0) {
+			invertroot(*Q,THETA);
+		}
+	}
+
+}
+
+static int checkroots_cerr(double *phi, int *p, double *theta, int *q, double *PHI, int *P, double *THETA, int *Q) {
+	int ret,out;
+
+	out = 1;
+
+	if (*p > 0) {
+		ret = archeck(*p,phi);
+		if (!ret) {
+			out = 10;
+			printf("\nnon-stationary AR part\n");
+			return out;
+		}
+	}
+
+	if (*q > 0) {
+		invertroot(*q,theta);
+	}
+
+	if (*P == *P) {
+		if (*P > 0) {
+			ret = archeck(*P,PHI);
+			if (!ret) {
+				out = 12;
+				printf("\nnon-stationary seasonal AR part\n");
+				return out;
+			}
+		}
+	}
+
+	if (*Q == *Q) {
+		if (*Q > 0) {
+			invertroot(*Q,THETA);
+		}
+	}
+
+	return out;
+
+}
+
 alik_css_object alik_css_init(int p, int d, int q, int N) {
 	alik_css_object obj = NULL;
 	int i, t;
@@ -1372,7 +1444,7 @@ double fas154(double *b,int pq,void *params) {
 
 int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, double *theta, double *wmean, double *var,
 	double *resid,double *loglik,double *hess, int cssml) {
-	int i,pq,retval,length,ret,rp,P,Q;
+	int i,pq,retval,length,ret,rp,P,Q,ERR;
 	double *b,*tf,*x,*dx,*thess,*varcovar,*res;
 	int *ipiv;
 	double maxstep,sigma,coeff;
@@ -1545,45 +1617,6 @@ int as154(double *inp, int N, int optmethod, int p, int d, int q, double *phi, d
 	free(dx);
 	free_alik(obj);
 	return ret;
-}
-
-static int checkroots_cerr(double *phi, int *p, double *theta, int *q, double *PHI, int *P, double *THETA, int *Q) {
-	int ret,out;
-
-	out = 1;
-
-	if (*p > 0) {
-		ret = archeck(*p,phi);
-		if (!ret) {
-			out = 10;
-			printf("\nnon-stationary AR part\n");
-			return out;
-		}
-	}
-
-	if (*q > 0) {
-		invertroot(*q,theta);
-	}
-
-	if (*P == *P) {
-		if (*P > 0) {
-			ret = archeck(*P,PHI);
-			if (!ret) {
-				out = 12;
-				printf("\nnon-stationary seasonal AR part\n");
-				return out;
-			}
-		}
-	}
-
-	if (*Q == *Q) {
-		if (*Q > 0) {
-			invertroot(*Q,THETA);
-		}
-	}
-
-	return out;
-
 }
 
 int as154x(double *inp, int N, double *xreg, int optmethod, int p, int d, int q, int s, int P, int D, int Q, double *phi, double *theta, 
@@ -2648,42 +2681,9 @@ double fas154_seas(double *b, int pq, void *params) {
 	return value;
 }
 
-void checkroots(double *phi, int *p, double *theta, int *q, double *PHI, int *P, double *THETA, int *Q) {
-	int ret;
-
-	if (*p > 0) {
-		ret = archeck(*p,phi);
-		if (!ret) {
-			printf("\nnon-stationary AR part\n");
-			exit(-1);
-		}
-	}
-
-	if (*q > 0) {
-		invertroot(*q,theta);
-	}
-
-	if (*P == *P) {
-		if (*P > 0) {
-			ret = archeck(*P,PHI);
-			if (!ret) {
-				printf("\nnon-stationary seasonal AR part\n");
-				exit(-1);
-			}
-		}
-	}
-
-	if (*Q == *Q) {
-		if (*Q > 0) {
-			invertroot(*Q,THETA);
-		}
-	}
-
-}
-
 int as154_seas(double *inp, int N, int optmethod, int p, int d, int q, int s, int P, int D, int Q,double *phi, double *theta, 
 	double *PHI, double *THETA, double *wmean,double *var,double *loglik,double *hess,int cssml) {
-	int i, pq, retval, length, offset,ret,nd,rp;
+	int i, pq, retval, length, offset,ret,nd,rp,ERR;
 	double *b, *tf, *x,*inp2,*dx,*thess,*res,*varcovar;
 	int *ipiv;
 	double maxstep,coeff,sigma;
