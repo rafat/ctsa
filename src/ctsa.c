@@ -3255,7 +3255,7 @@ void sarima_summary(sarima_object obj) {
 	int i,pq,t;
 	pq = obj->p + obj->q + obj->P + obj->Q + obj->M;
 	if (obj->method == 0 || obj->method == 1) {
-		printf("\n\n Exit Status \n");
+		printf("\n\nExit Status \n");
 		printf("Return Code : %d \n", obj->retval);
 		printf("Exit Message : ");
 
@@ -3273,7 +3273,7 @@ void sarima_summary(sarima_object obj) {
 		}
 	}
 	printf("\n\n");
-	printf("  ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->p,obj->d,obj->q, obj->P,obj->D,obj->Q );
+	printf("ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->p,obj->d,obj->q, obj->P,obj->D,obj->Q );
 	printf("\n");
 
 	printf("%-20s%-20s%-20s \n\n", "Coefficients", "Value", "Standard Error");
@@ -3393,7 +3393,7 @@ void arima_summary(arima_object obj) {
 	int i, pq,t;
 	pq = obj->p + obj->q + obj->M;
 	if (obj->method == 0 || obj->method == 1) {
-		printf("\n\n Exit Status \n");
+		printf("\n\nExit Status \n");
 		printf("Return Code : %d \n", obj->retval);
 		printf("Exit Message : ");
 
@@ -3522,7 +3522,7 @@ void sarimax_summary(sarimax_object obj) {
 	mean = obj->M - obj->r;
 	
 	if (obj->method == 0 || obj->method == 1) {
-		printf("\n\n Exit Status \n");
+		printf("\n\nExit Status \n");
 		printf("Return Code : %d \n", obj->retval);
 		printf("Exit Message : ");
 
@@ -3549,7 +3549,7 @@ void sarimax_summary(sarimax_object obj) {
 		}
 	}
 	printf("\n\n");
-	printf("  ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->p,obj->d,obj->q, obj->P,obj->D,obj->Q );
+	printf("ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->p,obj->d,obj->q, obj->P,obj->D,obj->Q );
 	printf("\n");
 	//mdisplay(obj->vcov,pq,pq);
 	printf("%-20s%-20s%-20s \n\n", "Coefficients", "Value", "Standard Error");
@@ -3670,7 +3670,7 @@ void auto_arima_summary(auto_arima_object obj) {
 	mean = obj->M - obj->r;
 
 	if (obj->method == 0 || obj->method == 1) {
-		printf("\n\n Exit Status \n");
+		printf("\n\nExit Status \n");
 		printf("Return Code : %d \n", obj->retval);
 		printf("Exit Message : ");
 
@@ -3697,7 +3697,7 @@ void auto_arima_summary(auto_arima_object obj) {
 		}
 	}
 	printf("\n\n");
-	printf("  ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->p,obj->d,obj->q,
+	printf("ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->p,obj->d,obj->q,
 	 obj->P,obj->D,obj->Q );
 	printf("\n");
 	t = 0;
@@ -3796,7 +3796,7 @@ void auto_arima_summary(auto_arima_object obj) {
 	printf("Auto ARIMA Parameters ");
 	printf("\n\n");
 	printf("Approximation: %s \n", obj->approximation == 1 ? "TRUE" : "FALSE");
-	printf("Stepwise: %s", obj->stepwise == 1 ? "TRUE" : "FALSE");
+	printf("Stepwise: %s \n", obj->stepwise == 1 ? "TRUE" : "FALSE");
 }
 
 void sarimax_wrapper_summary(sarimax_wrapper_object obj) {
@@ -3805,7 +3805,7 @@ void sarimax_wrapper_summary(sarimax_wrapper_object obj) {
 	mean = obj->sarimax->M - obj->sarimax->r;
 	
 	if (obj->sarimax->method == 0 || obj->sarimax->method == 1) {
-		printf("\n\n Exit Status \n");
+		printf("\n\nExit Status \n");
 		printf("Return Code : %d \n", obj->sarimax->retval);
 		printf("Exit Message : ");
 
@@ -3832,7 +3832,7 @@ void sarimax_wrapper_summary(sarimax_wrapper_object obj) {
 		}
 	}
 	printf("\n\n");
-	printf("  ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->sarimax->p,obj->sarimax->d,obj->sarimax->q,
+	printf("ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->sarimax->p,obj->sarimax->d,obj->sarimax->q,
 	 obj->sarimax->P,obj->sarimax->D,obj->sarimax->Q );
 	printf("\n");
 	//mdisplay(obj->vcov,pq,pq);
@@ -3935,7 +3935,7 @@ void myarima_summary(myarima_object obj) {
 	mean = obj->sarimax->M - obj->sarimax->r;
 	
 	if (obj->sarimax->method == 0 || obj->sarimax->method == 1) {
-		printf("\n\n Exit Status \n");
+		printf("\n\nExit Status \n");
 		printf("Return Code : %d \n", obj->sarimax->retval);
 		printf("Exit Message : ");
 
@@ -3962,7 +3962,7 @@ void myarima_summary(myarima_object obj) {
 		}
 	}
 	printf("\n\n");
-	printf("  ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->sarimax->p,obj->sarimax->d,obj->sarimax->q,
+	printf("ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->sarimax->p,obj->sarimax->d,obj->sarimax->q,
 	 obj->sarimax->P,obj->sarimax->D,obj->sarimax->Q );
 	printf("\n");
 	//mdisplay(obj->vcov,pq,pq);
