@@ -102,7 +102,7 @@ int ndiffs(double *x, int N,double *alpha, const char *test,const char *type, in
     alpha_ = alpha == NULL ? 0.05 : *alpha;
     max_d_ = max_d == NULL ? 2 : *max_d;
 
-    printf("%g \n",alpha_);
+    // printf("%g \n",alpha_);
 
     if (max_d_ < 0) {
         printf("Error. Maximum Difference cannot be less than 0 \n");
