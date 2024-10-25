@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 /*
  * dist.c
 
@@ -43,6 +44,8 @@ double eps(double x) {
 	return y;
 }
 
+// SPDX-License-Identifier: MIT
+// See https://github.com/geographiclib/geographiclib
 double log1p(double x) {
 	/*
 	 * This log(1+x) algorithm is courtesy of Charles kerney and John D Cook
@@ -77,6 +80,8 @@ double factorial(int N) {
 	return ans;
 }
 
+// Software released before the Berne Convention Implementation Act of 1988 without an explicit copyright notice are public-domain software
+// SPDX-License-Identifier: CC0
 double gamma(double x) {
 	/*
 	 * This C program code is based on  W J Cody's fortran code.
@@ -217,6 +222,8 @@ double gamma(double x) {
 	return oup;
 }
 
+// Software released before the Berne Convention Implementation Act of 1988 without an explicit copyright notice are public-domain software
+// SPDX-License-Identifier: CC0
 double gamma_log(double x) {
 	/*
 	 * This C program code is based on  W J Cody's fortran code.
@@ -537,6 +544,8 @@ double qgamma(double x, double a) {
 	
 }
 
+// This is Public Domain in the US (work of US government employees)
+// SPDX-License-Identifier: CC0
 double bfrac(double x,double a, double b, int* ctr) {
 	double d2m,d2m1,a0,b0,a1,b1,am,bm,g,g0,delta,a1m,a2m,del;
 	int m;
@@ -588,6 +597,8 @@ double bfrac(double x,double a, double b, int* ctr) {
 	 return g;
 }
 
+// This is Public Domain in the US (work of US government employees)
+// SPDX-License-Identifier: CC0
 double ibeta_appx(double x, double a , double b) {
 	double oup,abx,c2,w1,w2,num,den;
 	/*
@@ -619,6 +630,8 @@ double ibeta_appx(double x, double a , double b) {
 	
 }
 
+// This is Public Domain in the US (work of US government employees)
+// SPDX-License-Identifier: CC0
 double ibeta(double x, double a , double b) {
 	double oup,temp;
 	int ctrlint;
@@ -688,6 +701,8 @@ double ibetad(double x, double a , double b) {
 	return oup;
 }
 
+// This is Public Domain in the US (work of US government employees)
+// SPDX-License-Identifier: CC0
 double betapdf(double x, double a , double b) {
 	double oup,la,lb;
 	/*
@@ -742,6 +757,7 @@ double betacdf(double x, double a , double b) {
 	
 }
 
+// SPDX-License-Identifier: LGPL-3.0-or-later
 double r8_max ( double x, double y )
 
 /******************************************************************************/
@@ -783,6 +799,7 @@ double r8_max ( double x, double y )
   return value;
 }
 
+// SPDX-License-Identifier: LGPL-3.0-or-later
 double betainv(double alpha, double p, double q) {
 	/*
 	 *   Author:

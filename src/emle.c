@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 
 #include "emle.h"
 
@@ -388,7 +389,9 @@ static void regres(int np,int nrbar,double *rbar, double *thetab, double *beta) 
 	}
 }
 
-
+// Software released before the Berne Convention Implementation Act of 1988 without an explicit copyright notice are public-domain software
+// Copyright: Royal Statistical Society - free to redistribute but no fee for redistribution
+// SPDX-License-Identifier: CC0
 int starma(int ip, int iq,double *phi,double *theta,double *A,double *P,double *V) {
 	int ifault,ir,np,nrbar,i,ind,j,ir1,irank,ifail;
 	int npr, npr1, ind1, ind2, indj,indi,indn;
@@ -721,6 +724,9 @@ void karma(int ip,int iq,double *phi,double *theta,double *A,double *P,double*V,
 	free(E);
 }
 
+// Software released before the Berne Convention Implementation Act of 1988 without an explicit copyright notice are public-domain software
+// Copyright: Royal Statistical Society - free to redistribute but no fee for redistribution
+// SPDX-License-Identifier: CC0
 int forkal(int ip,int iq,int id,double *phi,double*theta,double *delta,int N,double *W,double *resid,int il,double *Y,double *AMSE) {
 	int ifault,ir,np,k,nrbar,ird,irz;
 	double *A,*P,*V,*store,*xrow;

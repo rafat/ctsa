@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 /*
  * initest.c
  *
@@ -85,6 +86,8 @@ void ma_inn(double *inp, int N,int q, double* theta, int lag) {
 	free(thetap);
 }
 
+// Free to use for any purpose, so ~CC0?
+// SPDX-License-Identifier: CC0
 void burgalg(double *x, int N, int p, double *phi,double *var) {
 	int i, j, N1, p1;
 	double dk,u,temp1,temp2;
