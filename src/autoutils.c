@@ -193,7 +193,7 @@ int nsdiffs(double *x, int N,int f,double *alpha, const char *test, int *max_D) 
 
     if (!strcmp(test,"ocsb")) {
         if (alpha_ != 0.05) {
-            printf("Significance levels other than 5% are not currently supported by test='ocsb', defaulting to alpha = 0.05.");
+            printf("Significance levels other than 5%% are not currently supported by test='ocsb', defaulting to alpha = 0.05.");
             alpha_ = 0.05;
         }
     }
