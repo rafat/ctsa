@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 /*
  * lls.c
  *
@@ -474,6 +475,7 @@ void bidiag_orth(double *A, int M, int N,double *U,double *V) {
 }
 
 
+// SPDX-License-Identifier: MIT
 int svd_gr(double *A,int M,int N,double *U,double *V,double *q) {
 	int i,j,k,l,t,t2,ierr,cancel,iter,l1;
 	double eps,g,x,s,temp,f,h,scale,c,y,z;
@@ -785,6 +787,7 @@ int svd_gr(double *A,int M,int N,double *U,double *V,double *q) {
 }
 
 
+// SPDX-License-Identifier: MIT
 int svd_gr2(double *A,int M,int N,double *U,double *V,double *q) {
 	int i,j,k,l,t,t2,ierr,cancel,iter,l1;
 	double eps,g,x,s,temp,f,h,tol,c,y,z;
@@ -1081,6 +1084,8 @@ int svd_gr2(double *A,int M,int N,double *U,double *V,double *q) {
 	return ierr;
 }
 
+
+// SPDX-License-Identifier: MIT
 int minfit(double *AB,int M,int N,int P,double *q) {
 	int i,j,k,l,t,t2,ierr,cancel,iter,l1,np,n1;
 	double eps,g,x,s,temp,f,h,tol,c,y,z;

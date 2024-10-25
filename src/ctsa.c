@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #include "ctsa.h"
 
 arima_object arima_init(int p, int d, int q, int N) {

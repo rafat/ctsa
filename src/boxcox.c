@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #include "boxcox.h"
 
 int checkConstant(double *x, int N) {

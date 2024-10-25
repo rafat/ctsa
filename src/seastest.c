@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #include "seastest.h"
 
 static void findMeans(double *x, int N, int stride, double *means) {

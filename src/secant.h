@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #ifndef SECANT_H_
 #define SECANT_H_
 

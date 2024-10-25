@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #ifndef BOXCOX_H_
 #define BOXCOX_H_
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #ifndef SEASTEST_H_
 #define SEASTEST_H_
 

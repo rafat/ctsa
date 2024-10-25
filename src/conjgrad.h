@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #ifndef CONJGRAD_H_
 #define CONJGRAD_H_
 

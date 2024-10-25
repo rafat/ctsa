@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: BSD-3-Clause
 add_executable(acftest acftest.c)
 
 target_link_libraries(acftest ctsalib m)

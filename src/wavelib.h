@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #ifndef WAVELIB_H_
 #define WAVELIB_H_
 

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: BSD-3-Clause
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(SOURCE_FILES   	autoutils.c
