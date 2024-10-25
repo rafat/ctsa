@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #ifndef WAVELETARIMA_H_
 #define WAVELETARIMA_H_
 #include "wavelib.h"

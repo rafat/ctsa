@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #include "errors.h"
 
 static void pe(double *predicted, double *actual, int N,double *err) {

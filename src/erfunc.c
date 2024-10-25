@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /*
  *
  * This program is modified C translation of ACM TOMS 708 erf and erfc

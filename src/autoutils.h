@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #ifndef AUTOUTILS_H_
 #define AUTOUTILS_H_
 

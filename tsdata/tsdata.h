@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #ifndef TSDATA_H_
 #define TSDATA_H_
 

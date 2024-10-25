@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #include "autoutils.h"
 
 static int runstattests(double *x, int N, const char * test,const char *mtype,double alpha) {

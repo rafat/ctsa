@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #ifndef ERRORS_H_
 #define ERRORS_H_
 

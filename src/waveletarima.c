@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #include "waveletarima.h"
 
 void waveletarima(double *x, int N, char *wname, int levels,int p, int q, double *forecasts, int lengthfor) {

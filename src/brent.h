@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
+// see https://people.math.sc.edu/Burkardt/f_src/brent/brent.html
 #ifndef BRENT_H_
 #define BRENT_H_
 

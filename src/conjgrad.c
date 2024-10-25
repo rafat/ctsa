@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #include "conjgrad.h"
 
 static int richolu(double *A,int N, int stride, double *U22) {

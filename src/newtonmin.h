@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #ifndef NEWTONMIN_H_
 #define NEWTONMIN_H_
 

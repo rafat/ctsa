@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #ifndef UNITROOT_H_
 #define UNITROOT_H_
 
