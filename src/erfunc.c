@@ -310,8 +310,10 @@ double erfcinv(double x) {
 	 * implementation.
 	 */ 
 	
-	xinf = 1.79e308;
-	pi  = 3.1415926535897932384626434;
+//	xinf = 1.79e308;
+//	pi  = 3.1415926535897932384626434;
+	xinf = XINFVAL;
+	pi  = PIVAL;
 	
 	if (x > 2. || x < 0.) {
 		 printf("The Input takes values between 0.0 and 2.0");
@@ -330,14 +332,16 @@ double erfcinv(double x) {
 		oup = (p[0]/t+p[1]+t*(p[2]+t*(p[3]+t*(p[4]+t*p[5]))))/
           (q[0]+t*(q[1]+t*(q[2])));
 		
-	} else if( x < 1.0e-100 && x > 1.0e-1000 ) {
+//	} else if( x < 1.0e-100 && x > 1.0e-1000 ) {
+	} else if( x < 1.0e-100 && x > XNINFVAL ) {
 		//Coefficients from table 70
 		double p[4]={0.00980456202915,0.363667889171,0.97302949837,-0.5374947401};
 		double q[3]={0.00980451277802,0.363699971544,1.000000000000}; 
 		t = 1.0/sqrt(-log(x));
 		oup = (p[0]/t+p[1]+t*(p[2]+t*p[3]))/(q[0]+t*(q[1]+t*(q[2])));
 		
-	} else if (x <= 1.0e-1000) {
+//	} else if (x <= 1.0e-1000) {
+	} else if (x <= XNINFVAL) {
 		 oup = xinf;
 	} else if (x == 2.) {
 		 oup = -xinf;
