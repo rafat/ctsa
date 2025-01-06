@@ -23,6 +23,28 @@ add_executable(sarimatest sarimatest.c)
 
 target_link_libraries(sarimatest ctsalib m)
 
+# TODO add the header files via a `target_include_directories`
+add_executable(sarimatest2 
+			   sarimatest2.c 
+			   auxlib.c 
+			   auxlib.h 
+			   csv_in.c 
+			   csv_in.h 
+			   )
+
+target_link_libraries(sarimatest2 ctsalib m)
+
+# TODO add the header files via a `target_include_directories`
+add_executable(sarimatest3 
+			   sarimatest3.c 
+			   auxlib.c 
+			   auxlib.h 
+			   csv_in.c 
+			   csv_in.h 
+			   )
+
+target_link_libraries(sarimatest3 ctsalib m)
+
 add_executable(misctests misctests.c)
 
 target_link_libraries(misctests ctsalib m)

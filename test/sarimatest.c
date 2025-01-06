@@ -9,8 +9,8 @@ int main(void) {
 	double *inp;
 	int p, q;
 	int s, P, D, Q;
-	double *phi, *theta;
-	double *PHI, *THETA;
+	// double *phi, *theta;
+	// double *PHI, *THETA;
 	double *xpred, *amse;
 	sarima_object obj;
 	p = 0;
@@ -24,10 +24,10 @@ int main(void) {
 
 	L = 5;
 
-	phi = (double*)malloc(sizeof(double)* p);
-	theta = (double*)malloc(sizeof(double)* q);
-	PHI = (double*)malloc(sizeof(double)* P);
-	THETA = (double*)malloc(sizeof(double)* Q);
+	// phi = (double*)malloc(sizeof(double)* p);
+	// theta = (double*)malloc(sizeof(double)* q);
+	// PHI = (double*)malloc(sizeof(double)* P);
+	// THETA = (double*)malloc(sizeof(double)* Q);
 
 	xpred = (double*)malloc(sizeof(double)* L);
 	amse = (double*)malloc(sizeof(double)* L);
@@ -76,10 +76,10 @@ int main(void) {
 	printf("\n");
 	sarima_free(obj);
 	free(inp);
-	free(phi);
-	free(theta);
-	free(PHI);
-	free(THETA);
+	// free(phi);
+	// free(theta);
+	// free(PHI);
+	// free(THETA);
 	free(xpred);
 	free(amse);
 	return 0;
