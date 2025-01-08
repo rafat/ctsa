@@ -11,6 +11,8 @@
 #if !defined(__CSV_IN_H)
 #define __CSV_IN_H
 
+#include <math.h> /* possible definition of NAN, if >= C99 */
+
 /**
  * Will use Not a Number as the huge DBL_MAX if NAN is not defined
  **/
