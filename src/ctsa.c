@@ -3274,7 +3274,8 @@ void sarima_summary(sarima_object obj) {
 		}
 	}
 	printf("\n\n");
-	printf("ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->p,obj->d,obj->q, obj->P,obj->D,obj->Q );
+	printf("ARIMA Seasonal Order : (%d, %d, %d) * (%d, %d, %d)[%d]\n",
+		obj->p, obj->d, obj->q, obj->P, obj->D ,obj->Q, obj->s);
 	printf("\n");
 
 	printf("%-20s%-20s%-20s \n\n", "Coefficients", "Value", "Standard Error");
