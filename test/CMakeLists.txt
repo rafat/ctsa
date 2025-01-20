@@ -45,6 +45,14 @@ add_executable(sarimatest3
 
 target_link_libraries(sarimatest3 ctsalib m)
 
+# TODO add the header files via a `target_include_directories`
+add_executable(sarimatest_mu
+	       sarimatest_mu.c 
+	       minunit.h
+	      )
+
+target_link_libraries(sarimatest_mu ctsalib m)
+
 add_executable(misctests misctests.c)
 
 target_link_libraries(misctests ctsalib m)
