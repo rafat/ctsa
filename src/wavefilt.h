@@ -15,6 +15,11 @@ Copyright (c) 2016, Holger Nahrstaedt
 extern "C" {
 #endif
 
+/** To deal with non-standard GCC extensions */
+#if !defined(M_SQRT2)
+#define M_SQRT2        1.41421356237309504880  /* sqrt(2) */
+
+#endif /* !defined(M_SQRT2) */
 
 int filtlength(const char* name);
 
