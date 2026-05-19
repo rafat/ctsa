@@ -670,7 +670,7 @@ void OCSBtest(double *x, int N, int f, int mlags, const char *method,double *sta
 
     //printf("\n\n%d\n\n",fit->rank);
 
-    if (fit->rank != fit->p && fit->rank == fit->rank) {
+    if (fit->rank != fit->p) {
         if (crit_reg == NULL) {
             printf("Could not find a solution. Try a different method. \n");
             exit(-1);
