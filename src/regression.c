@@ -36,7 +36,11 @@ reg_object reg_init(int N, int p) {
 	obj->r2adj = obj->R2[1] = 0.0;
 	obj->df = 0;
 	obj->intercept = (p == 0) ? 0 : 1;
-	strcpy(obj->lls, "qr");
+	if (strlen("qr") >= MAX_STR_LEN) {
+		fprintf(stderr, "String too long for obj->lls (max %d chars)", MAX_STR_LEN);
+		exit(-1);
+	}
+	strncpy(obj->lls, "qr", MAX_STR_LEN - 1);
 
 	obj->TSS = 0.0;
 	obj->ESS = 0.0;
@@ -508,14 +512,26 @@ void setIntercept(reg_object obj, int intercept) {
 
 void setLLSMethod(reg_object obj, char *llsmethod) {
 	if (!strcmp(llsmethod, "qr")) {
-		strcpy(obj->lls, llsmethod);
+		if (strlen(llsmethod) >= MAX_STR_LEN) {
+			fprintf(stderr, "String too long for obj->lls (max %d chars)", MAX_STR_LEN);
+			exit(-1);
+		}
+		strncpy(obj->lls, llsmethod, MAX_STR_LEN - 1);
 	}
 	else if (!strcmp(llsmethod, "normal")) {
-		strcpy(obj->lls, llsmethod);
+		if (strlen(llsmethod) >= MAX_STR_LEN) {
+			fprintf(stderr, "String too long for obj->lls (max %d chars)", MAX_STR_LEN);
+			exit(-1);
+		}
+		strncpy(obj->lls, llsmethod, MAX_STR_LEN - 1);
 		printf("Warning - This method will not calculate the rank of the regression. Use method qr instead. \n");
 	}
 	else if (!strcmp(llsmethod, "svd")) {
-		strcpy(obj->lls, llsmethod);
+		if (strlen(llsmethod) >= MAX_STR_LEN) {
+			fprintf(stderr, "String too long for obj->lls (max %d chars)", MAX_STR_LEN);
+			exit(-1);
+		}
+		strncpy(obj->lls, llsmethod, MAX_STR_LEN - 1);
 		printf("Warning - This method will not calculate the rank of the regression. use method qr instead. \n");
 	}
 	else {

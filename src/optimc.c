@@ -35,7 +35,11 @@ opt_object opt_init(int N) {
 	obj->Iter = 0;
 	obj->Method = 0;
 	obj->maxstep = -1.0;
-	strcpy(obj->MethodName,"Nelder-Mead");
+	if (strlen("Nelder-Mead") >= MAX_NAME_LEN) {
+		fprintf(stderr, "String too long for obj->MethodName (max %d chars)", MAX_NAME_LEN);
+		exit(-1);
+	}
+	strncpy(obj->MethodName, "Nelder-Mead", MAX_NAME_LEN - 1);
 	obj->objfunc = 0.0;
 	for (i = 0; i < N;++i) {
 		obj->xopt[i] = 0.0;
@@ -402,46 +406,82 @@ void optimize(opt_object obj, custom_function *funcpt, custom_gradient *funcgrad
 	}
 
 	if (method == 0) {
-		strcpy(obj->MethodName,"Nelder-Mead");
+		if (strlen("Nelder-Mead") >= MAX_NAME_LEN) {
+			fprintf(stderr, "String too long for obj->MethodName (max %d chars)", MAX_NAME_LEN);
+			exit(-1);
+		}
+		strncpy(obj->MethodName, "Nelder-Mead", MAX_NAME_LEN - 1);
 		obj->retval = nel_min(funcpt,xi,obj->N,dx,fsval,obj->MaxIter,&obj->Iter,obj->eps,obj->xopt);
 	} else if (method == 1) {
-		strcpy(obj->MethodName,"Newton Line Search");
+		if (strlen("Newton Line Search") >= MAX_NAME_LEN) {
+			fprintf(stderr, "String too long for obj->MethodName (max %d chars)", MAX_NAME_LEN);
+			exit(-1);
+		}
+		strncpy(obj->MethodName, "Newton Line Search", MAX_NAME_LEN - 1);
 		obj->retval = newton_min_func(funcpt,funcgrad,xi,obj->N,dx,fsval,obj->maxstep,obj->MaxIter,&obj->Iter,obj->eps,obj->gtol,
 				obj->stol,obj->xopt);
 	} else if (method == 2) {
-		strcpy(obj->MethodName,"Newton Trust Region - Hook Step");
+		if (strlen("Newton Trust Region - Hook Step") >= MAX_NAME_LEN) {
+			fprintf(stderr, "String too long for obj->MethodName (max %d chars)", MAX_NAME_LEN);
+			exit(-1);
+		}
+		strncpy(obj->MethodName, "Newton Trust Region - Hook Step", MAX_NAME_LEN - 1);
 
 		obj->retval = newton_min_trust(funcpt,funcgrad,xi,obj->N,dx,fsval,delta,0,obj->MaxIter,&obj->Iter,obj->eps,
 				obj->gtol,obj->stol,obj->xopt);
 	} else if (method == 3) {
-		strcpy(obj->MethodName,"Newton Trust Region - Double Dog-Leg");
+		if (strlen("Newton Trust Region - Double Dog-Leg") >= MAX_NAME_LEN) {
+			fprintf(stderr, "String too long for obj->MethodName (max %d chars)", MAX_NAME_LEN);
+			exit(-1);
+		}
+		strncpy(obj->MethodName, "Newton Trust Region - Double Dog-Leg", MAX_NAME_LEN - 1);
 
 		obj->retval = newton_min_trust(funcpt,funcgrad,xi,obj->N,dx,fsval,delta,1,obj->MaxIter,&obj->Iter,obj->eps,
 				obj->gtol,obj->stol,obj->xopt);
 	} else if (method == 4) {
-		strcpy(obj->MethodName,"Conjugate Gradient");
+		if (strlen("Conjugate Gradient") >= MAX_NAME_LEN) {
+			fprintf(stderr, "String too long for obj->MethodName (max %d chars)", MAX_NAME_LEN);
+			exit(-1);
+		}
+		strncpy(obj->MethodName, "Conjugate Gradient", MAX_NAME_LEN - 1);
 
 		obj->retval = conjgrad_min_lin(funcpt, funcgrad, xi, obj->N, dx, obj->maxstep, obj->MaxIter, &obj->Iter, obj->eps, obj->gtol,
 				obj->ftol,obj->xtol,obj->xopt);
 	} else if (method == 5) {
-		strcpy(obj->MethodName,"BFGS");
+		if (strlen("BFGS") >= MAX_NAME_LEN) {
+			fprintf(stderr, "String too long for obj->MethodName (max %d chars)", MAX_NAME_LEN);
+			exit(-1);
+		}
+		strncpy(obj->MethodName, "BFGS", MAX_NAME_LEN - 1);
 
 		obj->retval = bfgs_min(funcpt, funcgrad, xi, obj->N, dx, fsval, obj->maxstep, obj->MaxIter, &obj->Iter, obj->eps, obj->gtol,
 				obj->stol,obj->xopt);
 	} else if (method == 6) {
-		strcpy(obj->MethodName,"Limited Memory BFGS");
+		if (strlen("Limited Memory BFGS") >= MAX_NAME_LEN) {
+			fprintf(stderr, "String too long for obj->MethodName (max %d chars)", MAX_NAME_LEN);
+			exit(-1);
+		}
+		strncpy(obj->MethodName, "Limited Memory BFGS", MAX_NAME_LEN - 1);
 		m = mvalue(N);
 		obj->retval = bfgs_l_min(funcpt, funcgrad, xi, obj->N, m, dx, fsval, obj->maxstep, obj->MaxIter, &obj->Iter, obj->eps,
 				obj->gtol,obj->ftol,obj->xtol,obj->xopt);
 	}
 	else if (method == 7) {
-		strcpy(obj->MethodName, "BFGS More-Thuente Line Search");
+		if (strlen("BFGS More-Thuente Line Search") >= MAX_NAME_LEN) {
+			fprintf(stderr, "String too long for obj->MethodName (max %d chars)", MAX_NAME_LEN);
+			exit(-1);
+		}
+		strncpy(obj->MethodName, "BFGS More-Thuente Line Search", MAX_NAME_LEN - 1);
 		m = mvalue(N);
 		obj->retval = bfgs_min2(funcpt, funcgrad, xi, obj->N, m, dx, fsval, obj->maxstep, obj->MaxIter, &obj->Iter, obj->eps,
 			obj->gtol, obj->ftol, obj->xtol, obj->xopt);
 	}
 	else {
-		strcpy(obj->MethodName,"NULL");
+		if (strlen("NULL") >= MAX_NAME_LEN) {
+			fprintf(stderr, "String too long for obj->MethodName (max %d chars)", MAX_NAME_LEN);
+			exit(-1);
+		}
+		strncpy(obj->MethodName, "NULL", MAX_NAME_LEN - 1);
 		printf("Method Value should be one of 0,1,2,3,4,5 or 6. See Documentation. \n");
 		exit(1);
 	}

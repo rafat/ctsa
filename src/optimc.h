@@ -11,6 +11,8 @@
 
 #include "nls.h"
 
+#define MAX_NAME_LEN 50
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -32,7 +34,7 @@ struct opt_set{
 	int Iter;
 	int Method;
 	int retval;
-	char MethodName[50];
+	char MethodName[MAX_NAME_LEN];
 	double xopt[1];
 };
 
