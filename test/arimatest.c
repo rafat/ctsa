@@ -16,7 +16,7 @@ int main(void) {
 	q = 0;
 
 
-	L = 0;
+	L = 5;
 
 	phi = (double*)malloc(sizeof(double)* p);
 	theta = (double*)malloc(sizeof(double)* q);

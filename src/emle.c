@@ -1418,7 +1418,7 @@ double fas154(double *b,int pq,void *params) {
 
 	iupd = 0;
 
-	if (ip == 1 && iq == 0) {
+	if ((ip == 1 && iq == 0) || (ip == 0 && iq == 0)) {
 		*V = 1.0;
 		*A = 0.0;
 		*P = 1.0 / (1.0 - phi[0] * phi[0]);
@@ -2658,7 +2658,7 @@ double fas154_seas(double *b, int pq, void *params) {
 	iupd = 0;
 	//mdisplay(b, 1, pq);
 
-	if (ip == 1 && iq == 0) {
+	if ((ip == 1 && iq == 0) || (ip == 0 && iq == 0)) {
 		*V = 1.0;
 		*A = 0.0;
 		*P = 1.0 / (1.0 - phi[0] * phi[0]);
