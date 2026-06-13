@@ -25,9 +25,15 @@ wave_object wave_init(const char* wname) {
 
 	obj->filtlength = retval;
 	obj->lpd_len = obj->hpd_len = obj->lpr_len = obj->hpr_len = obj->filtlength;
-	strcpy(obj->wname, wname);
 	if (wname != NULL) {
+		if (strlen(wname) >= MAX_WNAME_LEN) {
+			fprintf(stderr, "String too long for obj->wname (max %d chars)", MAX_WNAME_LEN);
+			exit(-1);
+		}
+		strncpy(obj->wname, wname, MAX_WNAME_LEN - 1);
 		filtcoef(wname,obj->params,obj->params+retval,obj->params+2*retval,obj->params+3*retval);
+	} else {
+		obj->wname[0] = '\0';
 	}
 	obj->lpd = &obj->params[0];
 	obj->hpd = &obj->params[retval];
@@ -57,12 +63,20 @@ wt_object wt_init(wave_object wave,const char* method, int siglength,int J) {
 	if (method == NULL) {
 		obj = (wt_object)malloc(sizeof(struct wt_set) + sizeof(double)* (siglength +  2 * J * (size+1)));
 		obj->outlength = siglength + 2 * J * (size + 1); // Default
-		strcpy(obj->ext, "sym"); // Default
+		if (strlen("sym") >= MAX_EXT_LEN) {
+			fprintf(stderr, "String too long for obj->ext (max %d chars)", MAX_EXT_LEN);
+			exit(-1);
+		}
+		strncpy(obj->ext, "sym", MAX_EXT_LEN - 1);
 	}
 	else if (!strcmp(method, "dwt") || !strcmp(method, "DWT")) {
 		obj = (wt_object)malloc(sizeof(struct wt_set) + sizeof(double)* (siglength + 2 * J * (size + 1)));
 		obj->outlength = siglength + 2 * J * (size + 1); // Default
-		strcpy(obj->ext, "sym"); // Default
+		if (strlen("sym") >= MAX_EXT_LEN) {
+			fprintf(stderr, "String too long for obj->ext (max %d chars)", MAX_EXT_LEN);
+			exit(-1);
+		}
+		strncpy(obj->ext, "sym", MAX_EXT_LEN - 1);
 	}
 	else if (!strcmp(method, "swt") || !strcmp(method, "SWT")) {
 		if (!testSWTlength(siglength, J)) {
@@ -72,7 +86,11 @@ wt_object wt_init(wave_object wave,const char* method, int siglength,int J) {
 
 		obj = (wt_object)malloc(sizeof(struct wt_set) + sizeof(double)* (siglength * (J + 1)));
 		obj->outlength = siglength * (J + 1); // Default
-		strcpy(obj->ext, "per"); // Default
+		if (strlen("per") >= MAX_EXT_LEN) {
+			fprintf(stderr, "String too long for obj->ext (max %d chars)", MAX_EXT_LEN);
+			exit(-1);
+		}
+		strncpy(obj->ext, "per", MAX_EXT_LEN - 1);
 	}
 	else if (!strcmp(method, "modwt") || !strcmp(method, "MODWT")) {
 
@@ -89,7 +107,11 @@ wt_object wt_init(wave_object wave,const char* method, int siglength,int J) {
 
 		obj = (wt_object)malloc(sizeof(struct wt_set) + sizeof(double)* (siglength * 2 * (J + 1)));
 		obj->outlength = siglength * (J + 1); // Default
-		strcpy(obj->ext, "per"); // Default
+		if (strlen("per") >= MAX_EXT_LEN) {
+			fprintf(stderr, "String too long for obj->ext (max %d chars)", MAX_EXT_LEN);
+			exit(-1);
+		}
+		strncpy(obj->ext, "per", MAX_EXT_LEN - 1);
 	}
 
 	obj->wave = wave;
@@ -97,7 +119,15 @@ wt_object wt_init(wave_object wave,const char* method, int siglength,int J) {
 	obj->modwtsiglength = siglength;
 	obj->J = J;
 	obj->MaxIter = MaxIter;
-	strcpy(obj->method, method);
+	if (method != NULL) {
+		if (strlen(method) >= MAX_METHOD_LEN) {
+			fprintf(stderr, "String too long for obj->method (max %d chars)", MAX_METHOD_LEN);
+			exit(-1);
+		}
+		strncpy(obj->method, method, MAX_METHOD_LEN - 1);
+	} else {
+		obj->method[0] = '\0';
+	}
 
 	if (siglength % 2 == 0) {
 		obj->even = 1;
@@ -108,7 +138,12 @@ wt_object wt_init(wave_object wave,const char* method, int siglength,int J) {
 
 	obj->cobj = NULL;
 
-	strcpy(obj->cmethod, "direct"); // Default
+	if (strlen("direct") >= MAX_METHOD_LEN) {
+		fprintf(stderr, "String too long for obj->cmethod (max %d chars)", MAX_CMETHOD_LEN);
+		exit(-1);
+	}
+	strncpy(obj->cmethod, "direct", MAX_METHOD_LEN - 1);
+
 	obj->cfftset = 0;
 	obj->lenlength = J + 2;
 	obj->output = &obj->params[0];
@@ -161,13 +196,21 @@ wtree_object wtree_init(wave_object wave, int siglength,int J) {
 
 	obj = (wtree_object)malloc(sizeof(struct wtree_set) + sizeof(double)* (siglength * (J + 1) + elength + nodes + J + 1));
 	obj->outlength = siglength * (J + 1) + elength;
-	strcpy(obj->ext, "sym");
+	if (strlen("sym") >= MAX_EXT_LEN) {
+		fprintf(stderr, "String too long for obj->ext (max %d chars)", MAX_EXT_LEN);
+		exit(-1);
+	}
+	strncpy(obj->ext, "sym", MAX_EXT_LEN - 1);
 
 	obj->wave = wave;
 	obj->siglength = siglength;
 	obj->J = J;
 	obj->MaxIter = MaxIter;
-	strcpy(obj->method, "dwt");
+	if (strlen("dwt") >= MAX_METHOD_LEN) {
+		fprintf(stderr, "String too long for obj->method (max %d chars)", MAX_METHOD_LEN);
+		exit(-1);
+	}
+	strncpy(obj->method, "dwt", MAX_METHOD_LEN - 1);
 
 	if (siglength % 2 == 0) {
 		obj->even = 1;
@@ -234,8 +277,16 @@ wpt_object wpt_init(wave_object wave, int siglength, int J) {
 
 	obj = (wpt_object)malloc(sizeof(struct wpt_set) + sizeof(double)* (elength + 4 * nodes + 2 * J + 6));
 	obj->outlength = siglength + 2 * (J + 1) * (size + 1);
-	strcpy(obj->ext, "sym");
-	strcpy(obj->entropy, "shannon");
+	if (strlen("sym") >= MAX_EXT_LEN) {
+		fprintf(stderr, "String too long for obj->ext (max %d chars)", MAX_EXT_LEN);
+		exit(-1);
+	}
+	strncpy(obj->ext, "sym", MAX_EXT_LEN - 1);
+	if (strlen("shannon") >= MAX_ENTROPY_LEN) {
+		fprintf(stderr, "String too long for obj->entropy (max %d chars)", MAX_ENTROPY_LEN);
+		exit(-1);
+	}
+	strncpy(obj->entropy, "shannon", MAX_ENTROPY_LEN - 1);
 	obj->eparam = 0.0;
 
 	obj->wave = wave;
@@ -2966,10 +3017,18 @@ void imodwt(wt_object wt, double *oup) {
 
 void setDWTExtension(wt_object wt, const char *extension) {
 	if (!strcmp(extension, "sym")) {
-		strcpy(wt->ext, "sym");
+		if (strlen("sym") >= MAX_EXT_LEN) {
+			fprintf(stderr, "String too long for wt->ext (max %d chars)", MAX_EXT_LEN);
+			exit(-1);
+		}
+		strncpy(wt->ext, "sym", MAX_EXT_LEN - 1);
 	}
 	else if (!strcmp(extension, "per")) {
-		strcpy(wt->ext, "per");
+		if (strlen("per") >= MAX_EXT_LEN) {
+			fprintf(stderr, "String too long for wt->ext (max %d chars)", MAX_EXT_LEN);
+			exit(-1);
+		}
+		strncpy(wt->ext, "per", MAX_EXT_LEN - 1);
 	}
 	else {
 		printf("Signal extension can be either per or sym");
@@ -2979,10 +3038,18 @@ void setDWTExtension(wt_object wt, const char *extension) {
 
 void setWTREEExtension(wtree_object wt, const char *extension) {
 	if (!strcmp(extension, "sym")) {
-		strcpy(wt->ext, "sym");
+		if (strlen("sym") >= MAX_EXT_LEN) {
+			fprintf(stderr, "String too long for wt->ext (max %d chars)", MAX_EXT_LEN);
+			exit(-1);
+		}
+		strncpy(wt->ext, "sym", MAX_EXT_LEN - 1);
 	}
 	else if (!strcmp(extension, "per")) {
-		strcpy(wt->ext, "per");
+		if (strlen("per") >= MAX_EXT_LEN) {
+			fprintf(stderr, "String too long for wt->ext (max %d chars)", MAX_EXT_LEN);
+			exit(-1);
+		}
+		strncpy(wt->ext, "per", MAX_EXT_LEN - 1);
 	}
 	else {
 		printf("Signal extension can be either per or sym");
@@ -2992,10 +3059,18 @@ void setWTREEExtension(wtree_object wt, const char *extension) {
 
 void setDWPTExtension(wpt_object wt, const char *extension) {
 	if (!strcmp(extension, "sym")) {
-		strcpy(wt->ext, "sym");
+		if (strlen("sym") >= MAX_EXT_LEN) {
+			fprintf(stderr, "String too long for wt->ext (max %d chars)", MAX_EXT_LEN);
+			exit(-1);
+		}
+		strncpy(wt->ext, "sym", MAX_EXT_LEN - 1);
 	}
 	else if (!strcmp(extension, "per")) {
-		strcpy(wt->ext, "per");
+		if (strlen("per") >= MAX_EXT_LEN) {
+			fprintf(stderr, "String too long for wt->ext (max %d chars)", MAX_EXT_LEN);
+			exit(-1);
+		}
+		strncpy(wt->ext, "per", MAX_EXT_LEN - 1);
 	}
 	else {
 		printf("Signal extension can be either per or sym");
@@ -3005,18 +3080,34 @@ void setDWPTExtension(wpt_object wt, const char *extension) {
 
 void setDWPTEntropy(wpt_object wt, const char *entropy, double eparam) {
 	if (!strcmp(entropy, "shannon")) {
-		strcpy(wt->entropy, "shannon");
+		if (strlen("shannon") >= MAX_ENTROPY_LEN) {
+			fprintf(stderr, "String too long for wt->entropy (max %d chars)", MAX_ENTROPY_LEN);
+			exit(-1);
+		}
+		strncpy(wt->entropy, "shannon", MAX_ENTROPY_LEN - 1);
 	}
 	else if (!strcmp(entropy, "threshold")) {
-		strcpy(wt->entropy, "threshold");
+		if (strlen("threshold") >= MAX_ENTROPY_LEN) {
+			fprintf(stderr, "String too long for wt->entropy (max %d chars)", MAX_ENTROPY_LEN);
+			exit(-1);
+		}
+		strncpy(wt->entropy, "threshold", MAX_ENTROPY_LEN - 1);
 		wt ->eparam = eparam;
 	}
 	else if (!strcmp(entropy, "norm")) {
-		strcpy(wt->entropy, "norm");
+		if (strlen("norm") >= MAX_ENTROPY_LEN) {
+			fprintf(stderr, "String too long for wt->entropy (max %d chars)", MAX_ENTROPY_LEN);
+			exit(-1);
+		}
+		strncpy(wt->entropy, "norm", MAX_ENTROPY_LEN - 1);
 		wt->eparam = eparam;
 	}
 	else if (!strcmp(entropy, "logenergy") || !strcmp(entropy, "log energy") || !strcmp(entropy, "energy")) {
-		strcpy(wt->entropy, "logenergy");
+		if (strlen("logenergy") >= MAX_ENTROPY_LEN) {
+			fprintf(stderr, "String too long for wt->entropy (max %d chars)", MAX_ENTROPY_LEN);
+			exit(-1);
+		}
+		strncpy(wt->entropy, "logenergy", MAX_ENTROPY_LEN - 1);
 	}
 	else {
 		printf("Entropy should be one of shannon, threshold, norm or logenergy");
@@ -3026,10 +3117,18 @@ void setDWPTEntropy(wpt_object wt, const char *entropy, double eparam) {
 
 void setWTConv(wt_object wt, const char *cmethod) {
 	if (!strcmp(cmethod, "fft") || !strcmp(cmethod, "FFT")) {
-		strcpy(wt->cmethod, "fft");
+		if (strlen("fft") >= MAX_METHOD_LEN) {
+			fprintf(stderr, "String too long for wt->cmethod (max %d chars)", MAX_CMETHOD_LEN);
+			exit(-1);
+		}
+		strncpy(wt->cmethod, "fft", MAX_METHOD_LEN - 1);
 	}
 	else if (!strcmp(cmethod, "direct")) {
-		strcpy(wt->cmethod, "direct");
+		if (strlen("direct") >= MAX_METHOD_LEN) {
+			fprintf(stderr, "String too long for wt->cmethod (max %d chars)", MAX_CMETHOD_LEN);
+			exit(-1);
+		}
+		strncpy(wt->cmethod, "direct", MAX_METHOD_LEN - 1);
 	}
 	else {
 		printf("Convolution Only accepts two methods - direct and fft");

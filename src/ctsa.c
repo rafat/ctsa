@@ -308,10 +308,29 @@ auto_arima_object auto_arima_init(int *pdqmax,int *PDQmax,int s, int r, int N) {
 	obj->imean = 1;
 	obj->idrift = 1;
 
-	strcpy(obj->test,"kpss");
-	strcpy(obj->seas,"seas");
-	strcpy(obj->information_criteria,"aicc");
-	strcpy(obj->type,"level");
+	if (strlen("kpss") >= MAX_STR_LEN) {
+		fprintf(stderr, "String too long for obj->test (max %d chars)", MAX_STR_LEN);
+		exit(-1);
+	}
+	strncpy(obj->test, "kpss", MAX_STR_LEN - 1);
+	
+	if (strlen("seas") >= MAX_STR_LEN) {
+		fprintf(stderr, "String too long for obj->seas (max %d chars)", MAX_STR_LEN);
+		exit(-1);
+	}
+	strncpy(obj->seas, "seas", MAX_STR_LEN - 1);
+	
+	if (strlen("aicc") >= MAX_STR_LEN) {
+		fprintf(stderr, "String too long for obj->information_criteria (max %d chars)", MAX_STR_LEN);
+		exit(-1);
+	}
+	strncpy(obj->information_criteria, "aicc", MAX_STR_LEN - 1);
+	
+	if (strlen("level") >= MAX_STR_LEN) {
+		fprintf(stderr, "String too long for obj->type (max %d chars)", MAX_STR_LEN);
+		exit(-1);
+	}
+	strncpy(obj->type, "level", MAX_STR_LEN - 1);
 
 	obj->p_start = 2;
 	obj->q_start = 2;
@@ -2745,14 +2764,22 @@ void auto_arima_setSeasonal(auto_arima_object obj, int seasonal) {
 
 void auto_arima_setStationarityParameters(auto_arima_object obj,const char *test, double alpha, const char *type) {
 	if (!strcmp(test,"kpss") || !strcmp(test,"pp") || !strcmp(test,"df") || !strcmp(test,"adf")) {
-		strcpy(obj->test,test);
+		if (strlen(test) >= MAX_STR_LEN) {
+			fprintf(stderr, "String too long for obj->test (max %d chars)", MAX_STR_LEN);
+			exit(-1);
+		}
+		strncpy(obj->test, test, MAX_STR_LEN - 1);
 	} else {
 		printf("Only three tests are allowed - kpss, df and pp \n");
 		exit(-1);
 	}
 
 	if (!strcmp(type,"level") || !strcmp(type,"trend")) {
-		strcpy(obj->type,type);
+		if (strlen(type) >= MAX_STR_LEN) {
+			fprintf(stderr, "String too long for obj->type (max %d chars)", MAX_STR_LEN);
+			exit(-1);
+		}
+		strncpy(obj->type, type, MAX_STR_LEN - 1);
 	} else {
 		printf("Only two tests are allowed - level and trend \n");
 		exit(-1);
@@ -2763,7 +2790,11 @@ void auto_arima_setStationarityParameters(auto_arima_object obj,const char *test
 
 void auto_arima_setSeasonalParameters(auto_arima_object obj,const char *test, double alpha) {
 	if (!strcmp(test,"ocsb") || !strcmp(test,"seas")) {
-		strcpy(obj->seas,test);
+		if (strlen(test) >= MAX_STR_LEN) {
+			fprintf(stderr, "String too long for obj->seas (max %d chars)", MAX_STR_LEN);
+			exit(-1);
+		}
+		strncpy(obj->seas, test, MAX_STR_LEN - 1);
 	} else {
 		printf("Only two tests are allowed - seas and ocsb \n");
 		exit(-1);

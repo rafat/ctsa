@@ -11,6 +11,8 @@
 
 #include "stats.h"
 
+#define MAX_STR_LEN 10
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -36,7 +38,7 @@ struct reg_set{
 	double r2;
 	double r2adj;
 	double R2[2];
-	char lls[10];
+	char lls[MAX_STR_LEN];
 	int df;
 	int intercept;
 	int rank; // Use method "qr" to calculate the rank

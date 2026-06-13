@@ -76,7 +76,7 @@ struct auto_arima_set{
 	double aic;
 	double bic;
 	double aicc;
-	double params[0];
+	double params[];
 };
 
 
@@ -114,7 +114,7 @@ struct sarimax_set{
 	int retval;
 	int start;
 	int imean;
-	double params[0];
+	double params[];
 };
 
 typedef struct arima_set* arima_object;
@@ -141,7 +141,7 @@ struct arima_set{
 	double loglik;
 	double aic;
 	int retval;
-	double params[0];
+	double params[];
 };
 
 typedef struct sarima_set* sarima_object;
@@ -174,7 +174,7 @@ struct sarima_set{
 	double loglik;
 	double aic;
 	int retval;
-	double params[0];
+	double params[];
 };
 
 typedef struct ar_set* ar_object;
@@ -194,7 +194,7 @@ struct ar_set{
 	double var;
 	double aic;
 	int retval;
-	double params[0];
+	double params[];
 };
 
 void sarimax_exec(sarimax_object obj, double *inp,double *xreg) ;

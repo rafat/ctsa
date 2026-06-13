@@ -12,6 +12,8 @@
 #include "emle.h"
 #include "autoutils.h"
 
+#define MAX_STR_LEN 10
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -188,14 +190,14 @@ struct auto_arima_set{
 	int q_start;
 	int P_start;
 	int Q_start;
-	char information_criteria[10];
+	char information_criteria[MAX_STR_LEN];
 	int stepwise;
 	int num_models;
 	int approximation;
 	int verbose;
-	char test[10];
-	char type[10];
-	char seas[10];
+	char test[MAX_STR_LEN];
+	char type[MAX_STR_LEN];
+	char seas[MAX_STR_LEN];
 	double alpha_test;
 	double alpha_seas;
 	double lambda;

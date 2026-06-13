@@ -4,6 +4,11 @@
 
 #include "wtmath.h"
 
+#define MAX_WNAME_LEN 50
+#define MAX_METHOD_LEN 10
+#define MAX_EXT_LEN 10
+#define MAX_CMETHOD_LEN 10
+#define MAX_ENTROPY_LEN 20
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,7 +38,7 @@ typedef struct wave_set* wave_object;
 wave_object wave_init(const char* wname);
 
 struct wave_set{
-	char wname[50];
+	char wname[MAX_WNAME_LEN];
 	int filtlength;// When all filters are of the same length. [Matlab uses zero-padding to make all filters of the same length]
 	int lpd_len;// Default filtlength = lpd_len = lpr_len = hpd_len = hpr_len
 	int hpd_len;
@@ -53,7 +58,7 @@ wt_object wt_init(wave_object wave,const char* method, int siglength, int J);
 struct wt_set{
 	wave_object wave;
 	conv_object cobj;
-	char method[10];
+	char method[MAX_METHOD_LEN];
 	int siglength;// Length of the original signal.
 	int modwtsiglength; // Modified signal length for MODWT
 	int outlength;// Length of the output DWT vector
@@ -61,8 +66,8 @@ struct wt_set{
 	int J; // Number of decomposition Levels
 	int MaxIter;// Maximum Iterations J <= MaxIter
 	int even;// even = 1 if signal is of even length. even = 0 otherwise
-	char ext[10];// Type of Extension used - "per" or "sym"
-	char cmethod[10]; // Convolution Method - "direct" or "FFT"
+	char ext[MAX_EXT_LEN];// Type of Extension used - "per" or "sym"
+	char cmethod[MAX_CMETHOD_LEN]; // Convolution Method - "direct" or "FFT"
 
 	int N; //
 	int cfftset;
@@ -79,14 +84,14 @@ wtree_object wtree_init(wave_object wave, int siglength, int J);
 struct wtree_set{
 	wave_object wave;
 	conv_object cobj;
-	char method[10];
+	char method[MAX_METHOD_LEN];
 	int siglength;// Length of the original signal.
 	int outlength;// Length of the output DWT vector
 	int lenlength;// Length of the Output Dimension Vector "length"
 	int J; // Number of decomposition Levels
 	int MaxIter;// Maximum Iterations J <= MaxIter
 	int even;// even = 1 if signal is of even length. even = 0 otherwise
-	char ext[10];// Type of Extension used - "per" or "sym"
+	char ext[MAX_EXT_LEN];// Type of Extension used - "per" or "sym"
 
 	int N; //
 	int nodes;
@@ -112,8 +117,8 @@ struct wpt_set{
 	int J; // Number of decomposition Levels
 	int MaxIter;// Maximum Iterations J <= MaxIter
 	int even;// even = 1 if signal is of even length. even = 0 otherwise
-	char ext[10];// Type of Extension used - "per" or "sym"
-	char entropy[20];
+	char ext[MAX_EXT_LEN];// Type of Extension used - "per" or "sym"
+	char entropy[MAX_ENTROPY_LEN];
 	double eparam;
 
 	int N; //
